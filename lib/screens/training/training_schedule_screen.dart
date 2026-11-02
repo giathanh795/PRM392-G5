@@ -33,6 +33,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
   bool _inRange(DateTime date) =>
       date.year == TrainingScheduleData.year &&
       TrainingScheduleData.months.contains(date.month);
+
   String _dateKey(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
 
   List<TrainingSession> _filtered(List<TrainingSession> sessions) => sessions
@@ -59,6 +60,240 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     _playerId = null;
   });
 
+  // Hộp thoại tạo buổi tập mới
+  void _showAddSessionDialog(BuildContext context) {
+    final titleController = TextEditingController();
+    final locationController = TextEditingController(
+      text: 'AXA Training Ground - Pitch 1',
+    );
+    final coachController = TextEditingController(text: 'Andoni Iraola');
+    final descController = TextEditingController();
+    final startController = TextEditingController(text: '10:00');
+    final endController = TextEditingController(text: '12:00');
+
+    String selectedType = 'Tactical';
+    final selectedPlayers = <String>{};
+
+    final allPlayers = context.read<AppStateProvider>().players;
+    final currentDateStr = _dateKey(_selectedDate);
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppTheme.surfaceNavy,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppTheme.borderSubtle),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.add_task, color: AppTheme.accentCyan, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                'Schedule training ($currentDateStr)',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Session title',
+                      hintText: 'Example: High-intensity pressing and quick combinations',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: startController,
+                          decoration: const InputDecoration(
+                            labelText: 'Start time',
+                            hintText: '10:00',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: endController,
+                          decoration: const InputDecoration(
+                            labelText: 'End time',
+                            hintText: '12:00',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Training type:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    children: ['Tactical', 'Gym', 'Recovery', 'Match Prep'].map(
+                      (t) {
+                        final isSel = selectedType == t;
+                        return ChoiceChip(
+                          label: Text(t, style: const TextStyle(fontSize: 11)),
+                          selected: isSel,
+                          selectedColor: _color(t),
+                          onSelected: (_) =>
+                              setDialogState(() => selectedType = t),
+                        );
+                      },
+                    ).toList(),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: locationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Training location',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: coachController,
+                    decoration: const InputDecoration(labelText: 'Coach'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: descController,
+                    decoration: const InputDecoration(
+                      labelText: 'Objectives & instructions',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Assign players (${selectedPlayers.length}/${allPlayers.length}):',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.accentCyan,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setDialogState(() {
+                            if (selectedPlayers.length == allPlayers.length) {
+                              selectedPlayers.clear();
+                            } else {
+                              selectedPlayers.addAll(
+                                allPlayers.map((p) => p.id),
+                              );
+                            }
+                          });
+                        },
+                        child: Text(
+                          selectedPlayers.length == allPlayers.length
+                              ? 'Clear selection'
+                              : 'Select all',
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: allPlayers.map((p) {
+                      final isSel = selectedPlayers.contains(p.id);
+                      return FilterChip(
+                        label: Text(
+                          '#${p.number} ${p.name.split(' ').last}',
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        selected: isSel,
+                        selectedColor: AppTheme.accentCyan.withValues(
+                          alpha: 0.25,
+                        ),
+                        checkmarkColor: AppTheme.accentCyan,
+                        onSelected: (val) {
+                          setDialogState(() {
+                            if (val) {
+                              selectedPlayers.add(p.id);
+                            } else {
+                              selectedPlayers.remove(p.id);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentCyan,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: () {
+                final title = titleController.text.trim();
+                if (title.isEmpty) return;
+
+                final newSession = TrainingSession(
+                  id: 'session-${DateTime.now().millisecondsSinceEpoch}',
+                  title: title,
+                  date: currentDateStr,
+                  startTime: startController.text.trim(),
+                  endTime: endController.text.trim(),
+                  type: selectedType,
+                  location: locationController.text.trim(),
+                  coach: coachController.text.trim(),
+                  description: descController.text.trim().isNotEmpty
+                      ? descController.text.trim()
+                      : 'Training programme at AXA Training Ground.',
+                  playerIds: selectedPlayers.toList(),
+                );
+
+                context.read<AppStateProvider>().addTrainingSession(newSession);
+                Navigator.of(dialogCtx).pop();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Added session "$title" on $currentDateStr!'),
+                  ),
+                );
+              },
+              child: const Text(
+                'Create session',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppStateProvider>();
@@ -83,7 +318,6 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
         .toList();
     final filtered = _filtered(monthly);
     final selected = _filtered(daySessions);
-    final days = DateTime(_selectedDate.year, _selectedDate.month + 1, 0).day;
     final trainingDays = monthly.map((s) => s.date).toSet().length;
     final minutes = monthly.fold(
       0,
@@ -92,10 +326,29 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     final today = DateUtils.dateOnly(DateTime.now());
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Training & Schedule')),
+      appBar: AppBar(
+        title: const Text('Training & Schedule'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_task, color: AppTheme.accentCyan),
+            tooltip: 'Create training session',
+            onPressed: () => _showAddSessionDialog(context),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppTheme.accentCyan,
+        foregroundColor: Colors.black,
+        icon: const Icon(Icons.add_task),
+        label: const Text(
+          'Schedule training',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        onPressed: () => _showAddSessionDialog(context),
+      ),
       body: SingleChildScrollView(
         key: const PageStorageKey('training-scroll'),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1240),
@@ -118,65 +371,103 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                       _tag('FIRST TEAM · OCT – NOV 2026', AppTheme.accentCyan),
                       const SizedBox(height: 12),
                       const Text(
-                        'Train with a plan.',
+                        'AXA Training Programme',
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: 24,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Explore the squad programme, individual groups and daily training details.',
+                        'Manage first-team training, tactical preparation, conditioning and recovery.',
                         style: TextStyle(
+                          fontSize: 13,
                           color: AppTheme.textSecondary,
                           height: 1.5,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Fixed training programme · Sundays are rest days',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textSecondary,
-                        ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.accentCyan,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                            ),
+                            icon: const Icon(Icons.add_task, size: 18),
+                            label: const Text(
+                              'Schedule for this date',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () => _showAddSessionDialog(context),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              final today = DateUtils.dateOnly(DateTime.now());
+                              if (_inRange(today)) {
+                                setState(() => _selectedDate = today);
+                              } else {
+                                setState(
+                                  () => _selectedDate = DateTime(
+                                    TrainingScheduleData.year,
+                                    10,
+                                    1,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.today, size: 18),
+                            label: const Text('Today'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final columns = constraints.maxWidth >= 700 ? 3 : 1;
-                    final width =
-                        (constraints.maxWidth - (columns - 1) * 10) / columns;
+                    final width = constraints.maxWidth >= 720
+                        ? (constraints.maxWidth - 24) / 3
+                        : constraints.maxWidth;
                     return Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children:
-                          [
-                                _summary(
-                                  'Sessions this month',
-                                  '${monthly.length}',
-                                  Icons.event_note,
-                                  AppTheme.info,
-                                ),
-                                _summary(
-                                  'Training / rest days',
-                                  '$trainingDays / ${days - trainingDays}',
-                                  Icons.calendar_month,
-                                  AppTheme.success,
-                                ),
-                                _summary(
-                                  'Planned training hours',
-                                  (minutes / 60).toStringAsFixed(1),
-                                  Icons.timer_outlined,
-                                  AppTheme.lfcYellow,
-                                ),
-                              ]
-                              .map(
-                                (child) => SizedBox(width: width, child: child),
-                              )
-                              .toList(),
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        SizedBox(
+                          width: width,
+                          child: _summary(
+                            'Sessions in ${DateFormat('MMMM').format(_selectedDate)}',
+                            '${monthly.length}',
+                            Icons.calendar_month,
+                            AppTheme.info,
+                          ),
+                        ),
+                        SizedBox(
+                          width: width,
+                          child: _summary(
+                            'Training days',
+                            '$trainingDays',
+                            Icons.event_available,
+                            AppTheme.success,
+                          ),
+                        ),
+                        SizedBox(
+                          width: width,
+                          child: _summary(
+                            'Programme minutes',
+                            '$minutes',
+                            Icons.timer_outlined,
+                            AppTheme.accentCyan,
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),
@@ -186,9 +477,9 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Find your sessions',
+                        'Filter training calendar',
                         style: TextStyle(
-                          fontSize: 17,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -201,29 +492,20 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                               (type) => ChoiceChip(
                                 label: Text(type),
                                 selected: _type == type,
+                                selectedColor: _color(type),
                                 onSelected: (_) => setState(() => _type = type),
                               ),
                             )
                             .toList(),
                       ),
                       const SizedBox(height: 14),
-                      SizedBox(
-                        width: 380,
-                        child: DropdownButtonFormField<String>(
-                          key: ValueKey(
-                            'training-player-${_playerId ?? 'all'}-${state.players.length}',
-                          ),
-                          initialValue:
-                              state.players.any((p) => p.id == _playerId)
-                              ? _playerId
-                              : null,
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<String?>(
+                          value: _playerId,
                           isExpanded: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Player',
-                            prefixIcon: Icon(Icons.person_outline),
-                          ),
+                          hint: const Text('Filter by participating player'),
                           items: [
-                            const DropdownMenuItem<String>(
+                            const DropdownMenuItem(
                               value: null,
                               child: Text('All players'),
                             ),
@@ -232,6 +514,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                                 value: p.id,
                                 child: Text(
                                   '#${p.number} ${p.name}',
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -251,7 +534,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                         ),
                       const SizedBox(height: 10),
                       const Text(
-                        'Calendar markers show sessions matching your filters. Monthly totals show the full programme.',
+                        'Calendar markers show sessions matching your filters.',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.textSecondary,
@@ -555,6 +838,8 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
   Widget _sessionCard(TrainingSession session, List<Player> players) {
     final color = _color(session.type);
     final participants = _participants(session, players);
+    final isCompleted = session.status == 'Completed';
+
     return Container(
       key: ValueKey('training-session-${session.id}'),
       width: double.infinity,
@@ -563,17 +848,50 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
       decoration: BoxDecoration(
         color: AppTheme.primaryNavy,
         borderRadius: BorderRadius.circular(14),
-        border: Border(left: BorderSide(color: color, width: 3)),
+        border: Border(
+          left: BorderSide(
+            color: isCompleted ? AppTheme.success : color,
+            width: 3,
+          ),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _tag(session.type, color),
-              _tag('Planned', AppTheme.textSecondary),
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _tag(session.type, color),
+                    _tag(
+                      isCompleted ? 'Completed' : 'Planned',
+                      isCompleted ? AppTheme.success : AppTheme.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: AppTheme.danger,
+                ),
+                tooltip: 'Delete session',
+                onPressed: () {
+                  context.read<AppStateProvider>().deleteTrainingSession(
+                    session.id,
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Session removed from the schedule!'),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -607,10 +925,45 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: () => _showSession(session, participants),
-            icon: const Icon(Icons.open_in_new, size: 16),
-            label: const Text('View session & players'),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _showSession(session, participants),
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('View session & players'),
+              ),
+              if (!isCompleted)
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.success,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  icon: const Icon(Icons.check_circle_outline, size: 16),
+                  label: const Text(
+                    'Complete session',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () async {
+                    await context
+                        .read<AppStateProvider>()
+                        .completeTrainingSession(session.id);
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Session completed and participant fitness updated!',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+            ],
           ),
         ],
       ),
@@ -777,6 +1130,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     'Recovery' => AppTheme.accentCyan,
     _ => AppTheme.lfcRed,
   };
+
   int _minutes(String time) {
     final parts = time.split(':');
     return int.parse(parts[0]) * 60 + int.parse(parts[1]);

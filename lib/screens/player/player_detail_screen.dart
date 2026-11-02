@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/player.dart';
 import '../../providers/app_state_provider.dart';
 import '../../widgets/player_avatar.dart';
+import '../../widgets/delete_player_dialog.dart';
 import 'player_stats_screen.dart';
 
 class PlayerDetailScreen extends StatelessWidget {
@@ -14,7 +15,7 @@ class PlayerDetailScreen extends StatelessWidget {
 
   const PlayerDetailScreen({super.key, required this.player});
 
-  // Mở trình phát / Xem URL (Hỗ trợ Youtube, trang Web, file video MP4, v.v.)
+  // Mở trình phát / Xem URL (Youtube, Web, Video MP4...)
   Future<void> _launchMediaUrl(BuildContext context, PlayerMediaItem item) async {
     final rawUrl = item.url.trim();
     if (rawUrl.isEmpty) {
@@ -55,7 +56,7 @@ class PlayerDetailScreen extends StatelessWidget {
     }
   }
 
-  // Hộp thoại chỉnh sửa Avatar (Cho phép dán URL, chọn từ Thư viện máy, hoặc chọn Preset)
+  // Hộp thoại Chỉnh sửa Avatar
   void _showEditAvatarDialog(BuildContext context, Player currentPlayer) {
     final controller = TextEditingController(text: currentPlayer.avatarUrl);
     final picker = ImagePicker();
@@ -89,7 +90,6 @@ class PlayerDetailScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nút chọn ảnh trực tiếp từ bộ sưu tập máy tính / điện thoại
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -157,8 +157,6 @@ class PlayerDetailScreen extends StatelessWidget {
                   onChanged: (_) => setDialogState(() {}),
                 ),
                 const SizedBox(height: 14),
-
-                // Xem trước ảnh (Live Preview)
                 Center(
                   child: Column(
                     children: [
@@ -175,7 +173,6 @@ class PlayerDetailScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 const Text('Hoặc chọn nhanh ảnh mẫu Liverpool:', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
                 const SizedBox(height: 8),
                 Wrap(
@@ -218,6 +215,164 @@ class PlayerDetailScreen extends StatelessWidget {
                 }
               },
               child: const Text('Lưu thay đổi'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- HỘP THOẠI CHỈNH SỬA TOÀN BỘ THÔNG TIN (SỐ ÁO, GIÁ TRỊ, HỢP ĐỒNG, THỂ LỰC) ---
+  void _showEditProfileDialog(BuildContext context, Player currentPlayer) {
+    final nameController = TextEditingController(text: currentPlayer.name);
+    final numberController = TextEditingController(text: currentPlayer.number.toString());
+    final valueController = TextEditingController(text: currentPlayer.currentMarketValue.toStringAsFixed(1));
+    final contractController = TextEditingController(text: currentPlayer.contractUntil);
+    final footController = TextEditingController(text: currentPlayer.preferredFoot);
+
+    PlayerPosition selectedPos = currentPlayer.position;
+    String selectedStatus = currentPlayer.status;
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppTheme.surfaceNavy,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppTheme.borderSubtle),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.manage_accounts, color: AppTheme.accentCyan, size: 22),
+              SizedBox(width: 8),
+              Text('Chỉnh sửa Hồ sơ & Giá trị', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Họ và tên cầu thủ'),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: TextField(
+                        controller: numberController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Số áo (#)'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: valueController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Giá thị trường (€M)',
+                          prefixText: '€',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text('Vị trí thi đấu:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  children: PlayerPosition.values.map((pos) {
+                    final isSel = selectedPos == pos;
+                    return ChoiceChip(
+                      label: Text(pos.name.toUpperCase()),
+                      selected: isSel,
+                      selectedColor: AppTheme.accentBlue,
+                      onSelected: (_) => setDialogState(() => selectedPos = pos),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                const Text('Tình trạng thể lực / Y tế:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  children: ['Active', 'Injured', 'Doubtful', 'On Duty'].map((st) {
+                    final isSel = selectedStatus == st;
+                    Color color = AppTheme.success;
+                    if (st == 'Injured') color = AppTheme.danger;
+                    if (st == 'Doubtful') color = AppTheme.warning;
+                    return ChoiceChip(
+                      label: Text(st),
+                      selected: isSel,
+                      selectedColor: color.withValues(alpha: 0.3),
+                      onSelected: (_) => setDialogState(() => selectedStatus = st),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: contractController,
+                  decoration: const InputDecoration(labelText: 'Hợp đồng đến (YYYY-MM-DD)'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: footController,
+                  decoration: const InputDecoration(labelText: 'Chân thuận (Left / Right / Both)'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: const Text('Hủy', style: TextStyle(color: AppTheme.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentCyan,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: () async {
+                final newNum = int.tryParse(numberController.text.trim()) ?? currentPlayer.number;
+                final newMarketVal = double.tryParse(valueController.text.trim()) ?? currentPlayer.currentMarketValue;
+
+                // Cập nhật lịch sử biến động giá nếu có thay đổi
+                final updatedHist = List<MarketValuePoint>.from(currentPlayer.marketValueHistory);
+                if (newMarketVal != currentPlayer.currentMarketValue) {
+                  updatedHist.add(MarketValuePoint(
+                    date: 'Now',
+                    valueInMillionsEuro: newMarketVal,
+                  ));
+                }
+
+                final updated = currentPlayer.copyWith(
+                  name: nameController.text.trim(),
+                  number: newNum,
+                  position: selectedPos,
+                  status: selectedStatus,
+                  contractUntil: contractController.text.trim(),
+                  preferredFoot: footController.text.trim(),
+                  previousMarketValue: currentPlayer.currentMarketValue,
+                  currentMarketValue: newMarketVal,
+                  marketValueHistory: updatedHist,
+                );
+
+                await context.read<AppStateProvider>().updatePlayer(updated);
+                if (context.mounted) {
+                  Navigator.of(dialogCtx).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Đã cập nhật hồ sơ và giá trị cho ${updated.name}!')),
+                  );
+                }
+              },
+              child: const Text('Lưu thông tin'),
             ),
           ],
         ),
@@ -362,6 +517,54 @@ class PlayerDetailScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _handleDeletePlayer(BuildContext context, Player currentPlayer) async {
+    final confirmed = await showDeletePlayerConfirmationDialog(context, currentPlayer);
+    if (confirmed == true && context.mounted) {
+      final originalIndex = context.read<AppStateProvider>().players.indexWhere((p) => p.id == currentPlayer.id);
+      final deleted = await context.read<AppStateProvider>().deletePlayer(currentPlayer.id);
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        if (deleted != null) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppTheme.surfaceNavy,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: const BorderSide(color: AppTheme.borderSubtle),
+              ),
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle_outline, color: AppTheme.accentCyan, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Đã xóa cầu thủ "${currentPlayer.name}"',
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              action: SnackBarAction(
+                label: 'HOÀN TÁC',
+                textColor: AppTheme.lfcYellow,
+                onPressed: () {
+                  context.read<AppStateProvider>().restorePlayer(
+                    originalIndex >= 0 ? originalIndex : 0,
+                    deleted,
+                  );
+                },
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppStateProvider>();
@@ -375,8 +578,13 @@ class PlayerDetailScreen extends StatelessWidget {
         title: Text(currentPlayer.name),
         actions: [
           IconButton(
+            icon: const Icon(Icons.edit_note, color: AppTheme.accentCyan),
+            tooltip: 'Chỉnh sửa toàn bộ hồ sơ',
+            onPressed: () => _showEditProfileDialog(context, currentPlayer),
+          ),
+          IconButton(
             icon: const Icon(Icons.analytics_outlined),
-            tooltip: 'View Stats & Progress',
+            tooltip: 'Xem & Sửa Chỉ Số Radar',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -385,6 +593,11 @@ class PlayerDetailScreen extends StatelessWidget {
               );
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppTheme.lfcRed),
+            tooltip: 'Xóa cầu thủ',
+            onPressed: () => _handleDeletePlayer(context, currentPlayer),
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -392,7 +605,7 @@ class PlayerDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero Player Card Header với PlayerAvatar & Nút Edit Avatar
+            // Hero Player Card Header với PlayerAvatar & Nút Edit
             Card(
               clipBehavior: Clip.antiAlias,
               child: Container(
@@ -471,6 +684,27 @@ class PlayerDetailScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
+                            color: currentPlayer.status == 'Active'
+                                ? AppTheme.success.withValues(alpha: 0.2)
+                                : AppTheme.danger.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: currentPlayer.status == 'Active' ? AppTheme.success : AppTheme.danger,
+                            ),
+                          ),
+                          child: Text(
+                            currentPlayer.status.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: currentPlayer.status == 'Active' ? AppTheme.success : AppTheme.danger,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
                             color: AppTheme.adidasBlack,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(color: Colors.white30),
@@ -503,7 +737,7 @@ class PlayerDetailScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     icon: const Icon(Icons.radar),
-                    label: const Text('Radar & Chỉ Số'),
+                    label: const Text('Radar & Sửa Chỉ Số'),
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -522,8 +756,8 @@ class PlayerDetailScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     icon: const Icon(Icons.monetization_on, color: AppTheme.lfcYellow),
-                    label: Text('€${currentPlayer.currentMarketValue.toStringAsFixed(0)}M Value'),
-                    onPressed: () {},
+                    label: Text('€${currentPlayer.currentMarketValue.toStringAsFixed(1)}M Value'),
+                    onPressed: () => _showEditProfileDialog(context, currentPlayer),
                   ),
                 ),
               ],
@@ -531,11 +765,21 @@ class PlayerDetailScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Bio & Contract Information
-            const Text(
-              'Profile & Contract Information',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Profile & Contract Information',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                ),
+                TextButton.icon(
+                  icon: const Icon(Icons.edit, size: 14, color: AppTheme.accentCyan),
+                  label: const Text('Sửa hồ sơ', style: TextStyle(color: AppTheme.accentCyan, fontSize: 12)),
+                  onPressed: () => _showEditProfileDialog(context, currentPlayer),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -551,7 +795,7 @@ class PlayerDetailScreen extends StatelessWidget {
                     const Divider(color: AppTheme.borderSubtle, height: 20),
                     _buildInfoRow('Squad Status', currentPlayer.status),
                     const Divider(color: AppTheme.borderSubtle, height: 20),
-                    _buildInfoRow('Commercial Sponsor', currentPlayer.sponsorPartner),
+                    _buildInfoRow('Commercial Partner', currentPlayer.sponsorPartner),
                   ],
                 ),
               ),
@@ -667,6 +911,74 @@ class PlayerDetailScreen extends StatelessWidget {
                   );
                 },
               ),
+            const SizedBox(height: 24),
+            // Khu vực quản lý / Xóa cầu thủ (Danger Zone)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.lfcRed.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.lfcRed.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.lfcRed.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.delete_forever_rounded,
+                      color: AppTheme.lfcRed,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Xóa cầu thủ này',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Xóa khỏi đội hình chính thức của LFC',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.lfcRed,
+                      side: const BorderSide(color: AppTheme.lfcRed),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: const Text(
+                      'Xóa',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () => _handleDeletePlayer(context, currentPlayer),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

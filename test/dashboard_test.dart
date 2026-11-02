@@ -92,8 +92,13 @@ void main() {
         final campaigns = tester.getRect(
           find.byKey(const ValueKey('dashboard-panel-Partners & campaigns')),
         );
-        expect(campaigns.top - valuations.bottom, closeTo(20, 0.01));
-        expect(campaigns.top - contracts.bottom, closeTo(20, 0.01));
+        // The current design lets each column flow at its natural height.
+        final gridBottom = valuations.bottom > contracts.bottom
+            ? valuations.bottom
+            : contracts.bottom;
+        expect(campaigns.top - gridBottom, closeTo(20, 0.01));
+        expect(campaigns.top - valuations.bottom, greaterThanOrEqualTo(20));
+        expect(campaigns.top - contracts.bottom, greaterThanOrEqualTo(20));
       }
       await tester.tap(find.text('Manage squad'));
       expect(selectedTab, 1);
