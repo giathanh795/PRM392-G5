@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
 import '../../core/theme/app_theme.dart';
-import '../../providers/app_state_provider.dart';
+import '../../data/training_schedule_data.dart';
+import '../../models/player.dart';
 import '../../models/training_session.dart';
+import '../../providers/app_state_provider.dart';
 
 class TrainingScheduleScreen extends StatefulWidget {
   const TrainingScheduleScreen({super.key});
@@ -12,17 +16,49 @@ class TrainingScheduleScreen extends StatefulWidget {
 }
 
 class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
-  int _selectedDayIndex = 0;
+  static const _types = ['All', 'Gym', 'Tactical', 'Recovery', 'Match Prep'];
+  late DateTime _selectedDate;
+  String _type = 'All';
+  String? _playerId;
 
-  final List<Map<String, dynamic>> _days = [
-    {'day': 'MON', 'date': '12', 'fullDate': '2026-10-12'},
-    {'day': 'TUE', 'date': '13', 'fullDate': '2026-10-13'},
-    {'day': 'WED', 'date': '14', 'fullDate': '2026-10-14'},
-    {'day': 'THU', 'date': '15', 'fullDate': '2026-10-15'},
-    {'day': 'FRI', 'date': '16', 'fullDate': '2026-10-16'},
-    {'day': 'SAT', 'date': '17', 'fullDate': '2026-10-17'},
-    {'day': 'SUN', 'date': '18', 'fullDate': '2026-10-18'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    final today = DateUtils.dateOnly(DateTime.now());
+    _selectedDate = _inRange(today)
+        ? today
+        : DateTime(TrainingScheduleData.year, 10, 1);
+  }
+
+  bool _inRange(DateTime date) =>
+      date.year == TrainingScheduleData.year &&
+      TrainingScheduleData.months.contains(date.month);
+
+  String _dateKey(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
+
+  List<TrainingSession> _filtered(List<TrainingSession> sessions) => sessions
+      .where(
+        (session) =>
+            (_type == 'All' || session.type == _type) &&
+            (_playerId == null ||
+                session.playerIds.isEmpty ||
+                session.playerIds.contains(_playerId)),
+      )
+      .toList();
+
+  void _selectMonth(int month) => setState(() {
+    final lastDay = DateTime(TrainingScheduleData.year, month + 1, 0).day;
+    _selectedDate = DateTime(
+      TrainingScheduleData.year,
+      month,
+      _selectedDate.day.clamp(1, lastDay),
+    );
+  });
+
+  void _resetFilters() => setState(() {
+    _type = 'All';
+    _playerId = null;
+  });
 
   // Hộp thoại tạo buổi tập mới
   void _showAddSessionDialog(BuildContext context) {
@@ -34,11 +70,10 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     final endController = TextEditingController(text: '12:00');
 
     String selectedType = 'Tactical';
-    String selectedIntensity = 'High Intensity';
     final selectedPlayers = <String>{};
 
     final allPlayers = context.read<AppStateProvider>().players;
-    final currentDate = _days[_selectedDayIndex]['fullDate'] as String;
+    final currentDateStr = _dateKey(_selectedDate);
 
     showDialog(
       context: context,
@@ -49,11 +84,11 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
             borderRadius: BorderRadius.circular(16),
             side: const BorderSide(color: AppTheme.borderSubtle),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.add_task, color: AppTheme.accentCyan, size: 22),
-              SizedBox(width: 8),
-              Text('Lên Lịch Tập Huấn AXA', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Icon(Icons.add_task, color: AppTheme.accentCyan, size: 22),
+              const SizedBox(width: 8),
+              Text('Lên Lịch Tập Huấn ($currentDateStr)', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ],
           ),
           content: SizedBox(
@@ -93,31 +128,13 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 6,
-                    children: ['Tactical', 'Gym', 'Recovery', 'Set-Piece', 'Match Prep'].map((t) {
+                    children: ['Tactical', 'Gym', 'Recovery', 'Match Prep'].map((t) {
                       final isSel = selectedType == t;
                       return ChoiceChip(
                         label: Text(t, style: const TextStyle(fontSize: 11)),
                         selected: isSel,
-                        selectedColor: AppTheme.accentBlue,
+                        selectedColor: _color(t),
                         onSelected: (_) => setDialogState(() => selectedType = t),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Mức độ tải trọng (Intensity):', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 6,
-                    children: ['Light', 'Moderate', 'High Intensity'].map((intense) {
-                      final isSel = selectedIntensity == intense;
-                      Color c = AppTheme.success;
-                      if (intense == 'High Intensity') c = AppTheme.lfcRed;
-                      if (intense == 'Moderate') c = AppTheme.warning;
-                      return ChoiceChip(
-                        label: Text(intense, style: const TextStyle(fontSize: 11)),
-                        selected: isSel,
-                        selectedColor: c.withValues(alpha: 0.3),
-                        onSelected: (_) => setDialogState(() => selectedIntensity = intense),
                       );
                     }).toList(),
                   ),
@@ -154,30 +171,21 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                             }
                           });
                         },
-                        child: Text(
-                          selectedPlayers.length == allPlayers.length ? 'Bỏ chọn' : 'Chọn tất cả',
-                          style: const TextStyle(fontSize: 11),
-                        ),
+                        child: Text(selectedPlayers.length == allPlayers.length ? 'Bỏ chọn hết' : 'Chọn tất cả', style: const TextStyle(fontSize: 11)),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 6),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
                     children: allPlayers.map((p) {
                       final isSel = selectedPlayers.contains(p.id);
-                      final isInjured = p.status == 'Injured';
                       return FilterChip(
+                        label: Text('#${p.number} ${p.name.split(' ').last}', style: const TextStyle(fontSize: 11)),
                         selected: isSel,
-                        label: Text(
-                          '#${p.number} ${p.name.split(' ').last}${isInjured ? ' ⚠️' : ''}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isInjured ? AppTheme.danger : (isSel ? Colors.white : AppTheme.textSecondary),
-                          ),
-                        ),
-                        backgroundColor: AppTheme.surfaceNavyLight,
-                        selectedColor: AppTheme.accentBlue,
+                        selectedColor: AppTheme.accentCyan.withValues(alpha: 0.25),
+                        checkmarkColor: AppTheme.accentCyan,
                         onSelected: (val) {
                           setDialogState(() {
                             if (val) {
@@ -197,46 +205,40 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogCtx).pop(),
-              child: const Text('Hủy', style: TextStyle(color: AppTheme.textSecondary)),
+              child: const Text('Hủy'),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentCyan,
                 foregroundColor: Colors.black,
               ),
-              onPressed: () async {
+              onPressed: () {
                 final title = titleController.text.trim();
-                if (title.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Vui lòng nhập tiêu đề buổi tập!')),
-                  );
-                  return;
-                }
+                if (title.isEmpty) return;
 
                 final newSession = TrainingSession(
-                  id: 'train_${DateTime.now().millisecondsSinceEpoch}',
+                  id: 'session-${DateTime.now().millisecondsSinceEpoch}',
                   title: title,
-                  date: currentDate,
+                  date: currentDateStr,
                   startTime: startController.text.trim(),
                   endTime: endController.text.trim(),
                   type: selectedType,
                   location: locationController.text.trim(),
                   coach: coachController.text.trim(),
-                  description: descController.text.trim(),
-                  intensity: selectedIntensity,
-                  status: 'Upcoming',
+                  description: descController.text.trim().isNotEmpty
+                      ? descController.text.trim()
+                      : 'Kế hoạch tập luyện chuyên đề tại AXA Training Ground.',
                   playerIds: selectedPlayers.toList(),
                 );
 
-                await context.read<AppStateProvider>().addTrainingSession(newSession);
-                if (context.mounted) {
-                  Navigator.of(dialogCtx).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Đã xếp lịch buổi tập: $title cho ngày $currentDate!')),
-                  );
-                }
+                context.read<AppStateProvider>().addTrainingSession(newSession);
+                Navigator.of(dialogCtx).pop();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Đã thêm buổi tập "$title" vào lịch trình ngày $currentDateStr!')),
+                );
               },
-              child: const Text('Lên lịch'),
+              child: const Text('Tạo Buổi Tập', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -247,11 +249,33 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppStateProvider>();
-    final selectedDate = _days[_selectedDayIndex]['fullDate'] as String;
-
-    final sessionsForDay = state.trainings
-        .where((t) => t.date == selectedDate)
+    final playersByNumber = List<Player>.of(state.players)
+      ..sort((a, b) {
+        final numberOrder = a.number.compareTo(b.number);
+        return numberOrder != 0 ? numberOrder : a.name.compareTo(b.name);
+      });
+    final allSessions =
+        state.trainings.where((s) {
+          final date = DateTime.tryParse(s.date);
+          return date != null && _inRange(date);
+        }).toList()..sort(
+          (a, b) =>
+              '${a.date} ${a.startTime}'.compareTo('${b.date} ${b.startTime}'),
+        );
+    final monthly = allSessions
+        .where((s) => DateTime.parse(s.date).month == _selectedDate.month)
         .toList();
+    final daySessions = monthly
+        .where((s) => s.date == _dateKey(_selectedDate))
+        .toList();
+    final filtered = _filtered(monthly);
+    final selected = _filtered(daySessions);
+    final trainingDays = monthly.map((s) => s.date).toSet().length;
+    final minutes = monthly.fold(
+      0,
+      (sum, s) => sum + _minutes(s.endTime) - _minutes(s.startTime),
+    );
+    final today = DateUtils.dateOnly(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(
@@ -259,318 +283,782 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_task, color: AppTheme.accentCyan),
-            tooltip: 'Lên lịch buổi tập mới',
+            tooltip: 'Tạo buổi tập mới',
             onPressed: () => _showAddSessionDialog(context),
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Weekly Calendar Bar
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            color: AppTheme.bgCard,
-            child: SizedBox(
-              height: 72,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                scrollDirection: Axis.horizontal,
-                itemCount: _days.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 10),
-                itemBuilder: (context, index) {
-                  final isSelected = index == _selectedDayIndex;
-                  final day = _days[index];
-
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      setState(() {
-                        _selectedDayIndex = index;
-                      });
-                    },
-                    child: Container(
-                      width: 58,
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.lfcRed : AppTheme.bgCardLight,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? AppTheme.lfcRed : AppTheme.borderSubtle,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppTheme.accentCyan,
+        foregroundColor: Colors.black,
+        icon: const Icon(Icons.add_task),
+        label: const Text('Lên lịch tập mới', style: TextStyle(fontWeight: FontWeight.bold)),
+        onPressed: () => _showAddSessionDialog(context),
+      ),
+      body: SingleChildScrollView(
+        key: const PageStorageKey('training-scroll'),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1240),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    gradient: const LinearGradient(
+                      colors: [AppTheme.surfaceNavyLight, AppTheme.surfaceNavy],
+                    ),
+                    border: Border.all(color: AppTheme.borderSubtle),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _tag('FIRST TEAM · OCT – NOV 2026', AppTheme.accentCyan),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'AXA Training Programme',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Theo dõi và quản lý lịch trình huấn luyện, giáo án chiến thuật, thể lực và hồi phục của đội 1 Liverpool FC.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
                         children: [
-                          Text(
-                            day['day'],
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected ? Colors.white70 : AppTheme.textSecondary,
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.accentCyan,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             ),
+                            icon: const Icon(Icons.add_task, size: 18),
+                            label: const Text('Tạo buổi tập cho ngày này', style: TextStyle(fontWeight: FontWeight.bold)),
+                            onPressed: () => _showAddSessionDialog(context),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            day['date'],
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? Colors.white : AppTheme.textPrimary,
-                            ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              final today = DateUtils.dateOnly(DateTime.now());
+                              if (_inRange(today)) {
+                                setState(() => _selectedDate = today);
+                              } else {
+                                setState(() => _selectedDate = DateTime(TrainingScheduleData.year, 10, 1));
+                              }
+                            },
+                            icon: const Icon(Icons.today, size: 18),
+                            label: const Text('Về ngày hôm nay'),
                           ),
                         ],
                       ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-
-          // Day Info & Add Button Bar
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Lịch tập luyện: ${_days[_selectedDayIndex]['day']}, ${_days[_selectedDayIndex]['fullDate']}',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${sessionsForDay.length} buổi tập tại AXA Training Centre',
-                      style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                    ),
-                  ],
-                ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.lfcRed,
-                    foregroundColor: Colors.white,
-                    visualDensity: VisualDensity.compact,
+                    ],
                   ),
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Thêm buổi tập', style: TextStyle(fontSize: 12)),
-                  onPressed: () => _showAddSessionDialog(context),
+                ),
+                const SizedBox(height: 20),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = constraints.maxWidth >= 720
+                        ? (constraints.maxWidth - 24) / 3
+                        : constraints.maxWidth;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        SizedBox(
+                          width: width,
+                          child: _summary(
+                            'Sessions in ${DateFormat('MMMM').format(_selectedDate)}',
+                            '${monthly.length}',
+                            Icons.calendar_month,
+                            AppTheme.info,
+                          ),
+                        ),
+                        SizedBox(
+                          width: width,
+                          child: _summary(
+                            'Training days',
+                            '$trainingDays',
+                            Icons.event_available,
+                            AppTheme.success,
+                          ),
+                        ),
+                        SizedBox(
+                          width: width,
+                          child: _summary(
+                            'Programme minutes',
+                            '$minutes',
+                            Icons.timer_outlined,
+                            AppTheme.accentCyan,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+                _surface(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Filter training calendar',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _types
+                            .map(
+                              (type) => ChoiceChip(
+                                label: Text(type),
+                                selected: _type == type,
+                                selectedColor: _color(type),
+                                onSelected: (_) => setState(() => _type = type),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      const SizedBox(height: 14),
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<String?>(
+                          value: _playerId,
+                          isExpanded: true,
+                          hint: const Text('Filter by participating player'),
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('All squad / any player'),
+                            ),
+                            ...playersByNumber.map(
+                              (p) => DropdownMenuItem(
+                                value: p.id,
+                                child: Text('#${p.number}  ${p.name} (${p.positionName})'),
+                              ),
+                            ),
+                          ],
+                          onChanged: (id) => setState(() => _playerId = id),
+                        ),
+                      ),
+                      if (_type != 'All' || _playerId != null)
+                        TextButton.icon(
+                          onPressed: _resetFilters,
+                          icon: const Icon(
+                            Icons.filter_alt_off_outlined,
+                            size: 18,
+                          ),
+                          label: const Text('Reset filters'),
+                        ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Dấu chấm trên lịch cho biết các buổi tập khớp với bộ lọc của bạn.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final calendar = _calendar(filtered, monthly, today);
+                    final agenda = _agenda(
+                      selected,
+                      daySessions,
+                      state.players,
+                    );
+                    if (constraints.maxWidth < 900) {
+                      return Column(
+                        children: [
+                          calendar,
+                          const SizedBox(height: 20),
+                          agenda,
+                        ],
+                      );
+                    }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(width: 420, child: calendar),
+                        const SizedBox(width: 20),
+                        Expanded(child: agenda),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
 
-          // List of Training Sessions for the Selected Day
-          Expanded(
-            child: sessionsForDay.isEmpty
-                ? Center(
+  Widget _calendar(
+    List<TrainingSession> filtered,
+    List<TrainingSession> monthly,
+    DateTime today,
+  ) {
+    final days = DateTime(_selectedDate.year, _selectedDate.month + 1, 0).day;
+    final firstWeekday =
+        DateTime(_selectedDate.year, _selectedDate.month, 1).weekday;
+    final prefixBlanks = firstWeekday - 1;
+    final totalTiles = prefixBlanks + days;
+    final rows = (totalTiles / 7).ceil();
+
+    return _surface(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                DateFormat('MMMM yyyy').format(_selectedDate),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Row(
+                children: TrainingScheduleData.months
+                    .map(
+                      (m) => Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: ChoiceChip(
+                          label: Text(
+                            DateFormat(
+                              'MMM',
+                            ).format(DateTime(TrainingScheduleData.year, m, 1)),
+                          ),
+                          selected: _selectedDate.month == m,
+                          selectedColor: AppTheme.lfcRed,
+                          onSelected: (_) => _selectMonth(m),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: const ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+                .map(
+                  (d) => Expanded(
+                    child: Center(
+                      child: Text(
+                        d,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textMuted,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 10),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: rows * 7,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              crossAxisSpacing: 6,
+              mainAxisSpacing: 6,
+              childAspectRatio: 0.95,
+            ),
+            itemBuilder: (context, index) {
+              if (index < prefixBlanks || index >= totalTiles) {
+                return const SizedBox.shrink();
+              }
+              final day = index - prefixBlanks + 1;
+              final date = DateTime(
+                _selectedDate.year,
+                _selectedDate.month,
+                day,
+              );
+              final key = _dateKey(date);
+              final isSelected = DateUtils.isSameDay(date, _selectedDate);
+              final count = filtered.where((s) => s.date == key).length;
+              final isRest =
+                  count == 0 && !monthly.any((s) => s.date == key);
+
+              return Material(
+                color: isSelected
+                    ? AppTheme.accentBlue
+                    : AppTheme.primaryNavy,
+                borderRadius: BorderRadius.circular(10),
+                child: InkWell(
+                  key: ValueKey('training-day-$key'),
+                  onTap: () => setState(() => _selectedDate = date),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: DateUtils.isSameDay(date, today)
+                            ? AppTheme.accentCyan
+                            : Colors.transparent,
+                      ),
+                    ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.event_available, size: 48, color: AppTheme.textMuted),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Ngày nghỉ hồi phục thể lực (Rest / Recovery Day)',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                        Text(
+                          '$day',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected
+                                ? Colors.white
+                                : AppTheme.textPrimary,
+                          ),
                         ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Không có lịch tập nào được xếp cho ngày này.',
-                          style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                        ),
-                        const SizedBox(height: 16),
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(foregroundColor: AppTheme.accentCyan),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Xếp lịch tập ngay'),
-                          onPressed: () => _showAddSessionDialog(context),
+                        const SizedBox(height: 3),
+                        Text(
+                          isRest
+                              ? '–'
+                              : count == 0
+                              ? '·'
+                              : '$count',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isSelected
+                                ? Colors.white
+                                : count > 0
+                                ? AppTheme.accentCyan
+                                : AppTheme.textMuted,
+                          ),
                         ),
                       ],
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: sessionsForDay.length,
-                    itemBuilder: (context, index) {
-                      final session = sessionsForDay[index];
-                      return _buildSessionCard(context, session);
-                    },
                   ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Số = buổi tập phù hợp   ·   – = ngày nghỉ ngơi',
+            style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSessionCard(BuildContext context, TrainingSession session) {
-    Color typeColor;
-    IconData icon;
-    switch (session.type) {
-      case 'Gym':
-        typeColor = AppTheme.warning;
-        icon = Icons.fitness_center;
-        break;
-      case 'Tactical':
-        typeColor = AppTheme.lfcRed;
-        icon = Icons.sports_soccer;
-        break;
-      case 'Recovery':
-        typeColor = AppTheme.lfcTeal;
-        icon = Icons.spa;
-        break;
-      case 'Set-Piece':
-        typeColor = AppTheme.accentCyan;
-        icon = Icons.flag;
-        break;
-      default:
-        typeColor = AppTheme.info;
-        icon = Icons.timer;
-    }
-
-    final isCompleted = session.status == 'Completed';
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _agenda(
+    List<TrainingSession> sessions,
+    List<TrainingSession> unfiltered,
+    List<Player> players,
+  ) => _surface(
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: typeColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: typeColor, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        session.title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: isCompleted ? AppTheme.textSecondary : AppTheme.textPrimary,
-                          decoration: isCompleted ? TextDecoration.lineThrough : null,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${session.startTime} - ${session.endTime} • ${session.type} • ${session.intensity}',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: typeColor),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isCompleted
-                        ? AppTheme.success.withValues(alpha: 0.2)
-                        : (session.status == 'In Progress' ? AppTheme.lfcRed.withValues(alpha: 0.2) : AppTheme.bgCardLight),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: isCompleted
-                          ? AppTheme.success
-                          : (session.status == 'In Progress' ? AppTheme.lfcRed : AppTheme.borderSubtle),
-                    ),
-                  ),
-                  child: Text(
-                    session.status,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: isCompleted
-                          ? AppTheme.success
-                          : (session.status == 'In Progress' ? AppTheme.lfcRed : AppTheme.textSecondary),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const Divider(color: AppTheme.borderSubtle, height: 20),
-            Row(
-              children: [
-                const Icon(Icons.location_on_outlined, size: 14, color: AppTheme.textSecondary),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    session.location,
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(Icons.person_pin, size: 14, color: AppTheme.textSecondary),
-                const SizedBox(width: 4),
                 Text(
-                  session.coach,
-                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                  DateFormat('EEEE, d MMMM yyyy').format(_selectedDate),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${sessions.length} scheduled sessions',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
                 ),
               ],
             ),
-            if (session.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                session.description,
-                style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentCyan,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                visualDensity: VisualDensity.compact,
               ),
-            ],
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  session.playerIds.isEmpty
-                      ? 'Tất cả đội 1 tham gia'
-                      : 'Đã phân công ${session.playerIds.length} cầu thủ',
-                  style: const TextStyle(fontSize: 11, color: AppTheme.accentCyan, fontWeight: FontWeight.w600),
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, size: 18, color: AppTheme.danger),
-                      tooltip: 'Xóa buổi tập',
-                      onPressed: () {
-                        context.read<AppStateProvider>().deleteTrainingSession(session.id);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Đã xóa buổi tập')),
-                        );
-                      },
-                    ),
-                    if (!isCompleted)
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.success,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        icon: const Icon(Icons.check_circle_outline, size: 14),
-                        label: const Text('Hoàn thành', style: TextStyle(fontSize: 11)),
-                        onPressed: () async {
-                          await context.read<AppStateProvider>().completeTrainingSession(session.id);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Đã hoàn thành giáo án & tự động tăng thể lực cho cầu thủ!')),
-                            );
-                          }
-                        },
-                      ),
-                  ],
-                ),
-              ],
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('Thêm', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              onPressed: () => _showAddSessionDialog(context),
             ),
           ],
         ),
+        const SizedBox(height: 18),
+        if (sessions.isEmpty) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryNavy,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppTheme.borderSubtle),
+            ),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.hotel_outlined,
+                  size: 34,
+                  color: AppTheme.accentCyan,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  unfiltered.isEmpty
+                      ? 'No team sessions scheduled on this day'
+                      : 'No sessions matching current filters',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  unfiltered.isEmpty
+                      ? 'Squad recovery or individual maintenance programme.'
+                      : 'Adjust or clear filters to view planned activity.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_type != 'All' || _playerId != null)
+            OutlinedButton(
+              onPressed: _resetFilters,
+              child: const Text('Clear filters'),
+            ),
+          if (unfiltered.isEmpty)
+            OutlinedButton.icon(
+              onPressed: _nextTrainingDay,
+              icon: const Icon(Icons.arrow_forward, size: 18),
+              label: const Text('Find a training day'),
+            ),
+        ] else
+          ...sessions.map((session) => _sessionCard(session, players)),
+      ],
+    ),
+  );
+
+  void _nextTrainingDay() {
+    final sessions = _filtered(context.read<AppStateProvider>().trainings);
+    final dates =
+        sessions
+            .map((s) => DateTime.tryParse(s.date))
+            .whereType<DateTime>()
+            .where(_inRange)
+            .toSet()
+            .toList()
+          ..sort();
+    if (dates.isEmpty) {
+      _resetFilters();
+      return;
+    }
+    final next =
+        dates.where((d) => d.isAfter(_selectedDate)).firstOrNull ?? dates.first;
+    setState(() => _selectedDate = next);
+  }
+
+  Widget _sessionCard(TrainingSession session, List<Player> players) {
+    final color = _color(session.type);
+    final participants = _participants(session, players);
+    final isCompleted = session.status == 'Completed';
+
+    return Container(
+      key: ValueKey('training-session-${session.id}'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryNavy,
+        borderRadius: BorderRadius.circular(14),
+        border: Border(left: BorderSide(color: isCompleted ? AppTheme.success : color, width: 3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _tag(session.type, color),
+                  _tag(
+                    isCompleted ? 'Completed' : 'Planned',
+                    isCompleted ? AppTheme.success : AppTheme.textSecondary,
+                  ),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 18, color: AppTheme.danger),
+                tooltip: 'Xóa buổi tập',
+                onPressed: () {
+                  context.read<AppStateProvider>().deleteTrainingSession(session.id);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Đã xóa buổi tập khỏi lịch trình!')),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${session.startTime} – ${session.endTime}  ·  ${_minutes(session.endTime) - _minutes(session.startTime)} min',
+            style: TextStyle(
+              color: color,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            session.title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 14),
+          _info(Icons.location_on_outlined, session.location),
+          _info(Icons.person_outline, session.coach),
+          _info(
+            Icons.groups_outlined,
+            '${session.playerIds.isEmpty ? 'Full squad' : 'Selected group'} · ${participants.length} players',
+          ),
+          const SizedBox(height: 8),
+          Text(
+            session.description,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppTheme.textSecondary,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _showSession(session, participants),
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('Chi tiết & Cầu thủ'),
+              ),
+              const SizedBox(width: 10),
+              if (!isCompleted)
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.success,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  icon: const Icon(Icons.check_circle_outline, size: 16),
+                  label: const Text('Hoàn thành (+0.5 Stamina)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  onPressed: () async {
+                    await context.read<AppStateProvider>().completeTrainingSession(session.id);
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Đã hoàn thành giáo án & tự động tăng thể lực cho cầu thủ!')),
+                    );
+                  },
+                ),
+            ],
+          ),
+        ],
       ),
     );
+  }
+
+  List<Player> _participants(TrainingSession session, List<Player> players) =>
+      players
+          .where(
+            (p) =>
+                session.playerIds.isEmpty || session.playerIds.contains(p.id),
+          )
+          .toList();
+
+  void _showSession(TrainingSession session, List<Player> participants) =>
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          constraints: const BoxConstraints(maxWidth: 620),
+          scrollable: true,
+          title: Text(session.title),
+          content: SizedBox(
+            width: 520,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _tag(session.type, _color(session.type)),
+                const SizedBox(height: 16),
+                _info(
+                  Icons.calendar_today_outlined,
+                  '${session.date} · ${session.startTime} – ${session.endTime}',
+                ),
+                _info(Icons.location_on_outlined, session.location),
+                _info(Icons.person_outline, session.coach),
+                const SizedBox(height: 12),
+                Text(session.description, style: const TextStyle(height: 1.6)),
+                const Divider(height: 30, color: AppTheme.borderSubtle),
+                Text(
+                  'Participants (${participants.length})',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (participants.isEmpty)
+                  const Text('No players available for this group.'),
+                ...participants.map(
+                  (p) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: AppTheme.surfaceNavyLight,
+                      child: Text(
+                        '${p.number}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.accentCyan,
+                        ),
+                      ),
+                    ),
+                    title: Text(p.name),
+                    subtitle: Text(p.positionName),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+
+  Widget _surface(Widget child) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: AppTheme.surfaceNavy,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: AppTheme.borderSubtle),
+    ),
+    child: child,
+  );
+
+  Widget _summary(String label, String value, IconData icon, Color color) =>
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceNavy,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.borderSubtle),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: color,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _info(IconData icon, String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 17, color: AppTheme.textSecondary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppTheme.textSecondary,
+              height: 1.4,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _tag(String label, Color color) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+    ),
+  );
+
+  Color _color(String type) => switch (type) {
+    'Gym' => AppTheme.warning,
+    'Tactical' => AppTheme.info,
+    'Recovery' => AppTheme.accentCyan,
+    _ => AppTheme.lfcRed,
+  };
+
+  int _minutes(String time) {
+    final parts = time.split(':');
+    return int.parse(parts[0]) * 60 + int.parse(parts[1]);
   }
 }

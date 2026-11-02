@@ -6,6 +6,7 @@ import '../models/player.dart';
 import '../models/training_session.dart';
 import '../models/sponsor_campaign.dart';
 import '../data/mock_data.dart';
+import '../data/training_schedule_data.dart';
 import '../services/api_service.dart';
 
 class AppStateProvider extends ChangeNotifier {
@@ -13,8 +14,18 @@ class AppStateProvider extends ChangeNotifier {
   static const String _trainingsStorageKey = 'lfc_trainings_data_v1';
   static const String _campaignsStorageKey = 'lfc_campaigns_data_v1';
   
+  static List<TrainingSession> _getDefaultTrainings() {
+    final list = List<TrainingSession>.from(TrainingScheduleData.sessions);
+    for (final s in MockData.trainingSessions) {
+      if (!list.any((e) => e.id == s.id)) {
+        list.add(s);
+      }
+    }
+    return list;
+  }
+
   List<Player> _players = List.from(MockData.players);
-  List<TrainingSession> _trainings = List.from(MockData.trainingSessions);
+  List<TrainingSession> _trainings = _getDefaultTrainings();
   List<SponsorCampaign> _campaigns = List.from(MockData.sponsorCampaigns);
   
   String _selectedPositionFilter = 'All';
@@ -214,14 +225,40 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deletePlayer(String id) async {
-    _players.removeWhere((p) => p.id == id);
+  // Xóa cầu thủ (hỗ trợ hoàn tác và đồng bộ backend)
+  Future<Player?> deletePlayer(String id) async {
+    final index = _players.indexWhere((p) => p.id == id);
+    if (index == -1) return null;
+    final removed = _players.removeAt(index);
     if (_selectedPlayer?.id == id) {
       _selectedPlayer = _players.isNotEmpty ? _players.first : null;
     }
     notifyListeners();
     await _savePlayersToLocalStorage();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('lfc_avatar_$id');
+    } catch (_) {}
     ApiService.deletePlayer(id);
+    return removed;
+  }
+
+  // Khôi phục lại cầu thủ vừa xóa (Hoàn tác)
+  Future<void> restorePlayer(int index, Player player) async {
+    if (index < 0 || index > _players.length) {
+      _players.add(player);
+    } else {
+      _players.insert(index, player);
+    }
+    notifyListeners();
+    await _savePlayersToLocalStorage();
+    if (player.avatarUrl.trim().isNotEmpty) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('lfc_avatar_${player.id}', player.avatarUrl.trim());
+      } catch (_) {}
+    }
+    ApiService.addPlayer(player);
   }
 
   // --- QUẢN LÝ TRAINING (TRAINING CRUD & ATTENDANCE) ---
@@ -367,7 +404,7 @@ class AppStateProvider extends ChangeNotifier {
     } else {
       _players = List.from(MockData.players);
     }
-    _trainings = List.from(MockData.trainingSessions);
+    _trainings = _getDefaultTrainings();
     _campaigns = List.from(MockData.sponsorCampaigns);
     _selectedPlayer = _players.first;
     notifyListeners();

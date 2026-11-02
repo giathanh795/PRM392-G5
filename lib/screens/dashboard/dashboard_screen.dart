@@ -7,6 +7,7 @@ import '../../models/player.dart';
 import '../../providers/app_state_provider.dart';
 import '../../widgets/player_avatar.dart';
 import '../player/player_detail_screen.dart';
+import 'dashboard_overview.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(int) onNavigateTab;
@@ -19,6 +20,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final ScrollController _squadScrollController = ScrollController();
+  int _viewMode = 0; // 0: Strategic Dashboard, 1: Daily Schedule & Squad Overview
 
   @override
   void dispose() {
@@ -388,11 +390,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Column(
+        children: [
+          // Segmented Bar chuyển đổi Dashboard Chuyên nghiệp
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceNavyLight,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.borderSubtle),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(9),
+                    onTap: () => setState(() => _viewMode = 0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _viewMode == 0 ? AppTheme.lfcRed : Colors.transparent,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.dashboard_customize_rounded, size: 16, color: _viewMode == 0 ? Colors.white : AppTheme.textSecondary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Tổng quan Chiến lược',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: _viewMode == 0 ? Colors.white : AppTheme.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(9),
+                    onTap: () => setState(() => _viewMode = 1),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _viewMode == 1 ? AppTheme.accentBlue : Colors.transparent,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.calendar_month_rounded, size: 16, color: _viewMode == 1 ? Colors.white : AppTheme.textSecondary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Lịch trình & Đội hình',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: _viewMode == 1 ? Colors.white : AppTheme.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _viewMode == 1
+                ? DashboardOverview(
+                    state: state,
+                    onNavigateTab: widget.onNavigateTab,
+                    onManageData: () => _showDataManagementDialog(context),
+                  )
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
             // Welcome Club Banner với trạng thái Backend & Realtime
             Container(
               padding: const EdgeInsets.all(18),
@@ -891,7 +974,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-    );
+    ),
+  ],
+),
+);
   }
 
   Widget _buildReadinessCard({

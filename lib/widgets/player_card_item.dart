@@ -144,7 +144,22 @@ class PlayerCardItem extends StatelessWidget {
                 ),
               ),
               // Trailing action
-              const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.textMuted),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onDelete != null) ...[
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      color: AppTheme.textMuted,
+                      tooltip: 'Xóa cầu thủ',
+                      splashRadius: 18,
+                      onPressed: onDelete,
+                    ),
+                    const SizedBox(width: 2),
+                  ],
+                  const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.textMuted),
+                ],
+              ),
             ],
           ),
         ),

@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/player.dart';
 import '../../providers/app_state_provider.dart';
 import '../../widgets/player_avatar.dart';
+import '../../widgets/delete_player_dialog.dart';
 import 'player_stats_screen.dart';
 
 class PlayerDetailScreen extends StatelessWidget {
@@ -516,6 +517,54 @@ class PlayerDetailScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _handleDeletePlayer(BuildContext context, Player currentPlayer) async {
+    final confirmed = await showDeletePlayerConfirmationDialog(context, currentPlayer);
+    if (confirmed == true && context.mounted) {
+      final originalIndex = context.read<AppStateProvider>().players.indexWhere((p) => p.id == currentPlayer.id);
+      final deleted = await context.read<AppStateProvider>().deletePlayer(currentPlayer.id);
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        if (deleted != null) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppTheme.surfaceNavy,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: const BorderSide(color: AppTheme.borderSubtle),
+              ),
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle_outline, color: AppTheme.accentCyan, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Đã xóa cầu thủ "${currentPlayer.name}"',
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              action: SnackBarAction(
+                label: 'HOÀN TÁC',
+                textColor: AppTheme.lfcYellow,
+                onPressed: () {
+                  context.read<AppStateProvider>().restorePlayer(
+                    originalIndex >= 0 ? originalIndex : 0,
+                    deleted,
+                  );
+                },
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppStateProvider>();
@@ -543,6 +592,11 @@ class PlayerDetailScreen extends StatelessWidget {
                 ),
               );
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppTheme.lfcRed),
+            tooltip: 'Xóa cầu thủ',
+            onPressed: () => _handleDeletePlayer(context, currentPlayer),
           ),
         ],
       ),
@@ -857,6 +911,74 @@ class PlayerDetailScreen extends StatelessWidget {
                   );
                 },
               ),
+            const SizedBox(height: 24),
+            // Khu vực quản lý / Xóa cầu thủ (Danger Zone)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.lfcRed.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.lfcRed.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.lfcRed.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.delete_forever_rounded,
+                      color: AppTheme.lfcRed,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Xóa cầu thủ này',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Xóa khỏi đội hình chính thức của LFC',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.lfcRed,
+                      side: const BorderSide(color: AppTheme.lfcRed),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: const Text(
+                      'Xóa',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () => _handleDeletePlayer(context, currentPlayer),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
