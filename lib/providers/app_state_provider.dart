@@ -50,24 +50,19 @@ class AppStateProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // Danh sách gốc từ MockData
-      final Map<String, Player> playerMap = {
-        for (var p in MockData.players) p.id: p,
-      };
+      final savedJson = prefs.getString(_playersStorageKey);
+      List<Player> loadedList = [];
 
       // 1. Phục hồi từ danh sách JSON đã lưu (nếu có)
-      final savedJson = prefs.getString(_playersStorageKey);
       if (savedJson != null && savedJson.isNotEmpty) {
         try {
           final List<dynamic> decodedList = jsonDecode(savedJson);
           for (final item in decodedList) {
             try {
               if (item is Map<String, dynamic>) {
-                final p = Player.fromJson(item);
-                playerMap[p.id] = p;
+                loadedList.add(Player.fromJson(item));
               } else if (item is Map) {
-                final p = Player.fromJson(Map<String, dynamic>.from(item));
-                playerMap[p.id] = p;
+                loadedList.add(Player.fromJson(Map<String, dynamic>.from(item)));
               }
             } catch (err) {
               debugPrint('Error decoding individual player: $err');
@@ -78,19 +73,25 @@ class AppStateProvider extends ChangeNotifier {
         }
       }
 
+      // Nếu chưa có dữ liệu lưu trữ, khởi tạo từ MockData mặc định
+      if (loadedList.isEmpty && (savedJson == null || savedJson.isEmpty)) {
+        loadedList = List.from(MockData.players);
+      }
+
       // 2. Phục hồi avatar riêng cho từng cầu thủ (bảo đảm 100% không bao giờ mất sau khi restart)
-      for (final id in playerMap.keys) {
-        final savedAvatar = prefs.getString('lfc_avatar_$id');
+      for (int i = 0; i < loadedList.length; i++) {
+        final p = loadedList[i];
+        final savedAvatar = prefs.getString('lfc_avatar_${p.id}');
         if (savedAvatar != null && savedAvatar.trim().isNotEmpty) {
-          playerMap[id] = playerMap[id]!.copyWith(avatarUrl: savedAvatar.trim());
+          loadedList[i] = p.copyWith(avatarUrl: savedAvatar.trim());
         }
       }
 
-      _players = playerMap.values.toList();
+      _players = loadedList;
       if (_selectedPlayer != null) {
         _selectedPlayer = _players.firstWhere(
           (p) => p.id == _selectedPlayer!.id,
-          orElse: () => _players.first,
+          orElse: () => _players.isNotEmpty ? _players.first : null as dynamic,
         );
       }
     } catch (e) {
@@ -154,13 +155,38 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deletePlayer(String id) async {
-    _players.removeWhere((p) => p.id == id);
+  // Xóa cầu thủ khỏi danh sách và lưu vào storage, trả về cầu thủ đã xóa để hỗ trợ Hoàn tác
+  Future<Player?> deletePlayer(String id) async {
+    final index = _players.indexWhere((p) => p.id == id);
+    if (index == -1) return null;
+    final removed = _players.removeAt(index);
     if (_selectedPlayer?.id == id) {
       _selectedPlayer = _players.isNotEmpty ? _players.first : null;
     }
     notifyListeners();
     await _savePlayersToStorage();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('lfc_avatar_$id');
+    } catch (_) {}
+    return removed;
+  }
+
+  // Khôi phục lại cầu thủ vừa xóa (Hoàn tác)
+  Future<void> restorePlayer(int index, Player player) async {
+    if (index < 0 || index > _players.length) {
+      _players.add(player);
+    } else {
+      _players.insert(index, player);
+    }
+    notifyListeners();
+    await _savePlayersToStorage();
+    if (player.avatarUrl.trim().isNotEmpty) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('lfc_avatar_${player.id}', player.avatarUrl.trim());
+      } catch (_) {}
+    }
   }
 
   void addTrainingSession(TrainingSession session) {
@@ -176,7 +202,7 @@ class AppStateProvider extends ChangeNotifier {
       await prefs.remove('lfc_avatar_${p.id}');
     }
     _players = List.from(MockData.players);
-    _selectedPlayer = _players.first;
+    _selectedPlayer = _players.isNotEmpty ? _players.first : null;
     notifyListeners();
   }
 }
