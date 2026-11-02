@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../models/player.dart';
+import '../core/theme/app_theme.dart';
+import '../models/player.dart';
 import 'player_avatar.dart';
 
 class PlayerCardItem extends StatelessWidget {
