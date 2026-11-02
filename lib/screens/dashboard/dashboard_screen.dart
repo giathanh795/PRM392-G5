@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../models/player.dart';
 import '../../providers/app_state_provider.dart';
@@ -20,7 +22,8 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final ScrollController _squadScrollController = ScrollController();
-  int _viewMode = 0; // 0: Strategic Dashboard, 1: Daily Schedule & Squad Overview
+  int _viewMode =
+      1; // 0: Strategic Dashboard, 1: Daily Schedule & Squad Overview
 
   @override
   void dispose() {
@@ -41,7 +44,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Hộp thoại thêm tân binh / Ký hợp đồng cầu thủ mới
+  // Hộp thoại thêm tân binh / Ký hợp đồng players mới
   void _showAddPlayerDialog(BuildContext context) {
     final nameController = TextEditingController();
     final numberController = TextEditingController(text: '10');
@@ -62,9 +65,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           title: const Row(
             children: [
-              Icon(Icons.person_add_alt_1, color: AppTheme.accentCyan, size: 22),
+              Icon(
+                Icons.person_add_alt_1,
+                color: AppTheme.accentCyan,
+                size: 22,
+              ),
               SizedBox(width: 8),
-              Text('Ký Hợp Đồng Tân Binh Mới', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Ký Hợp Đồng Tân Binh Mới',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           content: SingleChildScrollView(
@@ -74,7 +84,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Tên cầu thủ tân binh', hintText: 'Ví dụ: Jude Bellingham'),
+                  decoration: const InputDecoration(
+                    labelText: 'Tên players tân binh',
+                    hintText: 'Ví dụ: Jude Bellingham',
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -83,21 +96,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: TextField(
                         controller: numberController,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: 'Số áo (#)'),
+                        decoration: const InputDecoration(
+                          labelText: 'Số áo (#)',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
                         controller: valController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(labelText: 'Định giá (€M)', prefixText: '€'),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Định giá (€M)',
+                          prefixText: '€',
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text('Vị trí sở trường:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                const Text(
+                  'Vị trí sở trường:',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
@@ -107,7 +130,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       label: Text(pos.name.toUpperCase()),
                       selected: isSel,
                       selectedColor: AppTheme.accentBlue,
-                      onSelected: (_) => setDialogState(() => selectedPos = pos),
+                      onSelected: (_) =>
+                          setDialogState(() => selectedPos = pos),
                     );
                   }).toList(),
                 ),
@@ -119,7 +143,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 10),
                 TextField(
                   controller: contractController,
-                  decoration: const InputDecoration(labelText: 'Hạn hợp đồng (YYYY-MM-DD)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Hạn hợp đồng (YYYY-MM-DD)',
+                  ),
                 ),
               ],
             ),
@@ -127,10 +153,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogCtx).pop(),
-              child: const Text('Hủy', style: TextStyle(color: AppTheme.textSecondary)),
+              child: const Text(
+                'Hủy',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentCyan, foregroundColor: Colors.black),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentCyan,
+                foregroundColor: Colors.black,
+              ),
               onPressed: () async {
                 final name = nameController.text.trim();
                 if (name.isEmpty) return;
@@ -155,7 +187,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   status: 'Active',
                   sponsorPartner: 'Adidas',
                   progressHistory: [
-                    PlayerStatistic(date: 'Oct', attributes: {'Pace': 85.0, 'Shooting': 82.0, 'Passing': 84.0, 'Dribbling': 86.0, 'Defending': 65.0, 'Physical': 80.0}),
+                    PlayerStatistic(
+                      date: 'Oct',
+                      attributes: {
+                        'Pace': 85.0,
+                        'Shooting': 82.0,
+                        'Passing': 84.0,
+                        'Dribbling': 86.0,
+                        'Defending': 65.0,
+                        'Physical': 80.0,
+                      },
+                    ),
                   ],
                   marketValueHistory: [
                     MarketValuePoint(date: 'Oct', valueInMillionsEuro: val),
@@ -167,7 +209,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (context.mounted) {
                   Navigator.of(dialogCtx).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Đã hoàn tất ký hợp đồng với tân binh $name!')),
+                    SnackBar(
+                      content: Text(
+                        'Đã hoàn tất ký hợp đồng với tân binh $name!',
+                      ),
+                    ),
                   );
                 }
               },
@@ -194,7 +240,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Icon(Icons.storage, color: AppTheme.accentCyan, size: 22),
             SizedBox(width: 8),
-            Text('Quản lý & Sao lưu Dữ liệu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'Quản lý & Sao lưu Dữ liệu',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: Column(
@@ -202,7 +251,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Tất cả chỉnh sửa ảnh cầu thủ, media PR đều được lưu vào bộ nhớ cục bộ thiết bị.',
+              'Tất cả chỉnh sửa ảnh players, media PR đều được lưu vào bộ nhớ cục bộ thiết bị.',
               style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 16),
@@ -212,14 +261,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 backgroundColor: AppTheme.surfaceNavyLight,
                 child: Icon(Icons.copy, color: AppTheme.accentCyan, size: 20),
               ),
-              title: const Text('Sao chép mã sao lưu (Backup JSON)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-              subtitle: const Text('Lưu toàn bộ danh sách cầu thủ & ảnh đã đổi vào bộ nhớ tạm', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+              title: const Text(
+                'Sao chép mã sao lưu (Backup JSON)',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              subtitle: const Text(
+                'Lưu toàn bộ danh sách players & ảnh đã đổi vào bộ nhớ tạm',
+                style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+              ),
               onTap: () {
-                final jsonStr = jsonEncode(state.players.map((p) => p.toJson()).toList());
+                final jsonStr = jsonEncode(
+                  state.players.map((p) => p.toJson()).toList(),
+                );
                 Clipboard.setData(ClipboardData(text: jsonStr));
                 Navigator.of(dialogCtx).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Đã sao chép toàn bộ dữ liệu vào Clipboard!')),
+                  const SnackBar(
+                    content: Text('Đã sao chép toàn bộ dữ liệu vào Clipboard!'),
+                  ),
                 );
               },
             ),
@@ -228,10 +287,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
               contentPadding: EdgeInsets.zero,
               leading: const CircleAvatar(
                 backgroundColor: AppTheme.surfaceNavyLight,
-                child: Icon(Icons.restore_page, color: AppTheme.lfcYellow, size: 20),
+                child: Icon(
+                  Icons.restore_page,
+                  color: AppTheme.lfcYellow,
+                  size: 20,
+                ),
               ),
-              title: const Text('Nhập mã khôi phục (Restore)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-              subtitle: const Text('Dán mã sao lưu để nạp lại ảnh và chỉ số', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+              title: const Text(
+                'Nhập mã khôi phục (Restore)',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              subtitle: const Text(
+                'Dán mã sao lưu để nạp lại ảnh và chỉ số',
+                style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+              ),
               onTap: () {
                 Navigator.of(dialogCtx).pop();
                 _showRestoreDialog(context);
@@ -244,14 +313,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 backgroundColor: AppTheme.surfaceNavyLight,
                 child: Icon(Icons.refresh, color: AppTheme.lfcRed, size: 20),
               ),
-              title: const Text('Khôi phục mặc định ban đầu', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.lfcRed)),
-              subtitle: const Text('Xóa toàn bộ ảnh đã đổi và đưa về dữ liệu gốc', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+              title: const Text(
+                'Khôi phục mặc định ban đầu',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.lfcRed,
+                ),
+              ),
+              subtitle: const Text(
+                'Xóa toàn bộ ảnh đã đổi và đưa về dữ liệu gốc',
+                style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+              ),
               onTap: () async {
                 await state.resetToDefaultMockData();
                 if (context.mounted) {
                   Navigator.of(dialogCtx).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Đã khôi phục toàn bộ danh sách Liverpool về mặc định!')),
+                    const SnackBar(
+                      content: Text(
+                        'Đã khôi phục toàn bộ danh sách Liverpool về mặc định!',
+                      ),
+                    ),
                   );
                 }
               },
@@ -261,7 +344,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('Đóng', style: TextStyle(color: AppTheme.textSecondary)),
+            child: const Text(
+              'Đóng',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
           ),
         ],
       ),
@@ -278,7 +364,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: AppTheme.borderSubtle),
         ),
-        title: const Text('Dán mã dữ liệu sao lưu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Dán mã dữ liệu sao lưu',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         content: TextField(
           controller: controller,
           maxLines: 4,
@@ -290,10 +379,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(restoreCtx).pop(),
-            child: const Text('Hủy', style: TextStyle(color: AppTheme.textSecondary)),
+            child: const Text(
+              'Hủy',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentCyan, foregroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.accentCyan,
+              foregroundColor: Colors.black,
+            ),
             onPressed: () async {
               try {
                 final List<dynamic> list = jsonDecode(controller.text.trim());
@@ -304,7 +399,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (context.mounted) {
                   Navigator.of(restoreCtx).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Khôi phục dữ liệu thành công!')),
+                    const SnackBar(
+                      content: Text('Khôi phục dữ liệu thành công!'),
+                    ),
                   );
                 }
               } catch (e) {
@@ -326,23 +423,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppStateProvider>();
     final activeCount = state.players.where((p) => p.status == 'Active').length;
-    final injuredCount = state.players.where((p) => p.status == 'Injured').length;
-    final doubtfulCount = state.players.where((p) => p.status == 'Doubtful' || p.status == 'On Duty').length;
+    final injuredCount = state.players
+        .where((p) => p.status == 'Injured')
+        .length;
+    final doubtfulCount = state.players
+        .where((p) => p.status == 'Doubtful' || p.status == 'On Duty')
+        .length;
 
-    // Phân bổ cầu thủ theo 4 tuyến
-    final fwCount = state.players.where((p) => p.position == PlayerPosition.forward).length;
-    final mfCount = state.players.where((p) => p.position == PlayerPosition.midfielder).length;
-    final dfCount = state.players.where((p) => p.position == PlayerPosition.defender).length;
-    final gkCount = state.players.where((p) => p.position == PlayerPosition.goalkeeper).length;
+    // Phân bổ players theo 4 tuyến
+    final fwCount = state.players
+        .where((p) => p.position == PlayerPosition.forward)
+        .length;
+    final mfCount = state.players
+        .where((p) => p.position == PlayerPosition.midfielder)
+        .length;
+    final dfCount = state.players
+        .where((p) => p.position == PlayerPosition.defender)
+        .length;
+    final gkCount = state.players
+        .where((p) => p.position == PlayerPosition.goalkeeper)
+        .length;
 
-    final fwVal = state.players.where((p) => p.position == PlayerPosition.forward).fold(0.0, (s, p) => s + p.currentMarketValue);
-    final mfVal = state.players.where((p) => p.position == PlayerPosition.midfielder).fold(0.0, (s, p) => s + p.currentMarketValue);
-    final dfVal = state.players.where((p) => p.position == PlayerPosition.defender).fold(0.0, (s, p) => s + p.currentMarketValue);
-    final gkVal = state.players.where((p) => p.position == PlayerPosition.goalkeeper).fold(0.0, (s, p) => s + p.currentMarketValue);
+    final fwVal = state.players
+        .where((p) => p.position == PlayerPosition.forward)
+        .fold(0.0, (s, p) => s + p.currentMarketValue);
+    final mfVal = state.players
+        .where((p) => p.position == PlayerPosition.midfielder)
+        .fold(0.0, (s, p) => s + p.currentMarketValue);
+    final dfVal = state.players
+        .where((p) => p.position == PlayerPosition.defender)
+        .fold(0.0, (s, p) => s + p.currentMarketValue);
+    final gkVal = state.players
+        .where((p) => p.position == PlayerPosition.goalkeeper)
+        .fold(0.0, (s, p) => s + p.currentMarketValue);
 
     // Cầu thủ có giá trị cao nhất & Cầu thủ đang chấn thương
-    final topPlayer = (List<Player>.from(state.players)..sort((a, b) => b.currentMarketValue.compareTo(a.currentMarketValue))).firstOrNull;
-    final injuredPlayers = state.players.where((p) => p.status == 'Injured').toList();
+    final topPlayer =
+        (List<Player>.from(state.players)..sort(
+              (a, b) => b.currentMarketValue.compareTo(a.currentMarketValue),
+            ))
+            .firstOrNull;
+    final injuredPlayers = state.players
+        .where((p) => p.status == 'Injured')
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -354,10 +477,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: AppTheme.lfcRed,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.sports_soccer, size: 18, color: Colors.white),
+              child: const Icon(
+                Icons.sports_soccer,
+                size: 18,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(width: 10),
-            const Text('Liverpool PMS'),
+            const Flexible(
+              child: Text(
+                'Liverpool PMS',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         actions: [
@@ -367,7 +500,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accentCyan),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.accentCyan,
+                    ),
                   )
                 : const Icon(Icons.sync, color: AppTheme.accentCyan),
             tooltip: 'Đồng bộ dữ liệu thời gian thực',
@@ -377,7 +513,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     await state.syncRealtimeData();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Đã đồng bộ giá trị thị trường & thể lực Premier League mới nhất!')),
+                        const SnackBar(
+                          content: Text(
+                            'Đã đồng bộ giá trị thị trường & thể lực Premier League mới nhất!',
+                          ),
+                        ),
                       );
                     }
                   },
@@ -410,21 +550,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
-                        color: _viewMode == 0 ? AppTheme.lfcRed : Colors.transparent,
+                        color: _viewMode == 0
+                            ? AppTheme.lfcRed
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(9),
                       ),
                       alignment: Alignment.center,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.dashboard_customize_rounded, size: 16, color: _viewMode == 0 ? Colors.white : AppTheme.textSecondary),
+                          Icon(
+                            Icons.dashboard_customize_rounded,
+                            size: 16,
+                            color: _viewMode == 0
+                                ? Colors.white
+                                : AppTheme.textSecondary,
+                          ),
                           const SizedBox(width: 6),
-                          Text(
-                            'Tổng quan Chiến lược',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: _viewMode == 0 ? Colors.white : AppTheme.textSecondary,
+                          Flexible(
+                            child: Text(
+                              'Command centre',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: _viewMode == 0
+                                    ? Colors.white
+                                    : AppTheme.textSecondary,
+                              ),
                             ),
                           ),
                         ],
@@ -439,21 +593,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
-                        color: _viewMode == 1 ? AppTheme.accentBlue : Colors.transparent,
+                        color: _viewMode == 1
+                            ? AppTheme.accentBlue
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(9),
                       ),
                       alignment: Alignment.center,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.calendar_month_rounded, size: 16, color: _viewMode == 1 ? Colors.white : AppTheme.textSecondary),
+                          Icon(
+                            Icons.calendar_month_rounded,
+                            size: 16,
+                            color: _viewMode == 1
+                                ? Colors.white
+                                : AppTheme.textSecondary,
+                          ),
                           const SizedBox(width: 6),
-                          Text(
-                            'Lịch trình & Đội hình',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: _viewMode == 1 ? Colors.white : AppTheme.textSecondary,
+                          Flexible(
+                            child: Text(
+                              'Club overview',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: _viewMode == 1
+                                    ? Colors.white
+                                    : AppTheme.textSecondary,
+                              ),
                             ),
                           ),
                         ],
@@ -476,508 +644,740 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-            // Welcome Club Banner với trạng thái Backend & Realtime
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppTheme.surfaceNavyLight, Color(0xFF0F3460)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'AXA TRAINING CENTRE • SEASON 2026/2027',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
-                                color: AppTheme.lfcYellow,
+                        // Welcome Club Banner với trạng thái Backend & Realtime
+                        Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppTheme.surfaceNavyLight,
+                                Color(0xFF0F3460),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'AXA TRAINING CENTRE • SEASON 2026/2027',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.5,
+                                            color: AppTheme.lfcYellow,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        const Text(
+                                          'Liverpool Squad Command Hub',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        const Text(
+                                          'Bản điều khiển quản lý nhân sự, lộ trình thể lực và bản quyền thương mại Adidas dưới HLV Andoni Iraola.',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black26,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Column(
+                                      children: [
+                                        Text(
+                                          'PARTNER',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                        Text(
+                                          'adidas',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Liverpool Squad Command Hub',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
+                              const SizedBox(height: 12),
+                              // Real-time Status Bar
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black38,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Wrap(
+                                  spacing: 12,
+                                  runSpacing: 6,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.circle,
+                                          size: 8,
+                                          color: state.isBackendConnected
+                                              ? Colors.greenAccent
+                                              : AppTheme.warning,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          state.isBackendConnected
+                                              ? 'Backend online'
+                                              : 'Offline mode',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      state.lastSyncTime != null
+                                          ? 'Updated: ${state.lastSyncTime!.hour}:${state.lastSyncTime!.minute.toString().padLeft(2, '0')}'
+                                          : 'Not synced',
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: AppTheme.accentCyan,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Bản điều khiển quản lý nhân sự, lộ trình thể lực và bản quyền thương mại Adidas dưới HLV Andoni Iraola.',
-                              style: TextStyle(fontSize: 12, color: Colors.white70),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black26,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Column(
-                          children: [
-                            Text('PARTNER', style: TextStyle(fontSize: 9, color: Colors.white70)),
-                            Text('adidas', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Real-time Status Bar
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black38,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
+                        const SizedBox(height: 16),
+
+                        // --- THANH TÁC VỤ QUẢN LÝ NHANH CHO ÔNG BẦU / HLV (3 QUICK ACTION BUTTONS) ---
                         Row(
                           children: [
-                            Icon(
-                              Icons.circle,
-                              size: 8,
-                              color: state.isBackendConnected ? Colors.greenAccent : AppTheme.warning,
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.accentBlue,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.person_add, size: 16),
+                                label: const Text(
+                                  'Ký Tân Binh',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                onPressed: () => _showAddPlayerDialog(context),
+                              ),
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              state.isBackendConnected ? 'Backend Server Online (Port 8080)' : 'Chế độ Local Storage',
-                              style: const TextStyle(fontSize: 11, color: Colors.white70),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.surfaceNavyLight,
+                                  foregroundColor: AppTheme.accentCyan,
+                                  side: const BorderSide(
+                                    color: AppTheme.accentCyan,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                icon: const Icon(
+                                  Icons.fitness_center,
+                                  size: 16,
+                                ),
+                                label: const Text(
+                                  'Lên Lịch AXA',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                onPressed: () => widget.onNavigateTab(2),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.surfaceNavyLight,
+                                  foregroundColor: AppTheme.lfcYellow,
+                                  side: const BorderSide(
+                                    color: AppTheme.lfcYellow,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.campaign, size: 16),
+                                label: const Text(
+                                  'Tài Trợ Adidas',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                onPressed: () => widget.onNavigateTab(3),
+                              ),
                             ),
                           ],
                         ),
-                        Text(
-                          state.lastSyncTime != null
-                              ? 'Cập nhật: ${state.lastSyncTime!.hour}:${state.lastSyncTime!.minute.toString().padLeft(2, '0')}'
-                              : 'Chưa đồng bộ live',
-                          style: const TextStyle(fontSize: 10, color: AppTheme.accentCyan),
+                        const SizedBox(height: 20),
+
+                        // --- KHỐI 1: SQUAD READINESS MATRIX (TRẠNG THÁI THỂ LỰC & Y TẾ TOÀN ĐỘI) ---
+                        const Text(
+                          'Squad Readiness & Medical Status',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // --- THANH TÁC VỤ QUẢN LÝ NHANH CHO ÔNG BẦU / HLV (3 QUICK ACTION BUTTONS) ---
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accentBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    icon: const Icon(Icons.person_add, size: 16),
-                    label: const Text('Ký Tân Binh', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    onPressed: () => _showAddPlayerDialog(context),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.surfaceNavyLight,
-                      foregroundColor: AppTheme.accentCyan,
-                      side: const BorderSide(color: AppTheme.accentCyan),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    icon: const Icon(Icons.fitness_center, size: 16),
-                    label: const Text('Lên Lịch AXA', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    onPressed: () => widget.onNavigateTab(2),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.surfaceNavyLight,
-                      foregroundColor: AppTheme.lfcYellow,
-                      side: const BorderSide(color: AppTheme.lfcYellow),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    icon: const Icon(Icons.campaign, size: 16),
-                    label: const Text('Tài Trợ Adidas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    onPressed: () => widget.onNavigateTab(3),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // --- KHỐI 1: SQUAD READINESS MATRIX (TRẠNG THÁI THỂ LỰC & Y TẾ TOÀN ĐỘI) ---
-            const Text(
-              'Squad Readiness & Medical Status',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildReadinessCard(
-                    title: 'Match Fit',
-                    count: activeCount,
-                    total: state.players.length,
-                    color: AppTheme.success,
-                    icon: Icons.check_circle_outline,
-                    subtitle: 'Sẵn sàng thi đấu 100%',
-                    onTap: () => widget.onNavigateTab(1),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildReadinessCard(
-                    title: 'Doubtful / Fatigue',
-                    count: doubtfulCount,
-                    total: state.players.length,
-                    color: AppTheme.warning,
-                    icon: Icons.access_time,
-                    subtitle: 'Cần giảm tải giáo án',
-                    onTap: () => widget.onNavigateTab(1),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildReadinessCard(
-                    title: 'Injured',
-                    count: injuredCount,
-                    total: state.players.length,
-                    color: AppTheme.danger,
-                    icon: Icons.healing,
-                    subtitle: 'Đang phục hồi tại AXA',
-                    onTap: () => widget.onNavigateTab(1),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Cảnh báo y tế chi tiết nếu có ca chấn thương
-            if (injuredPlayers.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppTheme.danger.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.danger.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Phòng y tế AXA: ${injuredPlayers.map((p) => '#${p.number} ${p.name}').join(', ')} đang được điều trị chuyên sâu, không tham gia các bài tập đối kháng.',
-                        style: const TextStyle(fontSize: 12, color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            const SizedBox(height: 20),
-
-            // --- KHỐI 2: SPOTLIGHT CẦU THỦ ĐẮT GIÁ NHẤT & ĐỘI TRƯỞNG ---
-            if (topPlayer != null) ...[
-              const Text(
-                'Squad Valuation Leader (Transfermarkt Top Asset)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-              ),
-              const SizedBox(height: 10),
-              InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => PlayerDetailScreen(player: topPlayer)),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.bgCard,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.lfcYellow.withValues(alpha: 0.4)),
-                  ),
-                  child: Row(
-                    children: [
-                      PlayerAvatar(
-                        imageUrl: topPlayer.avatarUrl,
-                        radius: 32,
-                        initials: topPlayer.name[0],
-                        borderColor: AppTheme.lfcYellow,
-                        borderWidth: 2,
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 10),
+                        Row(
                           children: [
-                            Row(
+                            Expanded(
+                              child: _buildReadinessCard(
+                                title: 'Match Fit',
+                                count: activeCount,
+                                total: state.players.length,
+                                color: AppTheme.success,
+                                icon: Icons.check_circle_outline,
+                                subtitle: 'Sẵn sàng thi đấu 100%',
+                                onTap: () => widget.onNavigateTab(1),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildReadinessCard(
+                                title: 'Doubtful / Fatigue',
+                                count: doubtfulCount,
+                                total: state.players.length,
+                                color: AppTheme.warning,
+                                icon: Icons.access_time,
+                                subtitle: 'Cần giảm tải giáo án',
+                                onTap: () => widget.onNavigateTab(1),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildReadinessCard(
+                                title: 'Injured',
+                                count: injuredCount,
+                                total: state.players.length,
+                                color: AppTheme.danger,
+                                icon: Icons.healing,
+                                subtitle: 'Đang phục hồi tại AXA',
+                                onTap: () => widget.onNavigateTab(1),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Cảnh báo y tế chi tiết nếu có ca chấn thương
+                        if (injuredPlayers.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.danger.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: AppTheme.danger.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.lfcYellow.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text('TOP ASSET', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.lfcYellow)),
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: AppTheme.danger,
+                                  size: 20,
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  topPlayer.nationality,
-                                  style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Phòng y tế AXA: ${injuredPlayers.map((p) => '#${p.number} ${p.name}').join(', ')} đang được điều trị chuyên sâu, không tham gia các bài tập đối kháng.',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '#${topPlayer.number} ${topPlayer.name}',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                        const SizedBox(height: 20),
+
+                        // --- KHỐI 2: SPOTLIGHT CẦU THỦ ĐẮT GIÁ NHẤT & ĐỘI TRƯỞNG ---
+                        if (topPlayer != null) ...[
+                          const Text(
+                            'Squad Valuation Leader (Transfermarkt Top Asset)',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
                             ),
-                            const SizedBox(height: 2),
+                          ),
+                          const SizedBox(height: 10),
+                          InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      PlayerDetailScreen(player: topPlayer),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: AppTheme.bgCard,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: AppTheme.lfcYellow.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  PlayerAvatar(
+                                    imageUrl: topPlayer.avatarUrl,
+                                    radius: 32,
+                                    initials: topPlayer.name[0],
+                                    borderColor: AppTheme.lfcYellow,
+                                    borderWidth: 2,
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Wrap(
+                                          children: [
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.lfcYellow
+                                                    .withValues(alpha: 0.2),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: const Text(
+                                                'TOP ASSET',
+                                                style: TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppTheme.lfcYellow,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              topPlayer.nationality,
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                color: AppTheme.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '#${topPlayer.number} ${topPlayer.name}',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${topPlayer.positionName} • Hợp đồng đến ${topPlayer.contractUntil}',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AppTheme.textMuted,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      const Text(
+                                        'Định giá',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: AppTheme.textMuted,
+                                        ),
+                                      ),
+                                      Text(
+                                        '€${topPlayer.currentMarketValue.toStringAsFixed(0)}M',
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppTheme.lfcYellow,
+                                        ),
+                                      ),
+                                      const Text(
+                                        'Transfermarkt',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          color: AppTheme.accentCyan,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+
+                        // --- KHỐI 3: BIỂU ĐỒ CHIỀU SÂU ĐỘI HÌNH & PHÂN BỔ TUYẾN (POSITION MATRIX) ---
+                        const Text(
+                          'Squad Depth & Valuation by Position',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Wrap(
+                                  spacing: 12,
+                                  runSpacing: 8,
+                                  children: [
+                                    const Text(
+                                      'Squad depth',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Total: €${state.totalMarketValue.toStringAsFixed(0)}M',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.lfcYellow,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+                                // 4 thanh đo chiều sâu theo tuyến
+                                _buildPositionDepthBar(
+                                  'Forwards',
+                                  fwCount,
+                                  25,
+                                  fwVal,
+                                  AppTheme.lfcRed,
+                                ),
+                                const SizedBox(height: 10),
+                                _buildPositionDepthBar(
+                                  'Midfielders',
+                                  mfCount,
+                                  25,
+                                  mfVal,
+                                  AppTheme.accentBlue,
+                                ),
+                                const SizedBox(height: 10),
+                                _buildPositionDepthBar(
+                                  'Defenders',
+                                  dfCount,
+                                  25,
+                                  dfVal,
+                                  AppTheme.accentCyan,
+                                ),
+                                const SizedBox(height: 10),
+                                _buildPositionDepthBar(
+                                  'Goalkeepers',
+                                  gkCount,
+                                  25,
+                                  gkVal,
+                                  AppTheme.lfcYellow,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // --- KHỐI 4: KEY SQUAD PROFILES HÀNG NGANG CUỘN MƯỢT ---
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text(
+                              'Key Squad Profiles',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             Text(
-                              '${topPlayer.positionName} • Hợp đồng đến ${topPlayer.contractUntil}',
-                              style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                              '${state.players.length} players',
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Scroll left',
+                              onPressed: () => _scrollSquad(-280),
+                              icon: const Icon(Icons.chevron_left),
+                            ),
+                            IconButton(
+                              tooltip: 'Scroll right',
+                              onPressed: () => _scrollSquad(280),
+                              icon: const Icon(Icons.chevron_right),
+                            ),
+                            TextButton(
+                              onPressed: () => widget.onNavigateTab(1),
+                              child: const Text('All Players'),
                             ),
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text('Định giá', style: TextStyle(fontSize: 10, color: AppTheme.textMuted)),
-                          Text(
-                            '€${topPlayer.currentMarketValue.toStringAsFixed(0)}M',
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.lfcYellow),
-                          ),
-                          const Text('Transfermarkt', style: TextStyle(fontSize: 9, color: AppTheme.accentCyan)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
+                        const SizedBox(height: 8),
 
-            // --- KHỐI 3: BIỂU ĐỒ CHIỀU SÂU ĐỘI HÌNH & PHÂN BỔ TUYẾN (POSITION MATRIX) ---
-            const Text(
-              'Squad Depth & Valuation by Position',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-            ),
-            const SizedBox(height: 10),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Cơ cấu chiều sâu 25 cầu thủ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                        Text('Tổng: €${state.totalMarketValue.toStringAsFixed(0)}M', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.lfcYellow)),
+                        // Horizontal Scrollable Key Squad Profiles
+                        SizedBox(
+                          height: 180,
+                          child: Scrollbar(
+                            controller: _squadScrollController,
+                            thumbVisibility: true,
+                            trackVisibility: true,
+                            child: ListView.separated(
+                              controller: _squadScrollController,
+                              physics: const BouncingScrollPhysics(),
+                              padding: const EdgeInsets.only(bottom: 14),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: state.players.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                final p = state.players[index];
+                                return InkWell(
+                                  borderRadius: BorderRadius.circular(16),
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            PlayerDetailScreen(player: p),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 136,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.bgCard,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: AppTheme.borderSubtle,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        PlayerAvatar(
+                                          imageUrl: p.avatarUrl,
+                                          radius: 26,
+                                          initials: p.name.isNotEmpty
+                                              ? p.name[0]
+                                              : null,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          p.name,
+                                          textAlign: TextAlign.center,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '#${p.number} • ${p.position.name.toUpperCase()}',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            color: AppTheme.textSecondary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '€${p.currentMarketValue.toStringAsFixed(0)}M',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.lfcYellow,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // --- KHỐI 5: LỊCH TẬP HUẤN HÔM NAY CỦA CÁC CẦU THỦ ---
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            const Text(
+                              'Upcoming Training Sessions at AXA',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => widget.onNavigateTab(2),
+                              child: const Text(
+                                'View Calendar',
+                                style: TextStyle(
+                                  color: AppTheme.lfcRed,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ...state.trainings.take(2).map((session) {
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            child: ListTile(
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.lfcRed.withValues(
+                                    alpha: 0.15,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.fitness_center,
+                                  color: AppTheme.lfcRed,
+                                  size: 20,
+                                ),
+                              ),
+                              title: Text(
+                                session.title,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '${session.startTime} - ${session.endTime} • ${session.location}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.bgCardLight,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  session.type,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                    // 4 thanh đo chiều sâu theo tuyến
-                    _buildPositionDepthBar('Tiền đạo (Forwards)', fwCount, 25, fwVal, AppTheme.lfcRed),
-                    const SizedBox(height: 10),
-                    _buildPositionDepthBar('Tiền vệ (Midfielders)', mfCount, 25, mfVal, AppTheme.accentBlue),
-                    const SizedBox(height: 10),
-                    _buildPositionDepthBar('Hậu vệ (Defenders)', dfCount, 25, dfVal, AppTheme.accentCyan),
-                    const SizedBox(height: 10),
-                    _buildPositionDepthBar('Thủ môn (Goalkeepers)', gkCount, 25, gkVal, AppTheme.lfcYellow),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // --- KHỐI 4: KEY SQUAD PROFILES HÀNG NGANG CUỘN MƯỢT ---
-            Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      const Text(
-                        'Key Squad Profiles',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppTheme.lfcRed.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppTheme.lfcRed.withValues(alpha: 0.3)),
-                        ),
-                        child: Text(
-                          '${state.players.length} cầu thủ',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.lfcRed, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new, size: 16),
-                  color: AppTheme.accentCyan,
-                  tooltip: 'Cuộn sang trái',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => _scrollSquad(-280),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios, size: 16),
-                  color: AppTheme.accentCyan,
-                  tooltip: 'Cuộn sang phải',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => _scrollSquad(280),
-                ),
-                TextButton(
-                  onPressed: () => widget.onNavigateTab(1),
-                  child: const Text('All Players', style: TextStyle(color: AppTheme.lfcRed, fontSize: 13)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Horizontal Scrollable Key Squad Profiles
-            SizedBox(
-              height: 180,
-              child: Scrollbar(
-                controller: _squadScrollController,
-                thumbVisibility: true,
-                trackVisibility: true,
-                child: ListView.separated(
-                  controller: _squadScrollController,
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.only(bottom: 14),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: state.players.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final p = state.players[index];
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => PlayerDetailScreen(player: p),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        width: 136,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: AppTheme.bgCard,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppTheme.borderSubtle),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            PlayerAvatar(
-                              imageUrl: p.avatarUrl,
-                              radius: 26,
-                              initials: p.name.isNotEmpty ? p.name[0] : null,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              p.name,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '#${p.number} • ${p.position.name.toUpperCase()}',
-                              style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '€${p.currentMarketValue.toStringAsFixed(0)}M',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.lfcYellow),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // --- KHỐI 5: LỊCH TẬP HUẤN HÔM NAY CỦA CÁC CẦU THỦ ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Upcoming Training Sessions at AXA',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                ),
-                TextButton(
-                  onPressed: () => widget.onNavigateTab(2),
-                  child: const Text('View Calendar', style: TextStyle(color: AppTheme.lfcRed, fontSize: 13)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            ...state.trainings.take(2).map((session) {
-              return Card(
-                margin: const EdgeInsets.only(bottom: 10),
-                child: ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.lfcRed.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.fitness_center, color: AppTheme.lfcRed, size: 20),
-                  ),
-                  title: Text(session.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                  subtitle: Text('${session.startTime} - ${session.endTime} • ${session.location}', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppTheme.bgCardLight,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(session.type, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                  ),
-                ),
-              );
-            }),
-          ],
-        ),
+          ),
+        ],
       ),
-    ),
-  ],
-),
-);
+    );
   }
 
   Widget _buildReadinessCard({
@@ -1002,33 +1402,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
               children: [
                 Icon(icon, size: 16, color: color),
-                Text('$count/$total', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color)),
+                Text(
+                  '$count/$total',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
-            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(subtitle, style: const TextStyle(fontSize: 10, color: AppTheme.textMuted)),
+            Text(
+              subtitle,
+              style: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPositionDepthBar(String label, int count, int total, double val, Color color) {
-    final pct = (count / total).clamp(0.0, 1.0);
+  Widget _buildPositionDepthBar(
+    String label,
+    int count,
+    int total,
+    double val,
+    Color color,
+  ) {
+    final pct = total == 0 ? 0.0 : (count / total).clamp(0.0, 1.0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70)),
-            Text('$count cầu thủ • €${val.toStringAsFixed(0)}M', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            ),
+            Text(
+              '$count players • €${val.toStringAsFixed(0)}M',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 4),

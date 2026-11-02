@@ -229,7 +229,7 @@ class PlayerDetailScreen extends StatelessWidget {
     final valueController = TextEditingController(text: currentPlayer.currentMarketValue.toStringAsFixed(1));
     final contractController = TextEditingController(text: currentPlayer.contractUntil);
     final footController = TextEditingController(text: currentPlayer.preferredFoot);
-    
+
     PlayerPosition selectedPos = currentPlayer.position;
     String selectedStatus = currentPlayer.status;
 

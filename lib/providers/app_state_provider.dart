@@ -289,7 +289,7 @@ class AppStateProvider extends ChangeNotifier {
     if (index != -1) {
       final current = _trainings[index];
       _trainings[index] = current.copyWith(status: 'Completed');
-      
+
       // Tăng nhẹ 0.5 chỉ số thể lực cho cầu thủ tham gia
       for (final playerId in current.playerIds) {
         final pIdx = _players.indexWhere((p) => p.id == playerId);
@@ -362,7 +362,7 @@ class AppStateProvider extends ChangeNotifier {
           final delta = (rng.nextDouble() * 5.0 - 2.0);
           final newVal = (p.currentMarketValue + delta).clamp(10.0, 200.0);
           final roundedVal = double.parse(newVal.toStringAsFixed(1));
-          
+
           final newHistory = List<MarketValuePoint>.from(p.marketValueHistory);
           if (newHistory.isNotEmpty) {
             newHistory[newHistory.length - 1] = MarketValuePoint(

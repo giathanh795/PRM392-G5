@@ -63,7 +63,9 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
   // Hộp thoại tạo buổi tập mới
   void _showAddSessionDialog(BuildContext context) {
     final titleController = TextEditingController();
-    final locationController = TextEditingController(text: 'AXA Training Ground - Pitch 1');
+    final locationController = TextEditingController(
+      text: 'AXA Training Ground - Pitch 1',
+    );
     final coachController = TextEditingController(text: 'Andoni Iraola');
     final descController = TextEditingController();
     final startController = TextEditingController(text: '10:00');
@@ -88,7 +90,13 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
             children: [
               const Icon(Icons.add_task, color: AppTheme.accentCyan, size: 22),
               const SizedBox(width: 8),
-              Text('Lên Lịch Tập Huấn ($currentDateStr)', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Schedule training ($currentDateStr)',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           content: SizedBox(
@@ -101,8 +109,8 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                   TextField(
                     controller: titleController,
                     decoration: const InputDecoration(
-                      labelText: 'Tiêu đề buổi tập',
-                      hintText: 'Ví dụ: Pressing cường độ cao & Phối hợp nhanh',
+                      labelText: 'Session title',
+                      hintText: 'Example: High-intensity pressing and quick combinations',
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -111,55 +119,78 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                       Expanded(
                         child: TextField(
                           controller: startController,
-                          decoration: const InputDecoration(labelText: 'Bắt đầu', hintText: '10:00'),
+                          decoration: const InputDecoration(
+                            labelText: 'Start time',
+                            hintText: '10:00',
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: TextField(
                           controller: endController,
-                          decoration: const InputDecoration(labelText: 'Kết thúc', hintText: '12:00'),
+                          decoration: const InputDecoration(
+                            labelText: 'End time',
+                            hintText: '12:00',
+                          ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text('Chuyên đề giáo án:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  const Text(
+                    'Training type:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 6,
-                    children: ['Tactical', 'Gym', 'Recovery', 'Match Prep'].map((t) {
-                      final isSel = selectedType == t;
-                      return ChoiceChip(
-                        label: Text(t, style: const TextStyle(fontSize: 11)),
-                        selected: isSel,
-                        selectedColor: _color(t),
-                        onSelected: (_) => setDialogState(() => selectedType = t),
-                      );
-                    }).toList(),
+                    children: ['Tactical', 'Gym', 'Recovery', 'Match Prep'].map(
+                      (t) {
+                        final isSel = selectedType == t;
+                        return ChoiceChip(
+                          label: Text(t, style: const TextStyle(fontSize: 11)),
+                          selected: isSel,
+                          selectedColor: _color(t),
+                          onSelected: (_) =>
+                              setDialogState(() => selectedType = t),
+                        );
+                      },
+                    ).toList(),
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: locationController,
-                    decoration: const InputDecoration(labelText: 'Địa điểm sân tập'),
+                    decoration: const InputDecoration(
+                      labelText: 'Training location',
+                    ),
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: coachController,
-                    decoration: const InputDecoration(labelText: 'HLV phụ trách'),
+                    decoration: const InputDecoration(labelText: 'Coach'),
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: descController,
-                    decoration: const InputDecoration(labelText: 'Mục tiêu & Hướng dẫn'),
+                    decoration: const InputDecoration(
+                      labelText: 'Objectives & instructions',
+                    ),
                   ),
                   const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Phân công cầu thủ (${selectedPlayers.length}/${allPlayers.length}):',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.accentCyan),
+                        'Assign players (${selectedPlayers.length}/${allPlayers.length}):',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.accentCyan,
+                        ),
                       ),
                       TextButton(
                         onPressed: () {
@@ -167,11 +198,18 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                             if (selectedPlayers.length == allPlayers.length) {
                               selectedPlayers.clear();
                             } else {
-                              selectedPlayers.addAll(allPlayers.map((p) => p.id));
+                              selectedPlayers.addAll(
+                                allPlayers.map((p) => p.id),
+                              );
                             }
                           });
                         },
-                        child: Text(selectedPlayers.length == allPlayers.length ? 'Bỏ chọn hết' : 'Chọn tất cả', style: const TextStyle(fontSize: 11)),
+                        child: Text(
+                          selectedPlayers.length == allPlayers.length
+                              ? 'Clear selection'
+                              : 'Select all',
+                          style: const TextStyle(fontSize: 11),
+                        ),
                       ),
                     ],
                   ),
@@ -182,9 +220,14 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                     children: allPlayers.map((p) {
                       final isSel = selectedPlayers.contains(p.id);
                       return FilterChip(
-                        label: Text('#${p.number} ${p.name.split(' ').last}', style: const TextStyle(fontSize: 11)),
+                        label: Text(
+                          '#${p.number} ${p.name.split(' ').last}',
+                          style: const TextStyle(fontSize: 11),
+                        ),
                         selected: isSel,
-                        selectedColor: AppTheme.accentCyan.withValues(alpha: 0.25),
+                        selectedColor: AppTheme.accentCyan.withValues(
+                          alpha: 0.25,
+                        ),
                         checkmarkColor: AppTheme.accentCyan,
                         onSelected: (val) {
                           setDialogState(() {
@@ -205,7 +248,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogCtx).pop(),
-              child: const Text('Hủy'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -227,7 +270,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                   coach: coachController.text.trim(),
                   description: descController.text.trim().isNotEmpty
                       ? descController.text.trim()
-                      : 'Kế hoạch tập luyện chuyên đề tại AXA Training Ground.',
+                      : 'Training programme at AXA Training Ground.',
                   playerIds: selectedPlayers.toList(),
                 );
 
@@ -235,10 +278,15 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                 Navigator.of(dialogCtx).pop();
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Đã thêm buổi tập "$title" vào lịch trình ngày $currentDateStr!')),
+                  SnackBar(
+                    content: Text('Added session "$title" on $currentDateStr!'),
+                  ),
                 );
               },
-              child: const Text('Tạo Buổi Tập', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Create session',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -283,7 +331,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_task, color: AppTheme.accentCyan),
-            tooltip: 'Tạo buổi tập mới',
+            tooltip: 'Create training session',
             onPressed: () => _showAddSessionDialog(context),
           ),
         ],
@@ -292,7 +340,10 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
         backgroundColor: AppTheme.accentCyan,
         foregroundColor: Colors.black,
         icon: const Icon(Icons.add_task),
-        label: const Text('Lên lịch tập mới', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: const Text(
+          'Schedule training',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         onPressed: () => _showAddSessionDialog(context),
       ),
       body: SingleChildScrollView(
@@ -328,7 +379,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Theo dõi và quản lý lịch trình huấn luyện, giáo án chiến thuật, thể lực và hồi phục của đội 1 Liverpool FC.',
+                        'Manage first-team training, tactical preparation, conditioning and recovery.',
                         style: TextStyle(
                           fontSize: 13,
                           color: AppTheme.textSecondary,
@@ -344,10 +395,16 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.accentCyan,
                               foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                             ),
                             icon: const Icon(Icons.add_task, size: 18),
-                            label: const Text('Tạo buổi tập cho ngày này', style: TextStyle(fontWeight: FontWeight.bold)),
+                            label: const Text(
+                              'Schedule for this date',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                             onPressed: () => _showAddSessionDialog(context),
                           ),
                           OutlinedButton.icon(
@@ -356,11 +413,17 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                               if (_inRange(today)) {
                                 setState(() => _selectedDate = today);
                               } else {
-                                setState(() => _selectedDate = DateTime(TrainingScheduleData.year, 10, 1));
+                                setState(
+                                  () => _selectedDate = DateTime(
+                                    TrainingScheduleData.year,
+                                    10,
+                                    1,
+                                  ),
+                                );
                               }
                             },
                             icon: const Icon(Icons.today, size: 18),
-                            label: const Text('Về ngày hôm nay'),
+                            label: const Text('Today'),
                           ),
                         ],
                       ),
@@ -444,12 +507,16 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                           items: [
                             const DropdownMenuItem(
                               value: null,
-                              child: Text('All squad / any player'),
+                              child: Text('All players'),
                             ),
                             ...playersByNumber.map(
                               (p) => DropdownMenuItem(
                                 value: p.id,
-                                child: Text('#${p.number}  ${p.name} (${p.positionName})'),
+                                child: Text(
+                                  '#${p.number} ${p.name}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           ],
@@ -467,7 +534,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                         ),
                       const SizedBox(height: 10),
                       const Text(
-                        'Dấu chấm trên lịch cho biết các buổi tập khớp với bộ lọc của bạn.',
+                        'Calendar markers show sessions matching your filters.',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.textSecondary,
@@ -518,60 +585,73 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     List<TrainingSession> monthly,
     DateTime today,
   ) {
-    final days = DateTime(_selectedDate.year, _selectedDate.month + 1, 0).day;
-    final firstWeekday =
-        DateTime(_selectedDate.year, _selectedDate.month, 1).weekday;
-    final prefixBlanks = firstWeekday - 1;
-    final totalTiles = prefixBlanks + days;
-    final rows = (totalTiles / 7).ceil();
-
+    final first = DateTime(_selectedDate.year, _selectedDate.month, 1);
+    final leading = first.weekday - 1;
+    final days = DateTime(first.year, first.month + 1, 0).day;
+    final cells = ((leading + days) / 7).ceil() * 7;
     return _surface(
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Text(
-                DateFormat('MMMM yyyy').format(_selectedDate),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+              for (final month in TrainingScheduleData.months)
+                ChoiceChip(
+                  key: ValueKey('training-month-$month'),
+                  label: Text(DateFormat('MMMM').format(DateTime(2026, month))),
+                  selected: _selectedDate.month == month,
+                  onSelected: (_) => _selectMonth(month),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  DateFormat('MMMM yyyy').format(first),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              Row(
-                children: TrainingScheduleData.months
-                    .map(
-                      (m) => Padding(
-                        padding: const EdgeInsets.only(left: 6),
-                        child: ChoiceChip(
-                          label: Text(
-                            DateFormat(
-                              'MMM',
-                            ).format(DateTime(TrainingScheduleData.year, m, 1)),
-                          ),
-                          selected: _selectedDate.month == m,
-                          selectedColor: AppTheme.lfcRed,
-                          onSelected: (_) => _selectMonth(m),
-                        ),
-                      ),
-                    )
-                    .toList(),
+              IconButton(
+                key: const ValueKey('training-previous-month'),
+                tooltip: 'Previous month',
+                onPressed: first.month == 10 ? null : () => _selectMonth(10),
+                icon: const Icon(Icons.chevron_left),
+              ),
+              IconButton(
+                key: const ValueKey('training-next-month'),
+                tooltip: 'Next month',
+                onPressed: first.month == 11 ? null : () => _selectMonth(11),
+                icon: const Icon(Icons.chevron_right),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          if (_inRange(today))
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => setState(() => _selectedDate = today),
+                icon: const Icon(Icons.today, size: 18),
+                label: const Text('Today'),
+              ),
+            ),
+          const SizedBox(height: 8),
           Row(
-            children: const ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+            children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
                 .map(
-                  (d) => Expanded(
+                  (day) => Expanded(
                     child: Center(
                       child: Text(
-                        d,
-                        style: TextStyle(
+                        day,
+                        style: const TextStyle(
                           fontSize: 12,
-                          color: AppTheme.textMuted,
-                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textSecondary,
                         ),
                       ),
                     ),
@@ -579,81 +659,82 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                 )
                 .toList(),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: rows * 7,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              crossAxisSpacing: 6,
+              crossAxisSpacing: 4,
               mainAxisSpacing: 6,
-              childAspectRatio: 0.95,
+              childAspectRatio: 0.9,
             ),
+            itemCount: cells,
             itemBuilder: (context, index) {
-              if (index < prefixBlanks || index >= totalTiles) {
-                return const SizedBox.shrink();
-              }
-              final day = index - prefixBlanks + 1;
-              final date = DateTime(
-                _selectedDate.year,
-                _selectedDate.month,
-                day,
-              );
+              final day = index - leading + 1;
+              if (day < 1 || day > days) return const SizedBox.shrink();
+              final date = DateTime(first.year, first.month, day);
               final key = _dateKey(date);
-              final isSelected = DateUtils.isSameDay(date, _selectedDate);
               final count = filtered.where((s) => s.date == key).length;
-              final isRest =
-                  count == 0 && !monthly.any((s) => s.date == key);
-
-              return Material(
-                color: isSelected
-                    ? AppTheme.accentBlue
-                    : AppTheme.primaryNavy,
-                borderRadius: BorderRadius.circular(10),
-                child: InkWell(
-                  key: ValueKey('training-day-$key'),
-                  onTap: () => setState(() => _selectedDate = date),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    decoration: BoxDecoration(
+              final isRest = !monthly.any((s) => s.date == key);
+              final isSelected = DateUtils.isSameDay(date, _selectedDate);
+              return Semantics(
+                selected: isSelected,
+                button: true,
+                label:
+                    '${DateFormat('MMMM d, yyyy').format(date)}, $count matching sessions${isRest ? ', rest day' : ''}',
+                child: Tooltip(
+                  message: isRest ? 'Rest day' : '$count matching sessions',
+                  child: Material(
+                    color: isSelected
+                        ? AppTheme.accentBlue
+                        : AppTheme.primaryNavy,
+                    borderRadius: BorderRadius.circular(10),
+                    child: InkWell(
+                      key: ValueKey('training-day-$key'),
+                      onTap: () => setState(() => _selectedDate = date),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: DateUtils.isSameDay(date, today)
-                            ? AppTheme.accentCyan
-                            : Colors.transparent,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '$day',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected
-                                ? Colors.white
-                                : AppTheme.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          isRest
-                              ? '–'
-                              : count == 0
-                              ? '·'
-                              : '$count',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isSelected
-                                ? Colors.white
-                                : count > 0
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: DateUtils.isSameDay(date, today)
                                 ? AppTheme.accentCyan
-                                : AppTheme.textMuted,
+                                : Colors.transparent,
                           ),
                         ),
-                      ],
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '$day',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppTheme.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              isRest
+                                  ? '–'
+                                  : count == 0
+                                  ? '·'
+                                  : '$count',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isSelected
+                                    ? Colors.white
+                                    : count > 0
+                                    ? AppTheme.accentCyan
+                                    : AppTheme.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -662,7 +743,12 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
           ),
           const SizedBox(height: 14),
           const Text(
-            'Số = buổi tập phù hợp   ·   – = ngày nghỉ ngơi',
+            'Number = matching sessions   ·   – = rest day',
+            style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Available dates: 1 October – 30 November 2026',
             style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
           ),
         ],
@@ -678,82 +764,42 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DateFormat('EEEE, d MMMM yyyy').format(_selectedDate),
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${sessions.length} scheduled sessions',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentCyan,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                visualDensity: VisualDensity.compact,
-              ),
-              icon: const Icon(Icons.add, size: 16),
-              label: const Text('Thêm', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              onPressed: () => _showAddSessionDialog(context),
-            ),
-          ],
+        _tag(
+          DateFormat('EEEE').format(_selectedDate).toUpperCase(),
+          AppTheme.accentCyan,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          DateFormat('d MMMM yyyy').format(_selectedDate),
+          key: const ValueKey('training-selected-date'),
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '${sessions.length} sessions${_type != 'All' || _playerId != null ? ' matching filters' : ' planned'}',
+          style: const TextStyle(color: AppTheme.textSecondary),
         ),
         const SizedBox(height: 18),
         if (sessions.isEmpty) ...[
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryNavy,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppTheme.borderSubtle),
-            ),
-            child: Column(
-              children: [
-                const Icon(
-                  Icons.hotel_outlined,
-                  size: 34,
-                  color: AppTheme.accentCyan,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  unfiltered.isEmpty
-                      ? 'No team sessions scheduled on this day'
-                      : 'No sessions matching current filters',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  unfiltered.isEmpty
-                      ? 'Squad recovery or individual maintenance programme.'
-                      : 'Adjust or clear filters to view planned activity.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
+          Icon(
+            unfiltered.isEmpty ? Icons.spa_outlined : Icons.search_off,
+            size: 40,
+            color: AppTheme.textMuted,
           ),
           const SizedBox(height: 12),
-          if (_type != 'All' || _playerId != null)
+          Text(
+            unfiltered.isEmpty ? 'Rest & recharge' : 'No matching sessions',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            unfiltered.isEmpty
+                ? 'No team training is planned for this date. Take time to recover before the next training day.'
+                : 'Try another training type or player to see more sessions.',
+            style: const TextStyle(color: AppTheme.textSecondary, height: 1.5),
+          ),
+          const SizedBox(height: 16),
+          if (unfiltered.isNotEmpty)
             OutlinedButton(
               onPressed: _resetFilters,
               child: const Text('Clear filters'),
@@ -802,7 +848,12 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
       decoration: BoxDecoration(
         color: AppTheme.primaryNavy,
         borderRadius: BorderRadius.circular(14),
-        border: Border(left: BorderSide(color: isCompleted ? AppTheme.success : color, width: 3)),
+        border: Border(
+          left: BorderSide(
+            color: isCompleted ? AppTheme.success : color,
+            width: 3,
+          ),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -810,24 +861,34 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _tag(session.type, color),
-                  _tag(
-                    isCompleted ? 'Completed' : 'Planned',
-                    isCompleted ? AppTheme.success : AppTheme.textSecondary,
-                  ),
-                ],
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _tag(session.type, color),
+                    _tag(
+                      isCompleted ? 'Completed' : 'Planned',
+                      isCompleted ? AppTheme.success : AppTheme.textSecondary,
+                    ),
+                  ],
+                ),
               ),
               IconButton(
-                icon: const Icon(Icons.delete_outline, size: 18, color: AppTheme.danger),
-                tooltip: 'Xóa buổi tập',
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: AppTheme.danger,
+                ),
+                tooltip: 'Delete session',
                 onPressed: () {
-                  context.read<AppStateProvider>().deleteTrainingSession(session.id);
+                  context.read<AppStateProvider>().deleteTrainingSession(
+                    session.id,
+                  );
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Đã xóa buổi tập khỏi lịch trình!')),
+                    const SnackBar(
+                      content: Text('Session removed from the schedule!'),
+                    ),
                   );
                 },
               ),
@@ -864,28 +925,41 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
             children: [
               OutlinedButton.icon(
                 onPressed: () => _showSession(session, participants),
                 icon: const Icon(Icons.open_in_new, size: 16),
-                label: const Text('Chi tiết & Cầu thủ'),
+                label: const Text('View session & players'),
               ),
-              const SizedBox(width: 10),
               if (!isCompleted)
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.success,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                   ),
                   icon: const Icon(Icons.check_circle_outline, size: 16),
-                  label: const Text('Hoàn thành (+0.5 Stamina)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'Complete session',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
                   onPressed: () async {
-                    await context.read<AppStateProvider>().completeTrainingSession(session.id);
+                    await context
+                        .read<AppStateProvider>()
+                        .completeTrainingSession(session.id);
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã hoàn thành giáo án & tự động tăng thể lực cho cầu thủ!')),
+                      const SnackBar(
+                        content: Text(
+                          'Session completed and participant fitness updated!',
+                        ),
+                      ),
                     );
                   },
                 ),
