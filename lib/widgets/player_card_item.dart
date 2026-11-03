@@ -147,6 +147,16 @@ class PlayerCardItem extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (onEdit != null) ...[
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 19),
+                      color: AppTheme.textMuted,
+                      tooltip: 'Chỉnh sửa cầu thủ',
+                      splashRadius: 18,
+                      onPressed: onEdit,
+                    ),
+                    const SizedBox(width: 2),
+                  ],
                   if (onDelete != null) ...[
                     IconButton(
                       icon: const Icon(Icons.delete_outline, size: 20),

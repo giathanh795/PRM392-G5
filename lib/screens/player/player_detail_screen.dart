@@ -8,6 +8,7 @@ import '../../models/player.dart';
 import '../../providers/app_state_provider.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/delete_player_dialog.dart';
+import '../../widgets/player_form_dialog.dart';
 import 'player_stats_screen.dart';
 
 class PlayerDetailScreen extends StatelessWidget {
@@ -15,7 +16,7 @@ class PlayerDetailScreen extends StatelessWidget {
 
   const PlayerDetailScreen({super.key, required this.player});
 
-  // Mở trình phát / Xem URL (Hỗ trợ Youtube, trang Web, file video MP4, v.v.)
+  // Mở trình phát / Xem URL (Hỗ trợ Youtube, trang Web, file video MP4, ảnh Base64, v.v.)
   Future<void> _launchMediaUrl(BuildContext context, PlayerMediaItem item) async {
     final rawUrl = item.url.trim();
     if (rawUrl.isEmpty) {
@@ -25,9 +26,44 @@ class PlayerDetailScreen extends StatelessWidget {
       return;
     }
 
-    final formattedUrl = (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'))
+    // Nếu là ảnh tải lên từ thiết bị dạng base64
+    if (rawUrl.startsWith('data:image')) {
+      showDialog(
+        context: context,
+        builder: (_) => Dialog(
+          backgroundColor: AppTheme.surfaceNavy,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppTheme.borderSubtle),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: Image.memory(
+                  base64Decode(rawUrl.split(',').last),
+                  fit: BoxFit.contain,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: Text(
+                  item.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
+
+    final formattedUrl = (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('file://'))
         ? rawUrl
-        : 'https://$rawUrl';
+        : (rawUrl.contains(':\\') || rawUrl.startsWith('/') ? 'file://$rawUrl' : 'https://$rawUrl');
 
     final uri = Uri.tryParse(formattedUrl);
     if (uri == null) {
@@ -226,139 +262,229 @@ class PlayerDetailScreen extends StatelessWidget {
     );
   }
 
-  // Hộp thoại Thêm Video / Ảnh PR mới
+  // Hộp thoại Thêm Video / Ảnh PR mới từ máy tính hoặc link
   void _showAddMediaDialog(BuildContext context, Player currentPlayer) {
     final titleController = TextEditingController();
     final urlController = TextEditingController();
     String mediaType = 'video';
-
-    final presetVideos = [
-      {'title': 'Adidas Football Official Spot', 'url': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'},
-      {'title': 'Liverpool FC Training Highlights', 'url': 'https://www.youtube.com/c/LiverpoolFC'},
-      {'title': 'Florian Wirtz Skills & Goals', 'url': 'https://www.youtube.com/results?search_query=florian+wirtz'},
-      {'title': 'Alexander Isak Top Finishes', 'url': 'https://www.youtube.com/results?search_query=alexander+isak'},
-    ];
+    String? uploadedFileName;
+    final picker = ImagePicker();
 
     showDialog(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: AppTheme.surfaceNavy,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppTheme.borderSubtle),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.video_library_outlined, color: AppTheme.lfcRed, size: 22),
-              SizedBox(width: 8),
-              Text('Thêm tư liệu PR / Video', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+        builder: (context, setDialogState) {
+          Future<void> pickMediaFile() async {
+            try {
+              if (mediaType == 'video') {
+                final picked = await picker.pickVideo(source: ImageSource.gallery);
+                if (picked != null) {
+                  setDialogState(() {
+                    uploadedFileName = picked.name;
+                    urlController.text = picked.path;
+                    if (titleController.text.trim().isEmpty) {
+                      titleController.text = picked.name.replaceAll(RegExp(r'\.[a-zA-Z0-9]+$'), '');
+                    }
+                  });
+                }
+              } else {
+                final picked = await picker.pickImage(
+                  source: ImageSource.gallery,
+                  maxWidth: 1200,
+                  maxHeight: 1200,
+                  imageQuality: 85,
+                );
+                if (picked != null) {
+                  final bytes = await picked.readAsBytes();
+                  final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                  setDialogState(() {
+                    uploadedFileName = picked.name;
+                    urlController.text = base64Image;
+                    if (titleController.text.trim().isEmpty) {
+                      titleController.text = picked.name.replaceAll(RegExp(r'\.[a-zA-Z0-9]+$'), '');
+                    }
+                  });
+                }
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Không thể chọn tệp: $e')),
+                );
+              }
+            }
+          }
+
+          return AlertDialog(
+            backgroundColor: AppTheme.surfaceNavy,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: AppTheme.borderSubtle),
+            ),
+            title: const Row(
               children: [
-                const Text('Loại tư liệu PR:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Video PR'),
-                      selected: mediaType == 'video',
-                      selectedColor: AppTheme.lfcRed,
-                      onSelected: (_) => setDialogState(() => mediaType = 'video'),
-                    ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text('Ảnh chụp (Photo)'),
-                      selected: mediaType == 'photo',
-                      selectedColor: AppTheme.accentBlue,
-                      onSelected: (_) => setDialogState(() => mediaType = 'photo'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Tiêu đề chiến dịch / Video',
-                    hintText: 'Ví dụ: Adidas Predator 2026 Promo...',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: urlController,
-                  decoration: InputDecoration(
-                    labelText: 'Đường dẫn (URL Video hoặc Ảnh)',
-                    hintText: 'https://youtube.com/... hoặc link mp4/ảnh',
-                    prefixIcon: Icon(
-                      mediaType == 'video' ? Icons.play_circle_fill : Icons.photo,
-                      color: AppTheme.accentCyan,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                const Text('Hoặc chọn nhanh link video mẫu:', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: presetVideos.map((v) {
-                    return ActionChip(
-                      label: Text(v['title']!, style: const TextStyle(fontSize: 10)),
-                      backgroundColor: AppTheme.surfaceNavyLight,
-                      onPressed: () {
-                        setDialogState(() {
-                          titleController.text = v['title']!;
-                          urlController.text = v['url']!;
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
+                Icon(Icons.video_library_outlined, color: AppTheme.lfcRed, size: 22),
+                SizedBox(width: 8),
+                Text('Thêm tư liệu PR / Video', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogCtx).pop(),
-              child: const Text('Hủy', style: TextStyle(color: AppTheme.textSecondary)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.lfcRed,
-                foregroundColor: Colors.white,
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Loại tư liệu PR:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Video PR'),
+                        selected: mediaType == 'video',
+                        selectedColor: AppTheme.lfcRed,
+                        onSelected: (_) => setDialogState(() {
+                          mediaType = 'video';
+                          uploadedFileName = null;
+                          urlController.clear();
+                        }),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('Ảnh chụp (Photo)'),
+                        selected: mediaType == 'photo',
+                        selectedColor: AppTheme.accentBlue,
+                        onSelected: (_) => setDialogState(() {
+                          mediaType = 'photo';
+                          uploadedFileName = null;
+                          urlController.clear();
+                        }),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Khu vực tải file trực tiếp từ máy tính / điện thoại
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceNavyLight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: uploadedFileName != null
+                            ? AppTheme.accentCyan
+                            : AppTheme.borderSubtle,
+                        width: uploadedFileName != null ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          uploadedFileName != null
+                              ? Icons.check_circle_outline_rounded
+                              : (mediaType == 'video' ? Icons.video_file_outlined : Icons.add_photo_alternate_outlined),
+                          size: 40,
+                          color: uploadedFileName != null
+                              ? AppTheme.accentCyan
+                              : (mediaType == 'video' ? AppTheme.lfcRed : AppTheme.accentCyan),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          uploadedFileName != null
+                              ? 'Đã tải lên: $uploadedFileName'
+                              : (mediaType == 'video' ? 'Chọn file Video từ máy tính / thiết bị' : 'Chọn file Ảnh từ máy tính / thiết bị'),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: uploadedFileName != null ? FontWeight.bold : FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          mediaType == 'video'
+                              ? 'Định dạng: MP4, MOV, MKV, AVI...'
+                              : 'Định dạng: JPG, PNG, WEBP...',
+                          style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: mediaType == 'video' ? AppTheme.lfcRed : AppTheme.accentBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          icon: const Icon(Icons.upload_file, size: 16),
+                          label: Text(uploadedFileName != null ? 'Chọn tệp khác' : 'Tải file từ máy lên'),
+                          onPressed: pickMediaFile,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Tiêu đề tư liệu / Video *',
+                      hintText: 'Ví dụ: Highlights tập luyện, Phỏng vấn...',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  TextField(
+                    controller: urlController,
+                    decoration: InputDecoration(
+                      labelText: 'Đường dẫn tệp / URL',
+                      hintText: uploadedFileName != null ? 'Đã liên kết tệp từ máy' : 'https://youtube.com/... hoặc link web',
+                      prefixIcon: Icon(
+                        uploadedFileName != null ? Icons.folder_open : (mediaType == 'video' ? Icons.play_circle_fill : Icons.photo),
+                        color: AppTheme.accentCyan,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              onPressed: () {
-                final title = titleController.text.trim();
-                final url = urlController.text.trim();
-                if (title.isNotEmpty && url.isNotEmpty) {
-                  final newItem = PlayerMediaItem(
-                    id: 'm_${DateTime.now().millisecondsSinceEpoch}',
-                    title: title,
-                    type: mediaType,
-                    url: url,
-                    date: '2026-10-12',
-                  );
-                  final updatedList = List<PlayerMediaItem>.from(currentPlayer.mediaList)..add(newItem);
-                  final updated = currentPlayer.copyWith(mediaList: updatedList);
-                  context.read<AppStateProvider>().updatePlayer(updated);
-                  Navigator.of(dialogCtx).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Đã thêm tư liệu PR mới: $title')),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Vui lòng điền tiêu đề và đường link tư liệu!')),
-                  );
-                }
-              },
-              child: const Text('Thêm ngay'),
             ),
-          ],
-        ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogCtx).pop(),
+                child: const Text('Hủy', style: TextStyle(color: AppTheme.textSecondary)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.lfcRed,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {
+                  final title = titleController.text.trim();
+                  final url = urlController.text.trim();
+                  if (title.isNotEmpty && url.isNotEmpty) {
+                    final newItem = PlayerMediaItem(
+                      id: 'm_${DateTime.now().millisecondsSinceEpoch}',
+                      title: title,
+                      type: mediaType,
+                      url: url,
+                      date: '2026-10-12',
+                    );
+                    final updatedList = List<PlayerMediaItem>.from(currentPlayer.mediaList)..add(newItem);
+                    final updated = currentPlayer.copyWith(mediaList: updatedList);
+                    context.read<AppStateProvider>().updatePlayer(updated);
+                    Navigator.of(dialogCtx).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Đã thêm tư liệu PR mới: $title')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Vui lòng chọn tệp từ máy hoặc điền đầy đủ tiêu đề và đường dẫn!')),
+                    );
+                  }
+                },
+                child: const Text('Thêm ngay'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -433,6 +559,11 @@ class PlayerDetailScreen extends StatelessWidget {
                 ),
               );
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: AppTheme.accentCyan),
+            tooltip: 'Chỉnh sửa cầu thủ',
+            onPressed: () => showPlayerFormDialog(context, player: currentPlayer),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppTheme.lfcRed),
@@ -585,9 +716,24 @@ class PlayerDetailScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Bio & Contract Information
-            const Text(
-              'Profile & Contract Information',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Profile & Contract Information',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                ),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.accentCyan,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  icon: const Icon(Icons.edit, size: 14),
+                  label: const Text('Chỉnh sửa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  onPressed: () => showPlayerFormDialog(context, player: currentPlayer),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
             Card(

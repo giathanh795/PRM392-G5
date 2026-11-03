@@ -5,6 +5,7 @@ import '../../models/player.dart';
 import '../../providers/app_state_provider.dart';
 import '../../widgets/player_card_item.dart';
 import '../../widgets/delete_player_dialog.dart';
+import '../../widgets/player_form_dialog.dart';
 import 'player_detail_screen.dart';
 
 class PlayerListScreen extends StatelessWidget {
@@ -114,12 +115,8 @@ class PlayerListScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.person_add_alt_1),
-            tooltip: 'Add Player',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Add Player form modal ready for implementation')),
-              );
-            },
+            tooltip: 'Thêm cầu thủ mới',
+            onPressed: () => showPlayerFormDialog(context),
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
@@ -342,6 +339,7 @@ class PlayerListScreen extends StatelessWidget {
                               ),
                             );
                           },
+                          onEdit: () => showPlayerFormDialog(context, player: player),
                           onDelete: () => _handleDeletePlayer(context, player),
                         ),
                       );
@@ -353,4 +351,3 @@ class PlayerListScreen extends StatelessWidget {
     );
   }
 }
-
