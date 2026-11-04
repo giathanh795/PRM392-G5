@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../models/sponsor_campaign.dart';
 import '../models/player.dart';
 import '../models/sponsorship.dart';
+import '../models/user_profile.dart';
 
 class ApiService {
   static String get apiBaseUrl {
@@ -110,6 +111,11 @@ class ApiService {
     return null;
   }
 
+  static const Map<String, String> _jsonHeaders = {
+    'Content-Type': 'application/json; charset=UTF-8',
+    'Accept': 'application/json',
+  };
+
   static Future<List<SponsorCampaign>> fetchCampaigns() async {
     final response = await http
         .get(Uri.parse('$apiBaseUrl/campaigns'))
@@ -191,9 +197,124 @@ class ApiService {
   static String sponsorshipContractUrl(String id) =>
       '$apiBaseUrl/sponsorships/${Uri.encodeComponent(id)}/contract';
 
-  static const _jsonHeaders = {
-    'Content-Type': 'application/json; charset=UTF-8',
-  };
+  // --- USER PROFILE ENDPOINTS (SQL BACKEND) ---
+  static Future<UserProfile?> fetchUserProfile() async {
+    try {
+      final response = await http
+          .get(Uri.parse('$apiBaseUrl/user/profile'))
+          .timeout(const Duration(seconds: 4));
+      if (response.statusCode == 200) {
+        return UserProfile.fromJson(
+          jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>,
+        );
+      }
+    } catch (e) {
+      debugPrint('[ApiService] Không thể tải user profile từ SQL Backend: $e');
+    }
+    return null;
+  }
+
+  static Future<bool> updateUserProfile(UserProfile profile) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$apiBaseUrl/user/profile'),
+            headers: _jsonHeaders,
+            body: jsonEncode(profile.toJson()),
+          )
+          .timeout(const Duration(seconds: 5));
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('[ApiService] Lỗi cập nhật user profile: $e');
+      return false;
+    }
+  }
+
+  static Future<UserProfile?> registerUser({
+    required String fullName,
+    required String email,
+    required String password,
+    String role = 'Club Official',
+    String department = 'Executive Leadership',
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$apiBaseUrl/user/register'),
+            headers: _jsonHeaders,
+            body: jsonEncode({
+              'fullName': fullName,
+              'email': email,
+              'password': password,
+              'role': role,
+              'department': department,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data =
+            jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        if (data['user'] != null) {
+          return UserProfile.fromJson(data['user'] as Map<String, dynamic>);
+        }
+      }
+    } catch (e) {
+      debugPrint('[ApiService] Lỗi đăng ký tài khoản: ');
+    }
+    return null;
+  }
+
+  static Future<UserProfile?> loginWithGoogle({
+    required String email,
+    required String fullName,
+    String avatarUrl = '',
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$apiBaseUrl/user/google-login'),
+            headers: _jsonHeaders,
+            body: jsonEncode({
+              'email': email,
+              'fullName': fullName,
+              'avatarUrl': avatarUrl,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data =
+            jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        if (data['user'] != null) {
+          return UserProfile.fromJson(data['user'] as Map<String, dynamic>);
+        }
+      }
+    } catch (e) {
+      debugPrint('[ApiService] Lỗi đăng nhập Google: ');
+    }
+    return null;
+  }
+
+  static Future<bool> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$apiBaseUrl/user/change-password'),
+            headers: _jsonHeaders,
+            body: jsonEncode({
+              'currentPassword': currentPassword,
+              'newPassword': newPassword,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('[ApiService] Lỗi đổi mật khẩu: $e');
+      return false;
+    }
+  }
 
   static Future<SponsorCampaign> _campaignResponse(
     http.Response response,

@@ -330,6 +330,16 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
         title: const Text('Training & Schedule'),
         actions: [
           IconButton(
+            icon: Icon(
+              state.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              color: state.isDarkMode ? AppTheme.accentGold : Colors.amber.shade700,
+            ),
+            tooltip: state.isDarkMode
+                ? 'Chuyển sang Giao diện Sáng'
+                : 'Chuyển sang Giao diện Tối',
+            onPressed: () => context.read<AppStateProvider>().toggleTheme(),
+          ),
+          IconButton(
             icon: const Icon(Icons.add_task, color: AppTheme.accentCyan),
             tooltip: 'Create training session',
             onPressed: () => _showAddSessionDialog(context),

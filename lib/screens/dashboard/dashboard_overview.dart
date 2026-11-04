@@ -511,7 +511,7 @@ class _DashboardOverviewState extends State<DashboardOverview> {
               ),
               const SizedBox(height: 18),
               const Text(
-                'Liverpool PMS · Overview of current application data',
+                'Liverpool FC - Player Management System · Overview of current application data',
                 style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
               ),
             ],

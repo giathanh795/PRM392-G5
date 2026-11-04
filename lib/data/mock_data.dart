@@ -689,6 +689,42 @@ class MockData {
       ],
       mediaList: [],
     ),
+    Player(
+      id: 'p26',
+      name: 'Lewis Koumas',
+      number: 67,
+      position: PlayerPosition.forward,
+      nationality: 'Wales',
+      dateOfBirth: '2005-09-19',
+      preferredFoot: 'Right',
+      height: '181 cm',
+      weight: '72 kg',
+      contractUntil: '2029-06-30',
+      avatarUrl: 'assets/images/koumas.jpg',
+      currentMarketValue: 10.0,
+      previousMarketValue: 6.0,
+      status: 'Active',
+      sponsorPartner: 'Adidas',
+      progressHistory: [
+        PlayerStatistic(date: 'Jul', attributes: {'Pace': 84.0, 'Shooting': 78.0, 'Passing': 73.0, 'Dribbling': 81.0, 'Physical': 72.0, 'Stamina': 79.0}),
+        PlayerStatistic(date: 'Aug', attributes: {'Pace': 85.0, 'Shooting': 79.0, 'Passing': 74.0, 'Dribbling': 82.0, 'Physical': 73.0, 'Stamina': 80.0}),
+        PlayerStatistic(date: 'Sep', attributes: {'Pace': 86.0, 'Shooting': 80.0, 'Passing': 75.0, 'Dribbling': 83.0, 'Physical': 74.0, 'Stamina': 81.0}),
+        PlayerStatistic(date: 'Oct', attributes: {'Pace': 87.0, 'Shooting': 81.0, 'Passing': 76.0, 'Dribbling': 84.0, 'Physical': 75.0, 'Stamina': 82.0}),
+      ],
+      marketValueHistory: [
+        MarketValuePoint(date: 'Jul', valueInMillionsEuro: 6.0),
+        MarketValuePoint(date: 'Oct', valueInMillionsEuro: 10.0),
+      ],
+      mediaList: [
+        PlayerMediaItem(
+          id: 'm_koumas',
+          title: 'Lewis Koumas Hat-trick & Breakthrough Moments',
+          type: 'video',
+          url: 'assets/images/koumas.jpg',
+          date: '2026-09-20',
+        ),
+      ],
+    ),
   ];
 
   static List<TrainingSession> trainingSessions = TrainingScheduleData.sessions;

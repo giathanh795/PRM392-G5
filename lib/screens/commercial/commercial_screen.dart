@@ -18,7 +18,23 @@ class CommercialScreen extends StatelessWidget {
     final chartPlayers = topPlayers.take(8).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Commercial & Sponsorship')),
+      appBar: AppBar(
+        title: const Text('Commercial & Sponsorship'),
+        actions: [
+          IconButton(
+            icon: Icon(
+              state.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              color: state.isDarkMode
+                  ? AppTheme.accentGold
+                  : Colors.amber.shade700,
+            ),
+            tooltip: state.isDarkMode
+                ? 'Chuyển sang Giao diện Sáng'
+                : 'Chuyển sang Giao diện Tối',
+            onPressed: () => context.read<AppStateProvider>().toggleTheme(),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
