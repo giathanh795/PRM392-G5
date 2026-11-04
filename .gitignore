@@ -52,3 +52,7 @@ backend/target/
 
 # Widget Preview related
 .widget_preview/
+
+# Database files
+*.mv.db
+*.trace.db

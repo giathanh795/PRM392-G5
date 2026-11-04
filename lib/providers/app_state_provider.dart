@@ -1,10 +1,14 @@
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/player.dart';
 import '../models/training_session.dart';
 import '../models/sponsor_campaign.dart';
+import '../models/sponsorship.dart';
+import '../models/user_profile.dart';
 import '../data/mock_data.dart';
 import '../data/training_schedule_data.dart';
 import '../services/api_service.dart';
@@ -13,7 +17,10 @@ class AppStateProvider extends ChangeNotifier {
   static const String _playersStorageKey = 'lfc_players_data_v1';
   static const String _trainingsStorageKey = 'lfc_trainings_data_v1';
   static const String _campaignsStorageKey = 'lfc_campaigns_data_v1';
-  
+  static const String _sponsorshipsStorageKey = 'lfc_sponsorships_data_v1';
+  static const String _themeModeStorageKey = 'lfc_theme_mode_v1';
+  static const String _userProfileStorageKey = 'lfc_user_profile_data_v1';
+
   static List<TrainingSession> _getDefaultTrainings() {
     final list = List<TrainingSession>.from(TrainingScheduleData.sessions);
     for (final s in MockData.trainingSessions) {
@@ -26,14 +33,26 @@ class AppStateProvider extends ChangeNotifier {
 
   List<Player> _players = List.from(MockData.players);
   List<TrainingSession> _trainings = _getDefaultTrainings();
-  List<SponsorCampaign> _campaigns = List.from(MockData.sponsorCampaigns);
-  
+  List<SponsorCampaign> _campaigns = [];
+  List<Sponsorship> _sponsorships = [];
+
+  // Theme Mode (Dark / Light)
+  ThemeMode _themeMode = ThemeMode.dark;
+
+  // Logged-in User Profile
+  UserProfile _userProfile = UserProfile.defaultProfile();
+  bool _isLoggedIn = false;
+
   String _selectedPositionFilter = 'All';
   String _searchQuery = '';
   Player? _selectedPlayer;
   bool _isInitialized = false;
   bool _isBackendConnected = false;
   bool _isSyncing = false;
+  bool _campaignsLoading = true;
+  bool _sponsorshipsLoading = true;
+  String? _campaignsError;
+  String? _sponsorshipsError;
   DateTime? _lastSyncTime;
 
   AppStateProvider() {
@@ -43,32 +62,63 @@ class AppStateProvider extends ChangeNotifier {
   List<Player> get players => _players;
   List<TrainingSession> get trainings => _trainings;
   List<SponsorCampaign> get campaigns => _campaigns;
+  List<Sponsorship> get sponsorships => _sponsorships;
+  bool get campaignsLoading => _campaignsLoading;
+  bool get sponsorshipsLoading => _sponsorshipsLoading;
+  String? get campaignsError => _campaignsError;
+  String? get sponsorshipsError => _sponsorshipsError;
   String get selectedPositionFilter => _selectedPositionFilter;
   String get searchQuery => _searchQuery;
-  Player? get selectedPlayer => _selectedPlayer ?? (_players.isNotEmpty ? _players.first : null);
+  Player? get selectedPlayer =>
+      _selectedPlayer ?? (_players.isNotEmpty ? _players.first : null);
   bool get isInitialized => _isInitialized;
   bool get isBackendConnected => _isBackendConnected;
   bool get isSyncing => _isSyncing;
   DateTime? get lastSyncTime => _lastSyncTime;
 
+  // Theme getters
+  ThemeMode get themeMode => _themeMode;
+  bool get isDarkMode => _themeMode == ThemeMode.dark;
+
+  // Profile getters
+  UserProfile get userProfile => _userProfile;
+  bool get isLoggedIn => _isLoggedIn;
+
   List<Player> get filteredPlayers {
     return _players.where((player) {
-      final matchesPosition = _selectedPositionFilter == 'All' ||
-          player.position.name.toLowerCase() == _selectedPositionFilter.toLowerCase();
-      final matchesSearch = player.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          player.nationality.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      final matchesPosition =
+          _selectedPositionFilter == 'All' ||
+          player.position.name.toLowerCase() ==
+              _selectedPositionFilter.toLowerCase();
+      final matchesSearch =
+          player.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          player.nationality.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ) ||
           player.number.toString().contains(_searchQuery);
       return matchesPosition && matchesSearch;
     }).toList();
   }
 
   double get totalMarketValue {
-    return _players.fold(0.0, (sum, p) => sum + p.currentMarketValue);
+    return _players.fold(0.0, (sum, player) => sum + player.currentMarketValue);
   }
 
-  // --- NẠP DỮ LIỆU ---
+  double get averageRating {
+    if (_players.isEmpty) return 0.0;
+    final total = _players.fold(
+      0.0,
+      (sum, player) => sum + player.overallRating,
+    );
+    return total / _players.length;
+  }
+
   Future<void> _loadAllData() async {
     try {
+      // 0. Load Theme and Profile
+      await _loadThemeModeFromLocalStorage();
+      await _loadUserProfile();
+
       // 1. Thử lấy Players từ Backend
       final backendPlayers = await ApiService.fetchPlayers();
       if (backendPlayers != null && backendPlayers.isNotEmpty) {
@@ -81,9 +131,9 @@ class AppStateProvider extends ChangeNotifier {
         await _loadPlayersFromLocalStorage();
       }
 
-      // 2. Nạp Trainings & Campaigns từ LocalStorage (nếu đã lưu tùy chỉnh)
+      // 2. Trainings remain local; commercial records are loaded from REST.
       await _loadTrainingsFromLocalStorage();
-      await _loadCampaignsFromLocalStorage();
+      await reloadCommercialData();
     } catch (e) {
       debugPrint('[AppState] Lỗi khởi tạo: $e');
       await _loadPlayersFromLocalStorage();
@@ -93,6 +143,72 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
+  // --- THEME MANAGEMENT ---
+  Future<void> _loadThemeModeFromLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final modeStr = prefs.getString(_themeModeStorageKey);
+      if (modeStr == 'light') {
+        _themeMode = ThemeMode.light;
+      } else {
+        _themeMode = ThemeMode.dark;
+      }
+    } catch (_) {}
+  }
+
+  Future<void> toggleTheme() async {
+    _themeMode = isDarkMode ? ThemeMode.light : ThemeMode.dark;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _themeModeStorageKey,
+        _themeMode == ThemeMode.light ? 'light' : 'dark',
+      );
+    } catch (_) {}
+  }
+
+  // --- USER PROFILE MANAGEMENT (SQL + LOCAL) ---
+  Future<void> _loadUserProfile() async {
+    try {
+      // Try fetching from SQL Backend first
+      final remoteProfile = await ApiService.fetchUserProfile();
+      if (remoteProfile != null) {
+        _userProfile = remoteProfile;
+        await _saveUserProfileToLocalStorage();
+        return;
+      }
+
+      // Fallback to local storage
+      final prefs = await SharedPreferences.getInstance();
+      final savedJson = prefs.getString(_userProfileStorageKey);
+      if (savedJson != null && savedJson.isNotEmpty) {
+        _userProfile = UserProfile.fromJson(jsonDecode(savedJson) as Map<String, dynamic>);
+      }
+    } catch (e) {
+      debugPrint('[AppState] Lỗi nạp user profile: $e');
+    }
+  }
+
+  Future<void> _saveUserProfileToLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userProfileStorageKey, jsonEncode(_userProfile.toJson()));
+    } catch (_) {}
+  }
+
+  Future<void> updateUserProfile(UserProfile updated) async {
+    _userProfile = updated;
+    notifyListeners();
+    await _saveUserProfileToLocalStorage();
+    await ApiService.updateUserProfile(updated);
+  }
+
+  Future<bool> changePassword(String currentPassword, String newPassword) async {
+    return await ApiService.changePassword(currentPassword, newPassword);
+  }
+
+  // --- PLAYERS MANAGEMENT ---
   Future<void> _loadPlayersFromLocalStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -138,8 +254,8 @@ class AppStateProvider extends ChangeNotifier {
   Future<void> _savePlayersToLocalStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final jsonList = _players.map((p) => p.toJson()).toList();
-      await prefs.setString(_playersStorageKey, jsonEncode(jsonList));
+      final encoded = jsonEncode(_players.map((p) => p.toJson()).toList());
+      await prefs.setString(_playersStorageKey, encoded);
 
       for (final p in _players) {
         if (p.avatarUrl.trim().isNotEmpty) {
@@ -157,7 +273,9 @@ class AppStateProvider extends ChangeNotifier {
       final savedJson = prefs.getString(_trainingsStorageKey);
       if (savedJson != null && savedJson.isNotEmpty) {
         final List<dynamic> list = jsonDecode(savedJson);
-        _trainings = list.map((e) => TrainingSession.fromJson(e as Map<String, dynamic>)).toList();
+        _trainings = list
+            .map((e) => TrainingSession.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
     } catch (_) {}
   }
@@ -165,8 +283,8 @@ class AppStateProvider extends ChangeNotifier {
   Future<void> _saveTrainingsToLocalStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final jsonList = _trainings.map((t) => t.toJson()).toList();
-      await prefs.setString(_trainingsStorageKey, jsonEncode(jsonList));
+      final encoded = jsonEncode(_trainings.map((t) => t.toJson()).toList());
+      await prefs.setString(_trainingsStorageKey, encoded);
     } catch (_) {}
   }
 
@@ -176,21 +294,95 @@ class AppStateProvider extends ChangeNotifier {
       final savedJson = prefs.getString(_campaignsStorageKey);
       if (savedJson != null && savedJson.isNotEmpty) {
         final List<dynamic> list = jsonDecode(savedJson);
-        _campaigns = list.map((e) => SponsorCampaign.fromJson(e as Map<String, dynamic>)).toList();
+        _campaigns = list
+            .map(
+              (item) =>
+                  SponsorCampaign.fromJson(
+                    Map<String, dynamic>.from(item as Map),
+                  ),
+            )
+            .toList();
+      } else {
+        _campaigns = List.from(MockData.sponsorCampaigns);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[AppState] Lỗi đọc campaigns local: $e');
+      _campaigns = List.from(MockData.sponsorCampaigns);
+    }
   }
 
   Future<void> _saveCampaignsToLocalStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final jsonList = _campaigns.map((c) => c.toJson()).toList();
-      await prefs.setString(_campaignsStorageKey, jsonEncode(jsonList));
+      final encoded = jsonEncode(_campaigns.map((c) => c.toJson()).toList());
+      await prefs.setString(_campaignsStorageKey, encoded);
     } catch (_) {}
   }
 
-  void setPositionFilter(String filter) {
-    _selectedPositionFilter = filter;
+  Future<void> _loadSponsorshipsFromLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedJson = prefs.getString(_sponsorshipsStorageKey);
+      if (savedJson != null && savedJson.isNotEmpty) {
+        final List<dynamic> list = jsonDecode(savedJson);
+        _sponsorships = list
+            .map(
+              (item) =>
+                  Sponsorship.fromJson(Map<String, dynamic>.from(item as Map)),
+            )
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('[AppState] Lỗi đọc sponsorship local: $e');
+    }
+  }
+
+  Future<void> _saveSponsorshipsToLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(_sponsorships.map((s) => s.toJson()).toList());
+      await prefs.setString(_sponsorshipsStorageKey, encoded);
+    } catch (_) {}
+  }
+
+  Future<void> reloadCommercialData() async {
+    await Future.wait([_reloadCampaigns(), _reloadSponsorships()]);
+  }
+
+  Future<void> _reloadCampaigns() async {
+    _campaignsLoading = true;
+    _campaignsError = null;
+    notifyListeners();
+    try {
+      _campaigns = await ApiService.fetchCampaigns();
+      await _saveCampaignsToLocalStorage();
+    } catch (error) {
+      await _loadCampaignsFromLocalStorage();
+      _campaignsError = error.toString();
+    } finally {
+      _campaignsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _reloadSponsorships() async {
+    _sponsorshipsLoading = true;
+    _sponsorshipsError = null;
+    notifyListeners();
+    try {
+      _sponsorships = await ApiService.fetchSponsorships();
+      await _saveSponsorshipsToLocalStorage();
+    } catch (error) {
+      await _loadSponsorshipsFromLocalStorage();
+      _sponsorshipsError = error.toString();
+    } finally {
+      _sponsorshipsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void setPositionFilter(String position) {
+    _selectedPositionFilter = position;
     notifyListeners();
   }
 
@@ -202,14 +394,6 @@ class AppStateProvider extends ChangeNotifier {
   void selectPlayer(Player player) {
     _selectedPlayer = player;
     notifyListeners();
-  }
-
-  // --- QUẢN LÝ CẦU THỦ (PLAYER CRUD & EDITING) ---
-  Future<void> addPlayer(Player player) async {
-    _players.add(player);
-    notifyListeners();
-    await _savePlayersToLocalStorage();
-    ApiService.addPlayer(player);
   }
 
   Future<void> updatePlayer(Player player) async {
@@ -225,7 +409,13 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  // Xóa cầu thủ (hỗ trợ hoàn tác và đồng bộ backend)
+  Future<void> addPlayer(Player player) async {
+    _players.insert(0, player);
+    notifyListeners();
+    await _savePlayersToLocalStorage();
+    ApiService.addPlayer(player);
+  }
+
   Future<Player?> deletePlayer(String id) async {
     final index = _players.indexWhere((p) => p.id == id);
     if (index == -1) return null;
@@ -243,7 +433,6 @@ class AppStateProvider extends ChangeNotifier {
     return removed;
   }
 
-  // Khôi phục lại cầu thủ vừa xóa (Hoàn tác)
   Future<void> restorePlayer(int index, Player player) async {
     if (index < 0 || index > _players.length) {
       _players.add(player);
@@ -255,13 +444,15 @@ class AppStateProvider extends ChangeNotifier {
     if (player.avatarUrl.trim().isNotEmpty) {
       try {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('lfc_avatar_${player.id}', player.avatarUrl.trim());
+        await prefs.setString(
+          'lfc_avatar_${player.id}',
+          player.avatarUrl.trim(),
+        );
       } catch (_) {}
     }
     ApiService.addPlayer(player);
   }
 
-  // --- QUẢN LÝ TRAINING (TRAINING CRUD & ATTENDANCE) ---
   Future<void> addTrainingSession(TrainingSession session) async {
     _trainings.insert(0, session);
     notifyListeners();
@@ -283,33 +474,36 @@ class AppStateProvider extends ChangeNotifier {
     await _saveTrainingsToLocalStorage();
   }
 
-  // Đổi trạng thái buổi tập (Upcoming -> Completed) và tự cộng chỉ số thể lực cho cầu thủ tham gia
   Future<void> completeTrainingSession(String id) async {
     final index = _trainings.indexWhere((t) => t.id == id);
     if (index != -1) {
       final current = _trainings[index];
       _trainings[index] = current.copyWith(status: 'Completed');
 
-      // Tăng nhẹ 0.5 chỉ số thể lực cho cầu thủ tham gia
       for (final playerId in current.playerIds) {
         final pIdx = _players.indexWhere((p) => p.id == playerId);
         if (pIdx != -1) {
           final p = _players[pIdx];
-          if (p.progressHistory.isNotEmpty) {
-            final latest = Map<String, double>.from(p.progressHistory.last.attributes);
-            if (latest.containsKey('Physical')) {
-              latest['Physical'] = (latest['Physical']! + 0.5).clamp(40.0, 99.0);
-            }
-            if (latest.containsKey('Stamina')) {
-              latest['Stamina'] = (latest['Stamina']! + 0.5).clamp(40.0, 99.0);
-            }
-            final updatedHist = List<PlayerStatistic>.from(p.progressHistory);
-            updatedHist[updatedHist.length - 1] = PlayerStatistic(
-              date: p.progressHistory.last.date,
-              attributes: latest,
-            );
-            _players[pIdx] = p.copyWith(progressHistory: updatedHist);
+          final newAttrs = Map<String, double>.from(p.attributes);
+          final oldStamina =
+              (newAttrs['stamina'] as num?)?.toDouble() ??
+              (newAttrs['physical'] as num?)?.toDouble() ??
+              80.0;
+          final updatedVal = min(99.0, oldStamina + 0.5);
+          if (newAttrs.containsKey('stamina')) {
+            newAttrs['stamina'] = updatedVal;
+          } else {
+            newAttrs['physical'] = updatedVal;
           }
+          final updatedHistory = List<PlayerStatistic>.from(p.progressHistory);
+          if (updatedHistory.isNotEmpty) {
+            final last = updatedHistory.removeLast();
+            updatedHistory.add(PlayerStatistic(date: last.date, attributes: newAttrs));
+          } else {
+            updatedHistory.add(PlayerStatistic(date: '2024-10', attributes: newAttrs));
+          }
+          _players[pIdx] = p.copyWith(progressHistory: updatedHistory);
+          ApiService.updatePlayer(_players[pIdx]);
         }
       }
       notifyListeners();
@@ -318,49 +512,78 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  // --- QUẢN LÝ COMMERCIAL (SPONSOR & ADIDAS CAMPAIGN CRUD) ---
   Future<void> addCampaign(SponsorCampaign campaign) async {
-    _campaigns.insert(0, campaign);
+    final created = await ApiService.addCampaign(campaign);
+    _campaigns.insert(0, created);
+    _campaignsError = null;
     notifyListeners();
     await _saveCampaignsToLocalStorage();
   }
 
   Future<void> updateCampaign(SponsorCampaign campaign) async {
-    final index = _campaigns.indexWhere((c) => c.id == campaign.id);
-    if (index != -1) {
-      _campaigns[index] = campaign;
-      notifyListeners();
-      await _saveCampaignsToLocalStorage();
+    final updated = await ApiService.updateCampaign(campaign);
+    final index = _campaigns.indexWhere((c) => c.id == updated.id);
+    if (index == -1) {
+      _campaigns.insert(0, updated);
+    } else {
+      _campaigns[index] = updated;
     }
-  }
-
-  Future<void> deleteCampaign(String id) async {
-    _campaigns.removeWhere((c) => c.id == id);
+    _campaignsError = null;
     notifyListeners();
     await _saveCampaignsToLocalStorage();
   }
 
-  // --- ĐỒNG BỘ THỜI GIAN THỰC TỪ TRỰC TIẾP (LIVE DATA SYNC) ---
-  // Tự động kết nối Backend hoặc mô phỏng cập nhật phong độ, giá trị thị trường và tình trạng chấn thương
+  Future<void> deleteCampaign(String id) async {
+    await ApiService.deleteCampaign(id);
+    _campaigns.removeWhere((c) => c.id == id);
+    _campaignsError = null;
+    notifyListeners();
+    await _saveCampaignsToLocalStorage();
+  }
+
+  Future<void> addSponsorship(Sponsorship sponsorship) async {
+    final saved = await ApiService.addSponsorship(sponsorship);
+    _sponsorships.insert(0, saved);
+    _sponsorshipsError = null;
+    notifyListeners();
+    await _saveSponsorshipsToLocalStorage();
+  }
+
+  Future<void> updateSponsorship(Sponsorship sponsorship) async {
+    final saved = await ApiService.updateSponsorship(sponsorship);
+    final index = _sponsorships.indexWhere((item) => item.id == saved.id);
+    if (index == -1) {
+      _sponsorships.insert(0, saved);
+    } else {
+      _sponsorships[index] = saved;
+    }
+    _sponsorshipsError = null;
+    notifyListeners();
+    await _saveSponsorshipsToLocalStorage();
+  }
+
+  Future<void> deleteSponsorship(String id) async {
+    await ApiService.deleteSponsorship(id);
+    _sponsorships.removeWhere((item) => item.id == id);
+    _sponsorshipsError = null;
+    notifyListeners();
+    await _saveSponsorshipsToLocalStorage();
+  }
+
   Future<void> syncRealtimeData() async {
     _isSyncing = true;
     notifyListeners();
-
     try {
-      // 1. Thử refresh từ Backend
       final backendPlayers = await ApiService.fetchPlayers();
       if (backendPlayers != null && backendPlayers.isNotEmpty) {
         _players = backendPlayers;
         _isBackendConnected = true;
       } else {
-        // 2. Mô phỏng cập nhật thuật toán thị trường & thể lực Premier League 2026/2027
-        await Future.delayed(const Duration(milliseconds: 1200));
-        final rng = Random();
+        final rand = Random();
         for (int i = 0; i < _players.length; i++) {
           final p = _players[i];
-          // Biến động giá trị thị trường nhỏ theo phong độ (-2M đến +3M)
-          final delta = (rng.nextDouble() * 5.0 - 2.0);
-          final newVal = (p.currentMarketValue + delta).clamp(10.0, 200.0);
+          final delta = (rand.nextDouble() * 3.0 - 1.2);
+          final newVal = max(5.0, p.currentMarketValue + delta);
           final roundedVal = double.parse(newVal.toStringAsFixed(1));
 
           final newHistory = List<MarketValuePoint>.from(p.marketValueHistory);
@@ -380,6 +603,7 @@ class AppStateProvider extends ChangeNotifier {
       }
       _lastSyncTime = DateTime.now();
       await _savePlayersToLocalStorage();
+      await reloadCommercialData();
     } catch (e) {
       debugPrint('[AppState] Lỗi sync: $e');
     } finally {
@@ -388,12 +612,75 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  // Khôi phục mặc định ban đầu
+  Future<bool> registerAccount({
+    required String fullName,
+    required String email,
+    required String password,
+    String role = 'Club Official',
+    String department = 'Executive Leadership',
+  }) async {
+    final registered = await ApiService.registerUser(
+      fullName: fullName,
+      email: email,
+      password: password,
+      role: role,
+      department: department,
+    );
+    if (registered != null) {
+      _userProfile = registered;
+    } else {
+      _userProfile = UserProfile(
+        id: 'usr_',
+        username: email.contains('@') ? email.split('@')[0] : email,
+        fullName: fullName,
+        email: email,
+        phone: '+44 151 263 2361',
+        role: role,
+        department: department,
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+        bio: 'Official Registered Member of Liverpool FC.',
+      );
+    }
+    _isLoggedIn = true;
+    notifyListeners();
+    await _saveUserProfileToLocalStorage();
+    return true;
+  }
+
+  Future<bool> loginWithGoogle({required String email, required String fullName}) async {
+    final user = await ApiService.loginWithGoogle(email: email, fullName: fullName);
+    if (user != null) {
+      _userProfile = user;
+    } else {
+      _userProfile = UserProfile(
+        id: 'usr_google_',
+        username: email.split('@')[0],
+        fullName: fullName,
+        email: email,
+        phone: '+1 (617) 226-6000',
+        role: 'Club Stakeholder & Official',
+        department: 'Liverpool FC Executive Management',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+        bio: 'Authenticated via Google / Gmail Account.',
+      );
+    }
+    _isLoggedIn = true;
+    notifyListeners();
+    await _saveUserProfileToLocalStorage();
+    return true;
+  }
+
+  Future<void> logout() async {
+    _isLoggedIn = false;
+    notifyListeners();
+  }
+
   Future<void> resetToDefaultMockData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_playersStorageKey);
     await prefs.remove(_trainingsStorageKey);
     await prefs.remove(_campaignsStorageKey);
+    await prefs.remove(_sponsorshipsStorageKey);
     for (final p in MockData.players) {
       await prefs.remove('lfc_avatar_${p.id}');
     }
@@ -405,7 +692,7 @@ class AppStateProvider extends ChangeNotifier {
       _players = List.from(MockData.players);
     }
     _trainings = _getDefaultTrainings();
-    _campaigns = List.from(MockData.sponsorCampaigns);
+    await reloadCommercialData();
     _selectedPlayer = _players.first;
     notifyListeners();
   }

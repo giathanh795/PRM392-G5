@@ -130,6 +130,16 @@ class Player {
     }
   }
 
+  int get overallRating {
+    if (progressHistory.isEmpty || latestAttributes.isEmpty) return 82;
+    final vals = latestAttributes.values;
+    if (vals.isEmpty) return 82;
+    final avg = vals.reduce((a, b) => a + b) / vals.length;
+    return avg.round();
+  }
+
+  Map<String, double> get attributes => latestAttributes;
+
   // Get current / latest attributes
   Map<String, double> get latestAttributes {
     if (progressHistory.isEmpty) return {};

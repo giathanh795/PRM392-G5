@@ -1,6 +1,6 @@
 {
-    "name": "liverpool_pms",
-    "short_name": "liverpool_pms",
+    "name": "Liverpool FC - Player Management System",
+    "short_name": "Liverpool FC",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

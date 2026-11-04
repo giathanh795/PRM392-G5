@@ -5,6 +5,7 @@ import '../../models/player.dart';
 import '../../providers/app_state_provider.dart';
 import '../../widgets/player_card_item.dart';
 import '../../widgets/delete_player_dialog.dart';
+import '../../widgets/player_form_dialog.dart';
 import 'player_detail_screen.dart';
 
 class PlayerListScreen extends StatelessWidget {
@@ -113,9 +114,47 @@ class PlayerListScreen extends StatelessWidget {
         title: const Text('Liverpool Squad'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.restart_alt_rounded),
-            tooltip: 'Khôi phục danh sách gốc',
-            onPressed: () => _showResetConfirmation(context),
+            icon: Icon(
+              state.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              color: state.isDarkMode ? AppTheme.accentGold : Colors.amber.shade700,
+            ),
+            tooltip: state.isDarkMode
+                ? 'Chuyển sang Giao diện Sáng'
+                : 'Chuyển sang Giao diện Tối',
+            onPressed: () => context.read<AppStateProvider>().toggleTheme(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_add_alt_1),
+            tooltip: 'Thêm cầu thủ mới',
+            onPressed: () => showPlayerFormDialog(context),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            color: AppTheme.surfaceNavy,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: AppTheme.borderSubtle),
+            ),
+            onSelected: (val) {
+              if (val == 'reset') {
+                _showResetConfirmation(context);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'reset',
+                child: Row(
+                  children: [
+                    Icon(Icons.restart_alt, size: 18, color: AppTheme.lfcYellow),
+                    SizedBox(width: 8),
+                    Text(
+                      'Khôi phục 25 cầu thủ gốc',
+                      style: TextStyle(fontSize: 13, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -174,7 +213,7 @@ class PlayerListScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Hiển thị ${state.filteredPlayers.length} cầu thủ',
+                  'Showing ${state.filteredPlayers.length} players',
                   style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
                 const Row(
@@ -188,12 +227,42 @@ class PlayerListScreen extends StatelessWidget {
             ),
           ),
 
-          // Player List View with Dismissible & Delete Action
+          // Player List View
           Expanded(
             child: state.filteredPlayers.isEmpty
-                ? const Center(
-                    child: Text('Không tìm thấy cầu thủ phù hợp.',
-                        style: TextStyle(color: AppTheme.textSecondary)),
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            state.players.isEmpty ? Icons.group_off_outlined : Icons.search_off,
+                            size: 56,
+                            color: AppTheme.textMuted,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            state.players.isEmpty
+                                ? 'Danh sách đội hình hiện đang trống.'
+                                : 'Không tìm thấy cầu thủ nào phù hợp.',
+                            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                          ),
+                          if (state.players.isEmpty) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.lfcRed,
+                                foregroundColor: Colors.white,
+                              ),
+                              icon: const Icon(Icons.restart_alt, size: 18),
+                              label: const Text('Khôi phục 25 cầu thủ gốc'),
+                              onPressed: () => context.read<AppStateProvider>().resetToDefaultMockData(),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   )
                 : ListView.builder(
                     itemCount: state.filteredPlayers.length,
@@ -280,6 +349,7 @@ class PlayerListScreen extends StatelessWidget {
                               ),
                             );
                           },
+                          onEdit: () => showPlayerFormDialog(context, player: player),
                           onDelete: () => _handleDeletePlayer(context, player),
                         ),
                       );

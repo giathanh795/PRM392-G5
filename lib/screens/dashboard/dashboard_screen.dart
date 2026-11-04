@@ -472,21 +472,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(4),
+              width: 32,
+              height: 32,
               decoration: const BoxDecoration(
-                color: AppTheme.lfcRed,
                 shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.sports_soccer,
-                size: 18,
                 color: Colors.white,
+              ),
+              padding: const EdgeInsets.all(2),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/liverpool.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.sports_soccer,
+                    size: 18,
+                    color: AppTheme.lfcRed,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             const Flexible(
               child: Text(
-                'Liverpool PMS',
+                'Liverpool FC - Player Management System',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
