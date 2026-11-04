@@ -677,7 +677,7 @@ class PlayerDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Ná»•i báº­t: PHÃ‚N TÃCH CHUYÃŠN MÃ”N & BIá»‚U Äá»’ RADAR (OWNER ANALYTICS CARD)
+            // Nổi bật: PHÂN TÍCH CHUYÊN MÔN & BIỂU ĐỒ RADAR (OWNER ANALYTICS CARD)
             InkWell(
               onTap: () {
                 Navigator.of(context).push(
@@ -737,7 +737,7 @@ class PlayerDetailScreen extends StatelessWidget {
                             children: [
                               Flexible(
                                 child: Text(
-                                  'PhÃ¢n TÃ­ch ChuyÃªn MÃ´n & Radar',
+                                  'Phân Tích Chuyên Môn & Radar',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w900,
@@ -768,7 +768,7 @@ class PlayerDetailScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Xem biá»ƒu Ä‘á»“ Ä‘a giÃ¡c cho ${currentPlayer.positionName} & nÃºt báº­t/táº¯t tiáº¿n Ä‘á»™ ká»¹ thuáº­t',
+                            'Xem biểu đồ đa giác cho ${currentPlayer.positionName} & nút bật/tắt tiến độ kỹ thuật',
                             style: TextStyle(
                               fontSize: 11,
                               color: AppTheme.subtextColor(context),
