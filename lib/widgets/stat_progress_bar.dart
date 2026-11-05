@@ -10,7 +10,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
+import '../core/theme/app_theme.dart';
 
 class StatProgressBar extends StatelessWidget {
   /// Tên thuộc tính kỹ năng (Ví dụ: 'Tốc độ', 'Dứt điểm', 'Phòng ngự')

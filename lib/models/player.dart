@@ -216,6 +216,18 @@ class Player {
     }
   }
 
+  /// Điểm chỉ số tổng quát (Overall Rating OVR) tính trung bình từ các chỉ số kỹ năng mới nhất
+  int get overallRating {
+    if (progressHistory.isEmpty || latestAttributes.isEmpty) return 82;
+    final vals = latestAttributes.values;
+    if (vals.isEmpty) return 82;
+    final avg = vals.reduce((a, b) => a + b) / vals.length;
+    return avg.round();
+  }
+
+  /// Thuộc tính kỹ thuật viết tắt trả về latestAttributes
+  Map<String, double> get attributes => latestAttributes;
+
   /// Lấy bản ghi chỉ số kỹ năng mới nhất của cầu thủ (phục vụ hiển thị biểu đồ Radar / Thanh tiến trình)
   Map<String, double> get latestAttributes {
     if (progressHistory.isEmpty) return {};

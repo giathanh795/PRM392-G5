@@ -1,5 +1,6 @@
 import '../models/player.dart';
 import '../models/training_session.dart';
+import 'training_schedule_data.dart';
 import '../models/sponsor_campaign.dart';
 
 class MockData {
@@ -688,58 +689,45 @@ class MockData {
       ],
       mediaList: [],
     ),
+    Player(
+      id: 'p26',
+      name: 'Lewis Koumas',
+      number: 67,
+      position: PlayerPosition.forward,
+      nationality: 'Wales',
+      dateOfBirth: '2005-09-19',
+      preferredFoot: 'Right',
+      height: '181 cm',
+      weight: '72 kg',
+      contractUntil: '2029-06-30',
+      avatarUrl: 'assets/images/koumas.jpg',
+      currentMarketValue: 10.0,
+      previousMarketValue: 6.0,
+      status: 'Active',
+      sponsorPartner: 'Adidas',
+      progressHistory: [
+        PlayerStatistic(date: 'Jul', attributes: {'Pace': 84.0, 'Shooting': 78.0, 'Passing': 73.0, 'Dribbling': 81.0, 'Physical': 72.0, 'Stamina': 79.0}),
+        PlayerStatistic(date: 'Aug', attributes: {'Pace': 85.0, 'Shooting': 79.0, 'Passing': 74.0, 'Dribbling': 82.0, 'Physical': 73.0, 'Stamina': 80.0}),
+        PlayerStatistic(date: 'Sep', attributes: {'Pace': 86.0, 'Shooting': 80.0, 'Passing': 75.0, 'Dribbling': 83.0, 'Physical': 74.0, 'Stamina': 81.0}),
+        PlayerStatistic(date: 'Oct', attributes: {'Pace': 87.0, 'Shooting': 81.0, 'Passing': 76.0, 'Dribbling': 84.0, 'Physical': 75.0, 'Stamina': 82.0}),
+      ],
+      marketValueHistory: [
+        MarketValuePoint(date: 'Jul', valueInMillionsEuro: 6.0),
+        MarketValuePoint(date: 'Oct', valueInMillionsEuro: 10.0),
+      ],
+      mediaList: [
+        PlayerMediaItem(
+          id: 'm_koumas',
+          title: 'Lewis Koumas Hat-trick & Breakthrough Moments',
+          type: 'video',
+          url: 'assets/images/koumas.jpg',
+          date: '2026-09-20',
+        ),
+      ],
+    ),
   ];
 
-  static List<TrainingSession> trainingSessions = [
-    TrainingSession(
-      id: 't1',
-      title: 'High Intensity Gym & Strength Conditioning',
-      date: '2026-10-12',
-      startTime: '09:00',
-      endTime: '10:30',
-      type: 'Gym',
-      location: 'AXA Training Centre - Indoor Gym',
-      coach: 'Andreas Kornmayer',
-      description: 'Core stability, hamstring injury prevention & upper body explosive power.',
-      status: 'In Progress',
-    ),
-    TrainingSession(
-      id: 't2',
-      title: 'Tactical Pressing & Rapid Vertical Transitions',
-      date: '2026-10-12',
-      startTime: '11:00',
-      endTime: '12:45',
-      type: 'Tactical',
-      location: 'AXA Training Centre - Pitch 1',
-      coach: 'Andoni Iraola',
-      description: 'High-intensity press triggers, half-space overloads & Isak-Wirtz linkups.',
-      status: 'Upcoming',
-    ),
-    TrainingSession(
-      id: 't3',
-      title: 'Recovery & Cryotherapy / Physiotherapy',
-      date: '2026-10-12',
-      startTime: '15:00',
-      endTime: '16:30',
-      type: 'Recovery',
-      location: 'Hydrotherapy & Recovery Suite',
-      coach: 'Dr. Jonathan Power',
-      description: 'Ice baths, deep-tissue massage and mobility stretching routines.',
-      status: 'Upcoming',
-    ),
-    TrainingSession(
-      id: 't4',
-      title: 'Pre-Match 11v11 Simulation & Set Pieces',
-      date: '2026-10-13',
-      startTime: '10:00',
-      endTime: '11:30',
-      type: 'Match Prep',
-      location: 'Anfield Stadium Pitch',
-      coach: 'Andoni Iraola',
-      description: 'Defensive box marking & attacking corner kicks routines.',
-      status: 'Upcoming',
-    ),
-  ];
+  static List<TrainingSession> trainingSessions = TrainingScheduleData.sessions;
 
   static List<SponsorCampaign> sponsorCampaigns = [
     SponsorCampaign(

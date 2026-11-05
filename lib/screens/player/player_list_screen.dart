@@ -150,6 +150,16 @@ class PlayerListScreen extends StatelessWidget {
         actions: [
           // Nút mở Dialog Thêm mới cầu thủ (Create)
           IconButton(
+            icon: Icon(
+              state.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              color: state.isDarkMode ? AppTheme.accentGold : Colors.amber.shade700,
+            ),
+            tooltip: state.isDarkMode
+                ? 'Chuyển sang Giao diện Sáng'
+                : 'Chuyển sang Giao diện Tối',
+            onPressed: () => context.read<AppStateProvider>().toggleTheme(),
+          ),
+          IconButton(
             icon: const Icon(Icons.person_add_alt_1),
             tooltip: 'Thêm cầu thủ mới',
             onPressed: () => showPlayerFormDialog(context),

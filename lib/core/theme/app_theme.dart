@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Brand Colors - Deep Navy Blue (Xanh nước biển đậm) as main, with Liverpool Gold/Teal/Red accents
-  static const Color primaryNavy = Color(0xFF0A192F);       // Deep Navy background (Xanh nước biển đậm)
+  // Brand Colors - Deep Navy Blue as main, with Liverpool Gold/Teal/Red accents
+  static const Color primaryNavy = Color(0xFF0A192F);       // Deep Navy background
   static const Color surfaceNavy = Color(0xFF112240);       // Surface / Card Deep Navy
   static const Color surfaceNavyLight = Color(0xFF1E3A5F);  // Elevated Surface Navy Light
   
-  // Backwards compatible aliases mapping to Deep Navy surfaces
+  // Light Mode Colors
+  static const Color primaryLightBg = Color(0xFFF1F5F9);    // Clean Slate 100
+  static const Color surfaceLight = Color(0xFFFFFFFF);      // Pure White Card
+  static const Color surfaceLightElevated = Color(0xFFE2E8F0); // Slate 200
+  static const Color textDarkPrimary = Color(0xFF0F172A);   // Deep Slate 900
+  static const Color textDarkSecondary = Color(0xFF475569); // Slate 600
+  static const Color borderLight = Color(0xFFCBD5E1);       // Slate 300
+
+  // Backwards compatible aliases
   static const Color bgDark = primaryNavy;
   static const Color bgCard = surfaceNavy;
   static const Color bgCardLight = surfaceNavyLight;
@@ -17,7 +25,8 @@ class AppTheme {
   // Accents & Brand Elements
   static const Color lfcRed = Color(0xFFE63946);           // Signature LFC Red highlight
   static const Color lfcDarkRed = Color(0xFF9B0A22);
-  static const Color lfcYellow = Color(0xFFFFD166);        // Gold / Yellow highlight
+  static const Color lfcYellow = Color(0xFFFFD166);
+  static const Color accentGold = Color(0xFFFFD166);        // Gold / Yellow highlight
   static const Color lfcTeal = Color(0xFF00B2A9);          // Liverpool Liverbird Teal
   
   // Text colors
@@ -32,6 +41,15 @@ class AppTheme {
   static const Color danger = Color(0xFFEF4444);
   static const Color info = Color(0xFF38BDF8);
   static const Color adidasBlack = Color(0xFF0B0F17);
+
+  // Dynamic Theme Helpers
+  static bool isDark(BuildContext context) => Theme.of(context).brightness == Brightness.dark;
+  static Color cardColor(BuildContext context) => isDark(context) ? surfaceNavy : surfaceLight;
+  static Color bgColor(BuildContext context) => isDark(context) ? primaryNavy : primaryLightBg;
+  static Color textColor(BuildContext context) => isDark(context) ? textPrimary : textDarkPrimary;
+  static Color subtextColor(BuildContext context) => isDark(context) ? textSecondary : textDarkSecondary;
+  static Color borderColor(BuildContext context) => isDark(context) ? borderSubtle : borderLight;
+  static Color surfaceLightColor(BuildContext context) => isDark(context) ? surfaceNavyLight : surfaceLightElevated;
 
   static ThemeData get darkTheme {
     return ThemeData(
@@ -105,6 +123,85 @@ class AppTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: accentCyan, width: 1.5),
+        ),
+        hintStyle: const TextStyle(color: textMuted, fontSize: 14),
+      ),
+    );
+  }
+
+  static ThemeData get lightTheme {
+    return ThemeData(
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: primaryLightBg,
+      primaryColor: lfcRed,
+      colorScheme: const ColorScheme.light(
+        primary: lfcRed,
+        secondary: lfcTeal,
+        surface: surfaceLight,
+        error: danger,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+        onSurface: textDarkPrimary,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: surfaceLight,
+        elevation: 0.5,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          color: textDarkPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+        iconTheme: IconThemeData(color: textDarkPrimary),
+      ),
+      cardTheme: CardThemeData(
+        color: surfaceLight,
+        elevation: 2,
+        shadowColor: Colors.black.withValues(alpha: 0.05),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: borderLight, width: 1.0),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: surfaceLightElevated,
+        selectedColor: lfcRed.withValues(alpha: 0.15),
+        secondarySelectedColor: lfcRed,
+        labelStyle: const TextStyle(fontSize: 12, color: textDarkPrimary),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      navigationRailTheme: const NavigationRailThemeData(
+        backgroundColor: surfaceLight,
+        selectedIconTheme: IconThemeData(color: lfcRed),
+        unselectedIconTheme: IconThemeData(color: textDarkSecondary),
+        selectedLabelTextStyle: TextStyle(
+          color: lfcRed,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
+        unselectedLabelTextStyle: TextStyle(
+          color: textDarkSecondary,
+          fontSize: 12,
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: borderLight),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: borderLight),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: lfcRed, width: 1.5),
         ),
         hintStyle: const TextStyle(color: textMuted, fontSize: 14),
       ),

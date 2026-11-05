@@ -13,7 +13,7 @@
 
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
+import '../core/theme/app_theme.dart';
 
 class RadarChartWidget extends StatelessWidget {
   /// Bộ thuộc tính kỹ năng dạng Map: {Tên thuộc tính: Điểm số}

@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -708,39 +708,139 @@ class PlayerDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Quick Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accentBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    icon: const Icon(Icons.radar),
-                    label: const Text('Radar & Chỉ Số'),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => PlayerStatsScreen(player: currentPlayer),
-                        ),
-                      );
-                    },
+            // Nổi bật: PHÂN TÍCH CHUYÊN MÔN & BIỂU ĐỒ RADAR (OWNER ANALYTICS CARD)
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PlayerStatsScreen(player: currentPlayer),
                   ),
+                );
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: AppTheme.isDark(context)
+                        ? [
+                            const Color(0xFF1E3A5F),
+                            const Color(0xFF0F2744),
+                          ]
+                        : [
+                            const Color(0xFFEFF6FF),
+                            Colors.white,
+                          ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppTheme.accentCyan.withValues(alpha: 0.6),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.accentCyan.withValues(alpha: 0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.textPrimary,
-                      side: const BorderSide(color: AppTheme.borderSubtle),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppTheme.accentCyan.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.accentCyan, width: 1.5),
+                      ),
+                      child: const Icon(Icons.radar, color: AppTheme.accentCyan, size: 26),
                     ),
-                    icon: const Icon(Icons.monetization_on, color: AppTheme.lfcYellow),
-                    label: Text('€${currentPlayer.currentMarketValue.toStringAsFixed(0)}M Value'),
-                    onPressed: () {},
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  'Phân Tích Chuyên Môn & Radar',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppTheme.textColor(context),
+                                    letterSpacing: 0.2,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.accentCyan.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'RADAR 6-AXIS',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.accentCyan,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Xem biểu đồ đa giác cho ${currentPlayer.positionName} & nút bật/tắt tiến độ kỹ thuật',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.subtextColor(context),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accentCyan.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.arrow_forward_ios, size: 13, color: AppTheme.accentCyan),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            // Bio & Contract Information
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Profile & Contract Information',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                ),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.accentCyan,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    visualDensity: VisualDensity.compact,
                   ),
+                  icon: const Icon(Icons.edit, size: 14),
+                  label: const Text('Chỉnh sửa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  onPressed: () => showPlayerFormDialog(context, player: currentPlayer),
                 ),
               ],
             ),

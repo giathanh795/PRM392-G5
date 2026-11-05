@@ -1,182 +1,401 @@
 import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/player.dart';
 import '../models/training_session.dart';
 import '../models/sponsor_campaign.dart';
+import '../models/sponsorship.dart';
+import '../models/user_profile.dart';
 import '../data/mock_data.dart';
+import '../data/training_schedule_data.dart';
+import '../services/api_service.dart';
 
-/// ============================================================================
-/// APP STATE PROVIDER: QUẢN LÝ TRẠNG THÁI TOÀN CỤC CỦA ỨNG DỤNG (STATE MANAGEMENT)
-/// ============================================================================
-/// Lớp này kế thừa ChangeNotifier để lắng nghe và thông báo cho toàn bộ Widget
-/// khi có sự thay đổi dữ liệu (Thêm, Sửa, Xóa, Tìm kiếm, Lọc cầu thủ).
-/// Đồng thời chịu trách nhiệm lưu trữ và phục hồi dữ liệu từ SharedPreferences.
 class AppStateProvider extends ChangeNotifier {
-  // Khóa định danh dùng để lưu danh sách cầu thủ dạng JSON trong bộ nhớ máy
   static const String _playersStorageKey = 'lfc_players_data_v1';
-  
-  // Danh sách cầu thủ nội bộ trong bộ nhớ RAM
+  static const String _trainingsStorageKey = 'lfc_trainings_data_v1';
+  static const String _campaignsStorageKey = 'lfc_campaigns_data_v1';
+  static const String _sponsorshipsStorageKey = 'lfc_sponsorships_data_v1';
+  static const String _themeModeStorageKey = 'lfc_theme_mode_v1';
+  static const String _userProfileStorageKey = 'lfc_user_profile_data_v1';
+
+  static List<TrainingSession> _getDefaultTrainings() {
+    final list = List<TrainingSession>.from(TrainingScheduleData.sessions);
+    for (final s in MockData.trainingSessions) {
+      if (!list.any((e) => e.id == s.id)) {
+        list.add(s);
+      }
+    }
+    return list;
+  }
+
   List<Player> _players = List.from(MockData.players);
-  final List<TrainingSession> _trainings = List.from(MockData.trainingSessions);
-  final List<SponsorCampaign> _campaigns = List.from(MockData.sponsorCampaigns);
-  
-  // Trạng thái tìm kiếm và bộ lọc vị trí
+  List<TrainingSession> _trainings = _getDefaultTrainings();
+  List<SponsorCampaign> _campaigns = [];
+  List<Sponsorship> _sponsorships = [];
+
+  // Theme Mode (Dark / Light)
+  ThemeMode _themeMode = ThemeMode.dark;
+
+  // Logged-in User Profile
+  UserProfile _userProfile = UserProfile.defaultProfile();
+  bool _isLoggedIn = false;
+
   String _selectedPositionFilter = 'All';
   String _searchQuery = '';
   Player? _selectedPlayer;
   bool _isInitialized = false;
+  bool _isBackendConnected = false;
+  bool _isSyncing = false;
+  bool _campaignsLoading = true;
+  bool _sponsorshipsLoading = true;
+  String? _campaignsError;
+  String? _sponsorshipsError;
+  DateTime? _lastSyncTime;
 
-  /// KHỞI TẠO: Tự động gọi hàm nạp dữ liệu từ bộ nhớ SharedPreferences khi Provider được dựng
   AppStateProvider() {
-    _loadPlayersFromStorage();
+    _loadAllData();
   }
 
-  // --- GETTERS: Các hàm lấy dữ liệu ra ngoài cho UI tiêu thụ ---
   List<Player> get players => _players;
   List<TrainingSession> get trainings => _trainings;
   List<SponsorCampaign> get campaigns => _campaigns;
+  List<Sponsorship> get sponsorships => _sponsorships;
+  bool get campaignsLoading => _campaignsLoading;
+  bool get sponsorshipsLoading => _sponsorshipsLoading;
+  String? get campaignsError => _campaignsError;
+  String? get sponsorshipsError => _sponsorshipsError;
   String get selectedPositionFilter => _selectedPositionFilter;
   String get searchQuery => _searchQuery;
-  Player? get selectedPlayer => _selectedPlayer ?? (_players.isNotEmpty ? _players.first : null);
+  Player? get selectedPlayer =>
+      _selectedPlayer ?? (_players.isNotEmpty ? _players.first : null);
   bool get isInitialized => _isInitialized;
+  bool get isBackendConnected => _isBackendConnected;
+  bool get isSyncing => _isSyncing;
+  DateTime? get lastSyncTime => _lastSyncTime;
 
-  /// LUỒNG LỌC & TÌM KIẾM DỮ LIỆU THỜI GIAN THỰC (Real-time Filtering):
-  /// - Lọc theo tuyến thi đấu (Forward, Midfielder, Defender, Goalkeeper hoặc All)
-  /// - Tìm kiếm theo tên cầu thủ, quốc tịch hoặc số áo
+  // Theme getters
+  ThemeMode get themeMode => _themeMode;
+  bool get isDarkMode => _themeMode == ThemeMode.dark;
+
+  // Profile getters
+  UserProfile get userProfile => _userProfile;
+  bool get isLoggedIn => _isLoggedIn;
+
   List<Player> get filteredPlayers {
     return _players.where((player) {
-      final matchesPosition = _selectedPositionFilter == 'All' ||
-          player.position.name.toLowerCase() == _selectedPositionFilter.toLowerCase();
-      final matchesSearch = player.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          player.nationality.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      final matchesPosition =
+          _selectedPositionFilter == 'All' ||
+          player.position.name.toLowerCase() ==
+              _selectedPositionFilter.toLowerCase();
+      final matchesSearch =
+          player.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          player.nationality.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ) ||
           player.number.toString().contains(_searchQuery);
       return matchesPosition && matchesSearch;
     }).toList();
   }
 
-  /// Tính tổng giá trị chuyển nhượng của cả đội hình
   double get totalMarketValue {
-    return _players.fold(0.0, (sum, p) => sum + p.currentMarketValue);
+    return _players.fold(0.0, (sum, player) => sum + player.currentMarketValue);
   }
 
-  /// LUỒNG 1: NẠP DỮ LIỆU TỪ BỘ NHỚ MÁY (SharedPreferences)
-  /// - Kiểm tra khóa lưu trữ `_playersStorageKey`
-  /// - Nếu có dữ liệu đã lưu: Giải mã JSON thành danh sách Player
-  /// - Nếu chưa từng lưu (lần đầu mở app): Lấy dữ liệu mặc định từ MockData
-  /// - Nạp lại avatar tùy chỉnh của từng cầu thủ
-  /// - Báo cho UI dựng lại màn hình bằng notifyListeners()
-  Future<void> _loadPlayersFromStorage() async {
+  double get averageRating {
+    if (_players.isEmpty) return 0.0;
+    final total = _players.fold(
+      0.0,
+      (sum, player) => sum + player.overallRating,
+    );
+    return total / _players.length;
+  }
+
+  Future<void> _loadAllData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      // 0. Load Theme and Profile
+      await _loadThemeModeFromLocalStorage();
+      await _loadUserProfile();
 
-      final savedJson = prefs.getString(_playersStorageKey);
-      List<Player> loadedList = [];
-
-      // 1. Phục hồi từ danh sách JSON đã lưu (nếu có)
-      if (savedJson != null && savedJson.isNotEmpty) {
-        try {
-          final List<dynamic> decodedList = jsonDecode(savedJson);
-          for (final item in decodedList) {
-            try {
-              if (item is Map<String, dynamic>) {
-                loadedList.add(Player.fromJson(item));
-              } else if (item is Map) {
-                loadedList.add(Player.fromJson(Map<String, dynamic>.from(item)));
-              }
-            } catch (err) {
-              debugPrint('Error decoding individual player: $err');
-            }
-          }
-        } catch (jsonErr) {
-          debugPrint('Error parsing saved players json: $jsonErr');
-        }
+      // 1. Thử lấy Players từ Backend
+      final backendPlayers = await ApiService.fetchPlayers();
+      if (backendPlayers != null && backendPlayers.isNotEmpty) {
+        _players = backendPlayers;
+        _isBackendConnected = true;
+        _lastSyncTime = DateTime.now();
+        await _savePlayersToLocalStorage();
+      } else {
+        _isBackendConnected = false;
+        await _loadPlayersFromLocalStorage();
       }
 
-      // Nếu chưa có dữ liệu lưu trữ, khởi tạo từ MockData mặc định
-      if (loadedList.isEmpty && (savedJson == null || savedJson.isEmpty)) {
-        loadedList = List.from(MockData.players);
-      }
-
-      // 2. Phục hồi avatar riêng cho từng cầu thủ (bảo đảm 100% không bao giờ mất sau khi restart)
-      for (int i = 0; i < loadedList.length; i++) {
-        final p = loadedList[i];
-        final savedAvatar = prefs.getString('lfc_avatar_${p.id}');
-        if (savedAvatar != null && savedAvatar.trim().isNotEmpty) {
-          loadedList[i] = p.copyWith(avatarUrl: savedAvatar.trim());
-        }
-      }
-
-      _players = loadedList;
-      if (_selectedPlayer != null) {
-        _selectedPlayer = _players.firstWhere(
-          (p) => p.id == _selectedPlayer!.id,
-          orElse: () => _players.isNotEmpty ? _players.first : null as dynamic,
-        );
-      }
+      // 2. Trainings remain local; commercial records are loaded from REST.
+      await _loadTrainingsFromLocalStorage();
+      await reloadCommercialData();
     } catch (e) {
-      debugPrint('Error loading saved players: $e');
+      debugPrint('[AppState] Lỗi khởi tạo: $e');
+      await _loadPlayersFromLocalStorage();
     } finally {
       _isInitialized = true;
       notifyListeners();
     }
   }
 
-  /// LUỒNG 2: LƯU TRỮ DỮ LIỆU VÀO BỘ NHỚ MÁY (SharedPreferences)
-  /// - Chuyển toàn bộ danh sách `_players` sang dạng chuỗi JSON
-  /// - Ghi vào bộ nhớ máy để bảo đảm khi tắt/mở lại app dữ liệu vẫn nguyên vẹn
-  Future<void> _savePlayersToStorage() async {
+  // --- THEME MANAGEMENT ---
+  Future<void> _loadThemeModeFromLocalStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
-      // Lưu toàn bộ danh sách cầu thủ dạng JSON
-      final jsonList = _players.map((p) => p.toJson()).toList();
-      await prefs.setString(_playersStorageKey, jsonEncode(jsonList));
+      final modeStr = prefs.getString(_themeModeStorageKey);
+      if (modeStr == 'light') {
+        _themeMode = ThemeMode.light;
+      } else {
+        _themeMode = ThemeMode.dark;
+      }
+    } catch (_) {}
+  }
 
-      // Lưu avatar riêng của từng cầu thủ để bảo đảm không bao giờ mất
+  Future<void> toggleTheme() async {
+    _themeMode = isDarkMode ? ThemeMode.light : ThemeMode.dark;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _themeModeStorageKey,
+        _themeMode == ThemeMode.light ? 'light' : 'dark',
+      );
+    } catch (_) {}
+  }
+
+  // --- USER PROFILE MANAGEMENT (SQL + LOCAL) ---
+  Future<void> _loadUserProfile() async {
+    try {
+      // Try fetching from SQL Backend first
+      final remoteProfile = await ApiService.fetchUserProfile();
+      if (remoteProfile != null) {
+        _userProfile = remoteProfile;
+        await _saveUserProfileToLocalStorage();
+        return;
+      }
+
+      // Fallback to local storage
+      final prefs = await SharedPreferences.getInstance();
+      final savedJson = prefs.getString(_userProfileStorageKey);
+      if (savedJson != null && savedJson.isNotEmpty) {
+        _userProfile = UserProfile.fromJson(jsonDecode(savedJson) as Map<String, dynamic>);
+      }
+    } catch (e) {
+      debugPrint('[AppState] Lỗi nạp user profile: $e');
+    }
+  }
+
+  Future<void> _saveUserProfileToLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userProfileStorageKey, jsonEncode(_userProfile.toJson()));
+    } catch (_) {}
+  }
+
+  Future<void> updateUserProfile(UserProfile updated) async {
+    _userProfile = updated;
+    notifyListeners();
+    await _saveUserProfileToLocalStorage();
+    await ApiService.updateUserProfile(updated);
+  }
+
+  Future<bool> changePassword(String currentPassword, String newPassword) async {
+    return await ApiService.changePassword(currentPassword, newPassword);
+  }
+
+  // --- PLAYERS MANAGEMENT ---
+  Future<void> _loadPlayersFromLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final Map<String, Player> playerMap = {
+        for (var p in MockData.players) p.id: p,
+      };
+
+      final savedJson = prefs.getString(_playersStorageKey);
+      if (savedJson != null && savedJson.isNotEmpty) {
+        final List<dynamic> decodedList = jsonDecode(savedJson);
+        for (final item in decodedList) {
+          try {
+            if (item is Map<String, dynamic>) {
+              final p = Player.fromJson(item);
+              playerMap[p.id] = p;
+            } else if (item is Map) {
+              final p = Player.fromJson(Map<String, dynamic>.from(item));
+              playerMap[p.id] = p;
+            }
+          } catch (_) {}
+        }
+      }
+
+      for (final id in playerMap.keys) {
+        final savedAvatar = prefs.getString('lfc_avatar_$id');
+        if (savedAvatar != null && savedAvatar.trim().isNotEmpty) {
+          playerMap[id] = playerMap[id]!.copyWith(avatarUrl: savedAvatar.trim());
+        }
+      }
+
+      _players = playerMap.values.toList();
+      if (_selectedPlayer != null) {
+        _selectedPlayer = _players.firstWhere(
+          (p) => p.id == _selectedPlayer!.id,
+          orElse: () => _players.first,
+        );
+      }
+    } catch (e) {
+      debugPrint('[AppState] Lỗi đọc players local: $e');
+    }
+  }
+
+  Future<void> _savePlayersToLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(_players.map((p) => p.toJson()).toList());
+      await prefs.setString(_playersStorageKey, encoded);
+
       for (final p in _players) {
         if (p.avatarUrl.trim().isNotEmpty) {
           await prefs.setString('lfc_avatar_${p.id}', p.avatarUrl.trim());
         }
       }
     } catch (e) {
-      debugPrint('Error saving players to storage: $e');
+      debugPrint('[AppState] Lỗi ghi players local: $e');
     }
   }
 
-  /// Cập nhật bộ lọc vị trí thi đấu và thông báo cho giao diện vẽ lại
-  void setPositionFilter(String filter) {
-    _selectedPositionFilter = filter;
+  Future<void> _loadTrainingsFromLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedJson = prefs.getString(_trainingsStorageKey);
+      if (savedJson != null && savedJson.isNotEmpty) {
+        final List<dynamic> list = jsonDecode(savedJson);
+        _trainings = list
+            .map((e) => TrainingSession.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveTrainingsToLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(_trainings.map((t) => t.toJson()).toList());
+      await prefs.setString(_trainingsStorageKey, encoded);
+    } catch (_) {}
+  }
+
+  Future<void> _loadCampaignsFromLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedJson = prefs.getString(_campaignsStorageKey);
+      if (savedJson != null && savedJson.isNotEmpty) {
+        final List<dynamic> list = jsonDecode(savedJson);
+        _campaigns = list
+            .map(
+              (item) =>
+                  SponsorCampaign.fromJson(
+                    Map<String, dynamic>.from(item as Map),
+                  ),
+            )
+            .toList();
+      } else {
+        _campaigns = List.from(MockData.sponsorCampaigns);
+      }
+    } catch (e) {
+      debugPrint('[AppState] Lỗi đọc campaigns local: $e');
+      _campaigns = List.from(MockData.sponsorCampaigns);
+    }
+  }
+
+  Future<void> _saveCampaignsToLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(_campaigns.map((c) => c.toJson()).toList());
+      await prefs.setString(_campaignsStorageKey, encoded);
+    } catch (_) {}
+  }
+
+  Future<void> _loadSponsorshipsFromLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedJson = prefs.getString(_sponsorshipsStorageKey);
+      if (savedJson != null && savedJson.isNotEmpty) {
+        final List<dynamic> list = jsonDecode(savedJson);
+        _sponsorships = list
+            .map(
+              (item) =>
+                  Sponsorship.fromJson(Map<String, dynamic>.from(item as Map)),
+            )
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('[AppState] Lỗi đọc sponsorship local: $e');
+    }
+  }
+
+  Future<void> _saveSponsorshipsToLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(_sponsorships.map((s) => s.toJson()).toList());
+      await prefs.setString(_sponsorshipsStorageKey, encoded);
+    } catch (_) {}
+  }
+
+  Future<void> reloadCommercialData() async {
+    await Future.wait([_reloadCampaigns(), _reloadSponsorships()]);
+  }
+
+  Future<void> _reloadCampaigns() async {
+    _campaignsLoading = true;
+    _campaignsError = null;
+    notifyListeners();
+    try {
+      _campaigns = await ApiService.fetchCampaigns();
+      await _saveCampaignsToLocalStorage();
+    } catch (error) {
+      await _loadCampaignsFromLocalStorage();
+      _campaignsError = error.toString();
+    } finally {
+      _campaignsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _reloadSponsorships() async {
+    _sponsorshipsLoading = true;
+    _sponsorshipsError = null;
+    notifyListeners();
+    try {
+      _sponsorships = await ApiService.fetchSponsorships();
+      await _saveSponsorshipsToLocalStorage();
+    } catch (error) {
+      await _loadSponsorshipsFromLocalStorage();
+      _sponsorshipsError = error.toString();
+    } finally {
+      _sponsorshipsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void setPositionFilter(String position) {
+    _selectedPositionFilter = position;
     notifyListeners();
   }
 
-  /// Cập nhật từ khóa tìm kiếm và thông báo cho giao diện vẽ lại
   void setSearchQuery(String query) {
     _searchQuery = query;
     notifyListeners();
   }
 
-  /// Chọn một cầu thủ cụ thể làm cầu thủ tiêu điểm
   void selectPlayer(Player player) {
     _selectedPlayer = player;
     notifyListeners();
   }
 
-  /// LUỒNG 3: THÊM MỚI CẦU THỦ (CREATE)
-  /// - Đưa đối tượng Player mới vào danh sách `_players`
-  /// - Kích hoạt `notifyListeners()` để UI cập nhật thẻ mới
-  /// - Đồng bộ lưu dữ liệu xuống bộ nhớ SharedPreferences
-  Future<void> addPlayer(Player player) async {
-    _players.add(player);
-    notifyListeners();
-    await _savePlayersToStorage();
-  }
-
-  /// LUỒNG 4: CẬP NHẬT / CHỈNH SỬA THÔNG TIN CẦU THỦ (UPDATE)
-  /// - Tìm vị trí index của cầu thủ theo ID
-  /// - Ghi đè thông tin mới lên vị trí đó
-  /// - Kích hoạt `notifyListeners()` để màn hình chi tiết và danh sách cập nhật
-  /// - Đồng bộ lưu dữ liệu xuống bộ nhớ SharedPreferences
   Future<void> updatePlayer(Player player) async {
     final index = _players.indexWhere((p) => p.id == player.id);
     if (index != -1) {
@@ -185,15 +404,18 @@ class AppStateProvider extends ChangeNotifier {
         _selectedPlayer = player;
       }
       notifyListeners();
-      await _savePlayersToStorage();
+      await _savePlayersToLocalStorage();
+      ApiService.updatePlayer(player);
     }
   }
 
-  /// LUỒNG 5: XÓA CẦU THỦ (DELETE)
-  /// - Tìm index và gỡ cầu thủ khỏi danh sách `_players`
-  /// - Cập nhật lại UI thông qua `notifyListeners()`
-  /// - Ghi đè danh sách mới vào bộ nhớ SharedPreferences
-  /// - TRẢ VỀ đối tượng Player đã xóa để màn hình có thể hỗ trợ nút "HOÀN TÁC (UNDO)"
+  Future<void> addPlayer(Player player) async {
+    _players.insert(0, player);
+    notifyListeners();
+    await _savePlayersToLocalStorage();
+    ApiService.addPlayer(player);
+  }
+
   Future<Player?> deletePlayer(String id) async {
     final index = _players.indexWhere((p) => p.id == id);
     if (index == -1) return null;
@@ -202,17 +424,15 @@ class AppStateProvider extends ChangeNotifier {
       _selectedPlayer = _players.isNotEmpty ? _players.first : null;
     }
     notifyListeners();
-    await _savePlayersToStorage();
+    await _savePlayersToLocalStorage();
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('lfc_avatar_$id');
     } catch (_) {}
+    ApiService.deletePlayer(id);
     return removed;
   }
 
-  /// LUỒNG 6: KHÔI PHỤC CẦU THỦ (UNDO RESTORE)
-  /// - Chèn lại cầu thủ vào đúng vị trí index trước khi xóa
-  /// - Thông báo cho UI và lưu lại vào SharedPreferences
   Future<void> restorePlayer(int index, Player player) async {
     if (index < 0 || index > _players.length) {
       _players.add(player);
@@ -220,32 +440,260 @@ class AppStateProvider extends ChangeNotifier {
       _players.insert(index, player);
     }
     notifyListeners();
-    await _savePlayersToStorage();
+    await _savePlayersToLocalStorage();
     if (player.avatarUrl.trim().isNotEmpty) {
       try {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('lfc_avatar_${player.id}', player.avatarUrl.trim());
+        await prefs.setString(
+          'lfc_avatar_${player.id}',
+          player.avatarUrl.trim(),
+        );
       } catch (_) {}
+    }
+    ApiService.addPlayer(player);
+  }
+
+  Future<void> addTrainingSession(TrainingSession session) async {
+    _trainings.insert(0, session);
+    notifyListeners();
+    await _saveTrainingsToLocalStorage();
+  }
+
+  Future<void> updateTrainingSession(TrainingSession session) async {
+    final index = _trainings.indexWhere((t) => t.id == session.id);
+    if (index != -1) {
+      _trainings[index] = session;
+      notifyListeners();
+      await _saveTrainingsToLocalStorage();
     }
   }
 
-  /// Thêm buổi tập luyện mới cho đội
-  void addTrainingSession(TrainingSession session) {
-    _trainings.add(session);
+  Future<void> deleteTrainingSession(String id) async {
+    _trainings.removeWhere((t) => t.id == id);
+    notifyListeners();
+    await _saveTrainingsToLocalStorage();
+  }
+
+  Future<void> completeTrainingSession(String id) async {
+    final index = _trainings.indexWhere((t) => t.id == id);
+    if (index != -1) {
+      final current = _trainings[index];
+      _trainings[index] = current.copyWith(status: 'Completed');
+
+      for (final playerId in current.playerIds) {
+        final pIdx = _players.indexWhere((p) => p.id == playerId);
+        if (pIdx != -1) {
+          final p = _players[pIdx];
+          final newAttrs = Map<String, double>.from(p.attributes);
+          final oldStamina =
+              (newAttrs['stamina'] as num?)?.toDouble() ??
+              (newAttrs['physical'] as num?)?.toDouble() ??
+              80.0;
+          final updatedVal = min(99.0, oldStamina + 0.5);
+          if (newAttrs.containsKey('stamina')) {
+            newAttrs['stamina'] = updatedVal;
+          } else {
+            newAttrs['physical'] = updatedVal;
+          }
+          final updatedHistory = List<PlayerStatistic>.from(p.progressHistory);
+          if (updatedHistory.isNotEmpty) {
+            final last = updatedHistory.removeLast();
+            updatedHistory.add(PlayerStatistic(date: last.date, attributes: newAttrs));
+          } else {
+            updatedHistory.add(PlayerStatistic(date: '2024-10', attributes: newAttrs));
+          }
+          _players[pIdx] = p.copyWith(progressHistory: updatedHistory);
+          ApiService.updatePlayer(_players[pIdx]);
+        }
+      }
+      notifyListeners();
+      await _saveTrainingsToLocalStorage();
+      await _savePlayersToLocalStorage();
+    }
+  }
+
+  Future<void> addCampaign(SponsorCampaign campaign) async {
+    final created = await ApiService.addCampaign(campaign);
+    _campaigns.insert(0, created);
+    _campaignsError = null;
+    notifyListeners();
+    await _saveCampaignsToLocalStorage();
+  }
+
+  Future<void> updateCampaign(SponsorCampaign campaign) async {
+    final updated = await ApiService.updateCampaign(campaign);
+    final index = _campaigns.indexWhere((c) => c.id == updated.id);
+    if (index == -1) {
+      _campaigns.insert(0, updated);
+    } else {
+      _campaigns[index] = updated;
+    }
+    _campaignsError = null;
+    notifyListeners();
+    await _saveCampaignsToLocalStorage();
+  }
+
+  Future<void> deleteCampaign(String id) async {
+    await ApiService.deleteCampaign(id);
+    _campaigns.removeWhere((c) => c.id == id);
+    _campaignsError = null;
+    notifyListeners();
+    await _saveCampaignsToLocalStorage();
+  }
+
+  Future<void> addSponsorship(Sponsorship sponsorship) async {
+    final saved = await ApiService.addSponsorship(sponsorship);
+    _sponsorships.insert(0, saved);
+    _sponsorshipsError = null;
+    notifyListeners();
+    await _saveSponsorshipsToLocalStorage();
+  }
+
+  Future<void> updateSponsorship(Sponsorship sponsorship) async {
+    final saved = await ApiService.updateSponsorship(sponsorship);
+    final index = _sponsorships.indexWhere((item) => item.id == saved.id);
+    if (index == -1) {
+      _sponsorships.insert(0, saved);
+    } else {
+      _sponsorships[index] = saved;
+    }
+    _sponsorshipsError = null;
+    notifyListeners();
+    await _saveSponsorshipsToLocalStorage();
+  }
+
+  Future<void> deleteSponsorship(String id) async {
+    await ApiService.deleteSponsorship(id);
+    _sponsorships.removeWhere((item) => item.id == id);
+    _sponsorshipsError = null;
+    notifyListeners();
+    await _saveSponsorshipsToLocalStorage();
+  }
+
+  Future<void> syncRealtimeData() async {
+    _isSyncing = true;
+    notifyListeners();
+    try {
+      final backendPlayers = await ApiService.fetchPlayers();
+      if (backendPlayers != null && backendPlayers.isNotEmpty) {
+        _players = backendPlayers;
+        _isBackendConnected = true;
+      } else {
+        final rand = Random();
+        for (int i = 0; i < _players.length; i++) {
+          final p = _players[i];
+          final delta = (rand.nextDouble() * 3.0 - 1.2);
+          final newVal = max(5.0, p.currentMarketValue + delta);
+          final roundedVal = double.parse(newVal.toStringAsFixed(1));
+
+          final newHistory = List<MarketValuePoint>.from(p.marketValueHistory);
+          if (newHistory.isNotEmpty) {
+            newHistory[newHistory.length - 1] = MarketValuePoint(
+              date: newHistory.last.date,
+              valueInMillionsEuro: roundedVal,
+            );
+          }
+
+          _players[i] = p.copyWith(
+            previousMarketValue: p.currentMarketValue,
+            currentMarketValue: roundedVal,
+            marketValueHistory: newHistory,
+          );
+        }
+      }
+      _lastSyncTime = DateTime.now();
+      await _savePlayersToLocalStorage();
+      await reloadCommercialData();
+    } catch (e) {
+      debugPrint('[AppState] Lỗi sync: $e');
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> registerAccount({
+    required String fullName,
+    required String email,
+    required String password,
+    String role = 'Club Official',
+    String department = 'Executive Leadership',
+  }) async {
+    final registered = await ApiService.registerUser(
+      fullName: fullName,
+      email: email,
+      password: password,
+      role: role,
+      department: department,
+    );
+    if (registered != null) {
+      _userProfile = registered;
+    } else {
+      _userProfile = UserProfile(
+        id: 'usr_',
+        username: email.contains('@') ? email.split('@')[0] : email,
+        fullName: fullName,
+        email: email,
+        phone: '+44 151 263 2361',
+        role: role,
+        department: department,
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+        bio: 'Official Registered Member of Liverpool FC.',
+      );
+    }
+    _isLoggedIn = true;
+    notifyListeners();
+    await _saveUserProfileToLocalStorage();
+    return true;
+  }
+
+  Future<bool> loginWithGoogle({required String email, required String fullName}) async {
+    final user = await ApiService.loginWithGoogle(email: email, fullName: fullName);
+    if (user != null) {
+      _userProfile = user;
+    } else {
+      _userProfile = UserProfile(
+        id: 'usr_google_',
+        username: email.split('@')[0],
+        fullName: fullName,
+        email: email,
+        phone: '+1 (617) 226-6000',
+        role: 'Club Stakeholder & Official',
+        department: 'Liverpool FC Executive Management',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+        bio: 'Authenticated via Google / Gmail Account.',
+      );
+    }
+    _isLoggedIn = true;
+    notifyListeners();
+    await _saveUserProfileToLocalStorage();
+    return true;
+  }
+
+  Future<void> logout() async {
+    _isLoggedIn = false;
     notifyListeners();
   }
 
-  /// LUỒNG 7: KHÔI PHỤC ĐỘI HÌNH GỐC (RESET TO DEFAULT)
-  /// - Xóa toàn bộ dữ liệu tùy chỉnh trong SharedPreferences
-  /// - Đặt lại danh sách 25 cầu thủ nguyên bản từ MockData
   Future<void> resetToDefaultMockData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_playersStorageKey);
+    await prefs.remove(_trainingsStorageKey);
+    await prefs.remove(_campaignsStorageKey);
+    await prefs.remove(_sponsorshipsStorageKey);
     for (final p in MockData.players) {
       await prefs.remove('lfc_avatar_${p.id}');
     }
-    _players = List.from(MockData.players);
-    _selectedPlayer = _players.isNotEmpty ? _players.first : null;
+
+    final resetPlayers = await ApiService.resetToDefault();
+    if (resetPlayers != null && resetPlayers.isNotEmpty) {
+      _players = resetPlayers;
+    } else {
+      _players = List.from(MockData.players);
+    }
+    _trainings = _getDefaultTrainings();
+    await reloadCommercialData();
+    _selectedPlayer = _players.first;
     notifyListeners();
   }
 }

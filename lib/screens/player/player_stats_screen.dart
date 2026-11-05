@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/player.dart';
+import '../../providers/app_state_provider.dart';
 import '../../widgets/radar_chart_widget.dart';
 import '../../widgets/stat_progress_bar.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -15,7 +17,6 @@ class PlayerStatsScreen extends StatefulWidget {
 }
 
 class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
-  // Selected attributes for Progress chart toggles
   late Set<String> _selectedAttributes;
   final List<Color> _chartColors = [
     AppTheme.lfcRed,
@@ -26,23 +27,178 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
     Colors.orangeAccent,
   ];
 
+  static String formatAttrLabel(String key) {
+    const map = {
+      'Reflexes': 'Phản xạ (Reflexes)',
+      'Diving': 'Bay người (Diving)',
+      'Handling': 'Bắt bóng (Handling)',
+      'Positioning': 'Chọn vị trí (Positioning)',
+      'Kicking': 'Phát bóng (Kicking)',
+      'One-on-one': 'Đối mặt 1v1 (One-on-one)',
+      'Tackling': 'Xoạc bóng (Tackling)',
+      'Interception': 'Cắt bóng (Interception)',
+      'Passing': 'Chuyền bóng (Passing)',
+      'Heading': 'Đánh đầu (Heading)',
+      'Physical': 'Thể lực & Tranh chấp (Physical)',
+      'Pace': 'Tốc độ (Pace)',
+      'Vision': 'Nhãn quan (Vision)',
+      'Dribbling': 'Rê dắt (Dribbling)',
+      'Stamina': 'Bền bỉ (Stamina)',
+      'Shooting': 'Dứt điểm (Shooting)',
+    };
+    return map[key] ?? key;
+  }
+
   @override
   void initState() {
     super.initState();
-    // Default select first two attributes
     final keys = widget.player.latestAttributes.keys.toList();
     _selectedAttributes = keys.take(2).toSet();
   }
 
+  // Hộp thoại chỉnh sửa chi tiết các chỉ số bằng Slider (40 -> 99)
+  void _showEditStatsDialog(BuildContext context, Player currentPlayer) {
+    final currentStats = Map<String, double>.from(currentPlayer.latestAttributes);
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppTheme.surfaceNavy,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppTheme.borderSubtle),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.tune, color: AppTheme.accentCyan, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Điều chỉnh chỉ số: ${currentPlayer.name}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bộ chỉ số tối ưu cho vị trí ${currentPlayer.positionName}',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                const SizedBox(height: 14),
+                ...currentStats.keys.map((attr) {
+                  final val = currentStats[attr] ?? 70.0;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              formatAttrLabel(attr),
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceNavyLight,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              val.toInt().toString(),
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.accentCyan),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Slider(
+                        value: val,
+                        min: 40.0,
+                        max: 99.0,
+                        divisions: 59,
+                        activeColor: AppTheme.accentCyan,
+                        inactiveColor: AppTheme.borderSubtle,
+                        onChanged: (newVal) {
+                          setDialogState(() {
+                            currentStats[attr] = newVal;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: const Text('Hủy', style: TextStyle(color: AppTheme.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentCyan,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: () async {
+                // Cập nhật lại chỉ số mới vào Progress History
+                final updatedHist = List<PlayerStatistic>.from(currentPlayer.progressHistory);
+                if (updatedHist.isNotEmpty) {
+                  updatedHist[updatedHist.length - 1] = PlayerStatistic(
+                    date: updatedHist.last.date,
+                    attributes: currentStats,
+                  );
+                } else {
+                  updatedHist.add(PlayerStatistic(date: 'Now', attributes: currentStats));
+                }
+
+                final updated = currentPlayer.copyWith(progressHistory: updatedHist);
+                await context.read<AppStateProvider>().updatePlayer(updated);
+
+                if (context.mounted) {
+                  Navigator.of(dialogCtx).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Đã cập nhật chỉ số kỹ thuật cho ${currentPlayer.name}!')),
+                  );
+                }
+              },
+              child: const Text('Lưu chỉ số'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final attributes = widget.player.latestAttributes;
+    final state = context.watch<AppStateProvider>();
+    final currentPlayer = state.players.firstWhere(
+      (p) => p.id == widget.player.id,
+      orElse: () => widget.player,
+    );
+
+    final attributes = currentPlayer.latestAttributes;
     final allAttrKeys = attributes.keys.toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.player.name} - Stats & Progress'),
+        title: Text('${currentPlayer.name} - Chỉ số & Tiến độ'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.tune, color: AppTheme.accentCyan),
+            tooltip: 'Chỉnh sửa chỉ số kỹ thuật',
+            onPressed: () => _showEditStatsDialog(context, currentPlayer),
+          ),
           Container(
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -56,7 +212,7 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                 const Icon(Icons.bolt, size: 14, color: AppTheme.lfcYellow),
                 const SizedBox(width: 4),
                 Text(
-                  widget.player.positionName,
+                  currentPlayer.positionName,
                   style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                 ),
               ],
@@ -69,7 +225,7 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Dynamic Position Notice Banner
+            // Dynamic Position Notice Banner với Nút Điều chỉnh chỉ số
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -83,9 +239,20 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Position-Adaptive Metrics: Bộ chỉ số đánh giá được tự động tối ưu hóa riêng cho vị trí ${widget.player.position.name.toUpperCase()}.',
+                      'Chỉ số thích ứng: Bộ chỉ số được tự động tối ưu hóa cho vị trí ${currentPlayer.positionName}.',
                       style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary),
                     ),
+                  ),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.accentCyan,
+                      side: const BorderSide(color: AppTheme.accentCyan),
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    ),
+                    icon: const Icon(Icons.tune, size: 14),
+                    label: const Text('Sửa', style: TextStyle(fontSize: 11)),
+                    onPressed: () => _showEditStatsDialog(context, currentPlayer),
                   ),
                 ],
               ),
@@ -103,74 +270,63 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Position Radar Evaluation',
+                          'Biểu đồ Radar Đa giác',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppTheme.bgCardLight,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text('Latest Session', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                        )
+                        TextButton.icon(
+                          icon: const Icon(Icons.edit, size: 14, color: AppTheme.accentCyan),
+                          label: const Text('Chỉnh sửa', style: TextStyle(color: AppTheme.accentCyan, fontSize: 12)),
+                          onPressed: () => _showEditStatsDialog(context, currentPlayer),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
-                      height: 250,
+                      height: 260,
+                      width: double.infinity,
                       child: RadarChartWidget(
                         attributes: attributes,
-                        lineColor: AppTheme.lfcRed,
-                        fillColor: AppTheme.lfcRed.withValues(alpha: 0.35),
+                        fillColor: AppTheme.accentCyan.withValues(alpha: 0.25),
+                        lineColor: AppTheme.accentCyan,
                       ),
                     ),
-                    const Divider(color: AppTheme.borderSubtle, height: 32),
+                    const SizedBox(height: 24),
                     const Text(
-                      'Attribute Breakdown',
+                      'Chi tiết từng chỉ số kỹ thuật',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
                     ),
-                    const SizedBox(height: 8),
-                    ...attributes.entries.map((entry) {
-                      return StatProgressBar(
-                        label: entry.key,
-                        value: entry.value,
-                        barColor: entry.value >= 90
-                            ? AppTheme.lfcYellow
-                            : (entry.value >= 80 ? AppTheme.lfcRed : AppTheme.textSecondary),
-                      );
-                    }),
+                    const SizedBox(height: 12),
+                    ...attributes.entries.map((e) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10.0),
+                          child: StatProgressBar(
+                            label: formatAttrLabel(e.key),
+                            value: e.value,
+                            barColor: e.value >= 85 ? AppTheme.accentCyan : AppTheme.lfcRed,
+                          ),
+                        )),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
-            // 2. Progress Tracker (Bật/tắt chỉ số theo dõi qua thời gian)
+            // 2. Progress Tracker Card with Toggle Switches
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Performance Progress Timeline',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                        ),
-                        const Icon(Icons.trending_up, color: AppTheme.success, size: 20),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
                     const Text(
-                      'Bật / tắt các chỉ số bên dưới để so sánh biểu đồ tiến bộ qua các tháng:',
+                      'Tiến trình phát triển phong độ (Progress Tracker)',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Bật/tắt các chỉ số bên dưới để theo dõi sự phát triển qua từng mốc thời gian:',
                       style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                     ),
                     const SizedBox(height: 12),
-
-                    // Filter Chips (Toggle Buttons)
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -180,24 +336,21 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                         final color = _chartColors[attrIndex];
 
                         return FilterChip(
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(attr),
-                            ],
-                          ),
                           selected: isSelected,
-                          selectedColor: color.withValues(alpha: 0.25),
+                          label: Text(
+                            attr,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : AppTheme.textSecondary,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              fontSize: 12,
+                            ),
+                          ),
+                          backgroundColor: AppTheme.surfaceNavyLight,
+                          selectedColor: color.withValues(alpha: 0.3),
                           checkmarkColor: color,
+                          side: BorderSide(
+                            color: isSelected ? color : AppTheme.borderSubtle,
+                          ),
                           onSelected: (selected) {
                             setState(() {
                               if (selected) {
@@ -207,7 +360,7 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                                   _selectedAttributes.remove(attr);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Vui lòng chọn ít nhất 1 chỉ số để vẽ biểu đồ.')),
+                                    const SnackBar(content: Text('Vui lòng chọn ít nhất 1 chỉ số để vẽ biểu đồ!')),
                                   );
                                 }
                               }
@@ -218,16 +371,21 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Line Chart
+                    // Biểu đồ đường cong LineChart
                     SizedBox(
                       height: 220,
                       child: LineChart(
                         LineChartData(
+                          minX: 0,
+                          maxX: (currentPlayer.progressHistory.length > 1)
+                              ? (currentPlayer.progressHistory.length - 1).toDouble()
+                              : 1.0,
+                          minY: 40,
+                          maxY: 100,
                           gridData: FlGridData(
                             show: true,
                             drawVerticalLine: false,
-                            horizontalInterval: 5,
-                            getDrawingHorizontalLine: (value) => const FlLine(
+                            getDrawingHorizontalLine: (val) => const FlLine(
                               color: AppTheme.borderSubtle,
                               strokeWidth: 1,
                             ),
@@ -236,8 +394,8 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                             leftTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
-                                interval: 5,
                                 reservedSize: 32,
+                                interval: 10,
                                 getTitlesWidget: (val, meta) => Text(
                                   val.toInt().toString(),
                                   style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
@@ -247,16 +405,34 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                             bottomTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
+                                interval: 1,
                                 getTitlesWidget: (val, meta) {
                                   final int index = val.toInt();
-                                  if (index >= 0 && index < widget.player.progressHistory.length) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(top: 8.0),
-                                      child: Text(
-                                        widget.player.progressHistory[index].date,
-                                        style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11),
-                                      ),
-                                    );
+                                  if (val == index.toDouble()) {
+                                    if (currentPlayer.progressHistory.length <= 1) {
+                                      if (index == 0) {
+                                        return const Padding(
+                                          padding: EdgeInsets.only(top: 8.0),
+                                          child: Text('Trước', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                                        );
+                                      } else if (index == 1 && currentPlayer.progressHistory.isNotEmpty) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(top: 8.0),
+                                          child: Text(
+                                            currentPlayer.progressHistory.first.date,
+                                            style: const TextStyle(color: AppTheme.accentCyan, fontSize: 11, fontWeight: FontWeight.bold),
+                                          ),
+                                        );
+                                      }
+                                    } else if (index >= 0 && index < currentPlayer.progressHistory.length) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 8.0),
+                                        child: Text(
+                                          currentPlayer.progressHistory[index].date,
+                                          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
+                                        ),
+                                      );
+                                    }
                                   }
                                   return const SizedBox.shrink();
                                 },
@@ -266,17 +442,23 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                             rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                           ),
                           borderData: FlBorderData(show: false),
-                          minY: 65,
-                          maxY: 100,
                           lineBarsData: _selectedAttributes.map((attr) {
                             final attrIndex = allAttrKeys.indexOf(attr) % _chartColors.length;
                             final color = _chartColors[attrIndex];
 
                             final spots = <FlSpot>[];
-                            for (int i = 0; i < widget.player.progressHistory.length; i++) {
-                              final history = widget.player.progressHistory[i];
-                              final val = history.attributes[attr] ?? 70.0;
-                              spots.add(FlSpot(i.toDouble(), val));
+                            if (currentPlayer.progressHistory.length <= 1) {
+                              final baseVal = currentPlayer.progressHistory.isNotEmpty
+                                  ? (currentPlayer.progressHistory.first.attributes[attr] ?? 70.0)
+                                  : 70.0;
+                              spots.add(FlSpot(0.0, (baseVal - 1.0).clamp(40.0, 99.0)));
+                              spots.add(FlSpot(1.0, baseVal));
+                            } else {
+                              for (int i = 0; i < currentPlayer.progressHistory.length; i++) {
+                                final history = currentPlayer.progressHistory[i];
+                                final val = history.attributes[attr] ?? 70.0;
+                                spots.add(FlSpot(i.toDouble(), val));
+                              }
                             }
 
                             return LineChartBarData(

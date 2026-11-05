@@ -45,5 +45,14 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Backend build artifacts
+target/
+**/target/
+backend/target/
+
 # Widget Preview related
 .widget_preview/
+
+# Database files
+*.mv.db
+*.trace.db

@@ -34,10 +34,13 @@ class LiverpoolPMSApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AppStateProvider>();
     return MaterialApp(
       title: 'Liverpool FC - Player Management System',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: state.themeMode,
       scrollBehavior: const AppCustomScrollBehavior(),
       home: const LoginScreen(),
     );
