@@ -37,7 +37,7 @@ class CampaignManagementScreen extends StatelessWidget {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (dialogStateContext, setDialogState) => AlertDialog(
           backgroundColor: AppTheme.surfaceNavy,
           title: Text(campaign == null ? 'Tạo chiến dịch' : 'Sửa chiến dịch'),
           content: SizedBox(

@@ -1,15 +1,15 @@
 class TrainingSession {
   final String id;
   final String title;
-  final String date; // YYYY-MM-DD
+  final String date;
   final String startTime;
   final String endTime;
-  final String type; // 'Gym', 'Tactical', 'Recovery', 'Match Prep', 'Set-Piece'
+  final String type;
   final String location;
   final String coach;
   final String description;
-  final String status; // 'Upcoming', 'Completed', 'In Progress'
-  final String intensity; // 'Light', 'Moderate', 'High Intensity'
+  final String status;
+  final String intensity;
   final List<String> playerIds;
 
   const TrainingSession({

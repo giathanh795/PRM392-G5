@@ -1,15 +1,15 @@
 class SponsorCampaign {
   final String id;
   final String name;
-  final String sponsorName; // e.g. Adidas
+  final String sponsorName;
   final String startDate;
   final String endDate;
-  final String status; // 'Active', 'Completed', 'Upcoming'
-  final String reach; // e.g. '4.2M'
-  final String engagement; // e.g. '11.1%'
+  final String status;
+  final String reach;
+  final String engagement;
   final String description;
-  final String category; // 'Footwear', 'Apparel', 'Digital Content', 'Community'
-  final double budgetMillions; // e.g. 2.5
+  final String category;
+  final double budgetMillions;
   final List<String> featuredPlayerNames;
 
   const SponsorCampaign({

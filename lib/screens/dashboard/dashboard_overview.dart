@@ -8,7 +8,6 @@ import '../../providers/app_state_provider.dart';
 import '../../widgets/player_avatar.dart';
 import '../player/player_detail_screen.dart';
 
-/// Dashboard content uses the same provider data as the squad and commercial tabs.
 class DashboardOverview extends StatefulWidget {
   final AppStateProvider state;
   final ValueChanged<int> onNavigateTab;
@@ -664,7 +663,6 @@ class _DashboardOverviewState extends State<DashboardOverview> {
     ),
   );
 
-  // Keep each column's gap fixed and align its bottom with the full-width panel.
   Widget _panelGrid(List<Widget> panels) => LayoutBuilder(
     builder: (context, constraints) {
       if (constraints.maxWidth < 850) {

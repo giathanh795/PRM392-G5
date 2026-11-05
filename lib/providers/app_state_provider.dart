@@ -33,13 +33,11 @@ class AppStateProvider extends ChangeNotifier {
 
   List<Player> _players = List.from(MockData.players);
   List<TrainingSession> _trainings = _getDefaultTrainings();
-  List<SponsorCampaign> _campaigns = [];
-  List<Sponsorship> _sponsorships = [];
+  List<SponsorCampaign> _campaigns = List.from(MockData.sponsorCampaigns);
+  List<Sponsorship> _sponsorships = List.from(MockData.sponsorships);
 
-  // Theme Mode (Dark / Light)
   ThemeMode _themeMode = ThemeMode.dark;
 
-  // Logged-in User Profile
   UserProfile _userProfile = UserProfile.defaultProfile();
   bool _isLoggedIn = false;
 
@@ -76,11 +74,9 @@ class AppStateProvider extends ChangeNotifier {
   bool get isSyncing => _isSyncing;
   DateTime? get lastSyncTime => _lastSyncTime;
 
-  // Theme getters
   ThemeMode get themeMode => _themeMode;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
 
-  // Profile getters
   UserProfile get userProfile => _userProfile;
   bool get isLoggedIn => _isLoggedIn;
 
@@ -115,11 +111,10 @@ class AppStateProvider extends ChangeNotifier {
 
   Future<void> _loadAllData() async {
     try {
-      // 0. Load Theme and Profile
+
       await _loadThemeModeFromLocalStorage();
       await _loadUserProfile();
 
-      // 1. Thử lấy Players từ Backend
       final backendPlayers = await ApiService.fetchPlayers();
       if (backendPlayers != null && backendPlayers.isNotEmpty) {
         _players = backendPlayers;
@@ -131,7 +126,6 @@ class AppStateProvider extends ChangeNotifier {
         await _loadPlayersFromLocalStorage();
       }
 
-      // 2. Trainings remain local; commercial records are loaded from REST.
       await _loadTrainingsFromLocalStorage();
       await reloadCommercialData();
     } catch (e) {
@@ -143,7 +137,6 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  // --- THEME MANAGEMENT ---
   Future<void> _loadThemeModeFromLocalStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -168,10 +161,9 @@ class AppStateProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
-  // --- USER PROFILE MANAGEMENT (SQL + LOCAL) ---
   Future<void> _loadUserProfile() async {
     try {
-      // Try fetching from SQL Backend first
+
       final remoteProfile = await ApiService.fetchUserProfile();
       if (remoteProfile != null) {
         _userProfile = remoteProfile;
@@ -179,11 +171,15 @@ class AppStateProvider extends ChangeNotifier {
         return;
       }
 
-      // Fallback to local storage
       final prefs = await SharedPreferences.getInstance();
       final savedJson = prefs.getString(_userProfileStorageKey);
       if (savedJson != null && savedJson.isNotEmpty) {
-        _userProfile = UserProfile.fromJson(jsonDecode(savedJson) as Map<String, dynamic>);
+        final loaded = UserProfile.fromJson(jsonDecode(savedJson) as Map<String, dynamic>);
+        if (loaded.avatarUrl.contains('images.unsplash.com') || loaded.avatarUrl.isEmpty) {
+          _userProfile = loaded.copyWith(avatarUrl: 'assets/images/john.jpg');
+        } else {
+          _userProfile = loaded;
+        }
       }
     } catch (e) {
       debugPrint('[AppState] Lỗi nạp user profile: $e');
@@ -208,7 +204,6 @@ class AppStateProvider extends ChangeNotifier {
     return await ApiService.changePassword(currentPassword, newPassword);
   }
 
-  // --- PLAYERS MANAGEMENT ---
   Future<void> _loadPlayersFromLocalStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -221,20 +216,33 @@ class AppStateProvider extends ChangeNotifier {
         final List<dynamic> decodedList = jsonDecode(savedJson);
         for (final item in decodedList) {
           try {
+            Player p;
             if (item is Map<String, dynamic>) {
-              final p = Player.fromJson(item);
-              playerMap[p.id] = p;
+              p = Player.fromJson(item);
             } else if (item is Map) {
-              final p = Player.fromJson(Map<String, dynamic>.from(item));
-              playerMap[p.id] = p;
+              p = Player.fromJson(Map<String, dynamic>.from(item));
+            } else {
+              continue;
             }
+
+            final defaultPlayer = MockData.players.cast<Player?>().firstWhere(
+                  (def) => def?.id == p.id,
+                  orElse: () => null,
+                );
+            if (defaultPlayer != null &&
+                (p.avatarUrl.contains('images.unsplash.com') || p.avatarUrl.isEmpty)) {
+              p = p.copyWith(avatarUrl: defaultPlayer.avatarUrl);
+            }
+            playerMap[p.id] = p;
           } catch (_) {}
         }
       }
 
       for (final id in playerMap.keys) {
         final savedAvatar = prefs.getString('lfc_avatar_$id');
-        if (savedAvatar != null && savedAvatar.trim().isNotEmpty) {
+        if (savedAvatar != null &&
+            savedAvatar.trim().isNotEmpty &&
+            !savedAvatar.contains('images.unsplash.com')) {
           playerMap[id] = playerMap[id]!.copyWith(avatarUrl: savedAvatar.trim());
         }
       }
@@ -331,9 +339,12 @@ class AppStateProvider extends ChangeNotifier {
                   Sponsorship.fromJson(Map<String, dynamic>.from(item as Map)),
             )
             .toList();
+      } else {
+        _sponsorships = List.from(MockData.sponsorships);
       }
     } catch (e) {
       debugPrint('[AppState] Lỗi đọc sponsorship local: $e');
+      _sponsorships = List.from(MockData.sponsorships);
     }
   }
 
@@ -513,20 +524,30 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   Future<void> addCampaign(SponsorCampaign campaign) async {
-    final created = await ApiService.addCampaign(campaign);
-    _campaigns.insert(0, created);
+    var itemToSave = campaign;
+    try {
+      itemToSave = await ApiService.addCampaign(campaign);
+    } catch (e) {
+      debugPrint('[AppState] Thêm chiến dịch offline: $e');
+    }
+    _campaigns.insert(0, itemToSave);
     _campaignsError = null;
     notifyListeners();
     await _saveCampaignsToLocalStorage();
   }
 
   Future<void> updateCampaign(SponsorCampaign campaign) async {
-    final updated = await ApiService.updateCampaign(campaign);
-    final index = _campaigns.indexWhere((c) => c.id == updated.id);
+    var itemToSave = campaign;
+    try {
+      itemToSave = await ApiService.updateCampaign(campaign);
+    } catch (e) {
+      debugPrint('[AppState] Cập nhật chiến dịch offline: $e');
+    }
+    final index = _campaigns.indexWhere((c) => c.id == itemToSave.id);
     if (index == -1) {
-      _campaigns.insert(0, updated);
+      _campaigns.insert(0, itemToSave);
     } else {
-      _campaigns[index] = updated;
+      _campaigns[index] = itemToSave;
     }
     _campaignsError = null;
     notifyListeners();
@@ -534,7 +555,11 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   Future<void> deleteCampaign(String id) async {
-    await ApiService.deleteCampaign(id);
+    try {
+      await ApiService.deleteCampaign(id);
+    } catch (e) {
+      debugPrint('[AppState] Xóa chiến dịch offline: $e');
+    }
     _campaigns.removeWhere((c) => c.id == id);
     _campaignsError = null;
     notifyListeners();
@@ -542,20 +567,30 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   Future<void> addSponsorship(Sponsorship sponsorship) async {
-    final saved = await ApiService.addSponsorship(sponsorship);
-    _sponsorships.insert(0, saved);
+    var itemToSave = sponsorship;
+    try {
+      itemToSave = await ApiService.addSponsorship(sponsorship);
+    } catch (e) {
+      debugPrint('[AppState] Thêm nhà tài trợ offline: $e');
+    }
+    _sponsorships.insert(0, itemToSave);
     _sponsorshipsError = null;
     notifyListeners();
     await _saveSponsorshipsToLocalStorage();
   }
 
   Future<void> updateSponsorship(Sponsorship sponsorship) async {
-    final saved = await ApiService.updateSponsorship(sponsorship);
-    final index = _sponsorships.indexWhere((item) => item.id == saved.id);
+    var itemToSave = sponsorship;
+    try {
+      itemToSave = await ApiService.updateSponsorship(sponsorship);
+    } catch (e) {
+      debugPrint('[AppState] Cập nhật nhà tài trợ offline: $e');
+    }
+    final index = _sponsorships.indexWhere((item) => item.id == itemToSave.id);
     if (index == -1) {
-      _sponsorships.insert(0, saved);
+      _sponsorships.insert(0, itemToSave);
     } else {
-      _sponsorships[index] = saved;
+      _sponsorships[index] = itemToSave;
     }
     _sponsorshipsError = null;
     notifyListeners();
@@ -563,7 +598,11 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   Future<void> deleteSponsorship(String id) async {
-    await ApiService.deleteSponsorship(id);
+    try {
+      await ApiService.deleteSponsorship(id);
+    } catch (e) {
+      debugPrint('[AppState] Xóa nhà tài trợ offline: $e');
+    }
     _sponsorships.removeWhere((item) => item.id == id);
     _sponsorshipsError = null;
     notifyListeners();

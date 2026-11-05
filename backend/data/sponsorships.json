@@ -1,18 +1,31 @@
-[
-  {
-    "id": "sponsor_adidas",
-    "name": "Adidas",
-    "logo": "https://logo.clearbit.com/adidas.com",
-    "description": "Official global sportswear and kit supplier.",
-    "contractFileName": "",
-    "contractStorageKey": null,
-    "value": 75000000,
-    "startDate": "2026-07-01",
-    "endDate": "2031-06-30",
-    "status": "Active",
-    "phone": "",
-    "email": "",
-    "contactPerson": "",
-    "removeContract": false
-  }
-]
+[ {
+  "id" : "sponsor_1793862390772880",
+  "name" : "Nike",
+  "logo" : "",
+  "description" : "Sponsorship",
+  "contractFileName" : "",
+  "contractStorageKey" : null,
+  "value" : 8.0E7,
+  "startDate" : "2026-11-05",
+  "endDate" : "2035-11-05",
+  "status" : "Active",
+  "phone" : "1234567890",
+  "email" : "ok@gmail.com",
+  "contactPerson" : "ok",
+  "removeContract" : false
+}, {
+  "id" : "sponsor_adidas",
+  "name" : "Adidas",
+  "logo" : "https://logo.clearbit.com/adidas.com",
+  "description" : "Official global sportswear and kit supplier.",
+  "contractFileName" : "",
+  "contractStorageKey" : null,
+  "value" : 7.5E7,
+  "startDate" : "2026-07-01",
+  "endDate" : "2031-06-30",
+  "status" : "Active",
+  "phone" : "",
+  "email" : "",
+  "contactPerson" : "",
+  "removeContract" : false
+} ]

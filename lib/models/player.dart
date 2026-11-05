@@ -1,8 +1,8 @@
 enum PlayerPosition { forward, midfielder, defender, goalkeeper }
 
 class PlayerStatistic {
-  final String date; // YYYY-MM
-  final Map<String, double> attributes; // Dynamic based on position
+  final String date;
+  final Map<String, double> attributes;
 
   const PlayerStatistic({
     required this.date,
@@ -47,7 +47,7 @@ class MarketValuePoint {
 class PlayerMediaItem {
   final String id;
   final String title;
-  final String type; // 'photo' | 'video' | 'interview' | 'campaign'
+  final String type;
   final String url;
   final String date;
 
@@ -88,10 +88,10 @@ class Player {
   final String weight;
   final String contractUntil;
   final String avatarUrl;
-  final double currentMarketValue; // in Millions Euro
+  final double currentMarketValue;
   final double previousMarketValue;
-  final String status; // 'Active', 'Injured', 'On Duty'
-  final String sponsorPartner; // 'Adidas', etc.
+  final String status;
+  final String sponsorPartner;
   final List<PlayerStatistic> progressHistory;
   final List<MarketValuePoint> marketValueHistory;
   final List<PlayerMediaItem> mediaList;
@@ -140,7 +140,6 @@ class Player {
 
   Map<String, double> get attributes => latestAttributes;
 
-  // Get current / latest attributes
   Map<String, double> get latestAttributes {
     if (progressHistory.isEmpty) return {};
     return progressHistory.last.attributes;

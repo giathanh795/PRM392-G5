@@ -56,14 +56,13 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
     _selectedAttributes = keys.take(2).toSet();
   }
 
-  // Hộp thoại chỉnh sửa chi tiết các chỉ số bằng Slider (40 -> 99)
-  void _showEditStatsDialog(BuildContext context, Player currentPlayer) {
+  void _showEditStatsDialog(BuildContext parentContext, Player currentPlayer) {
     final currentStats = Map<String, double>.from(currentPlayer.latestAttributes);
 
     showDialog(
-      context: context,
+      context: parentContext,
       builder: (dialogCtx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (dialogStateCtx, setDialogState) => AlertDialog(
           backgroundColor: AppTheme.surfaceNavy,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -150,7 +149,7 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                 foregroundColor: Colors.black,
               ),
               onPressed: () async {
-                // Cập nhật lại chỉ số mới vào Progress History
+
                 final updatedHist = List<PlayerStatistic>.from(currentPlayer.progressHistory);
                 if (updatedHist.isNotEmpty) {
                   updatedHist[updatedHist.length - 1] = PlayerStatistic(
@@ -162,11 +161,11 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                 }
 
                 final updated = currentPlayer.copyWith(progressHistory: updatedHist);
-                await context.read<AppStateProvider>().updatePlayer(updated);
+                Navigator.of(dialogCtx).pop();
+                await parentContext.read<AppStateProvider>().updatePlayer(updated);
 
-                if (context.mounted) {
-                  Navigator.of(dialogCtx).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                if (parentContext.mounted) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
                     SnackBar(content: Text('Đã cập nhật chỉ số kỹ thuật cho ${currentPlayer.name}!')),
                   );
                 }
@@ -225,7 +224,7 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Dynamic Position Notice Banner với Nút Điều chỉnh chỉ số
+
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -259,7 +258,6 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 1. Radar View & Bar Metrics Card
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -310,7 +308,6 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
             ),
             const SizedBox(height: 20),
 
-            // 2. Progress Tracker Card with Toggle Switches
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -371,7 +368,6 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Biểu đồ đường cong LineChart
                     SizedBox(
                       height: 220,
                       child: LineChart(

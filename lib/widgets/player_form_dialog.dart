@@ -8,7 +8,6 @@ import '../models/player.dart';
 import '../providers/app_state_provider.dart';
 import 'player_avatar.dart';
 
-/// Hộp thoại Thêm mới hoặc Chỉnh sửa thông tin cầu thủ
 Future<bool?> showPlayerFormDialog(BuildContext context, {Player? player}) {
   return showDialog<bool>(
     context: context,
@@ -47,8 +46,6 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
   late String _selectedStatus;
 
   final ImagePicker _picker = ImagePicker();
-
-
 
   @override
   void initState() {
@@ -161,7 +158,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
     final provider = context.read<AppStateProvider>();
 
     if (widget.isEdit) {
-      // Cập nhật cầu thủ đã có
+
       final oldPlayer = widget.player!;
       final double previousValue = (marketValue != oldPlayer.currentMarketValue)
           ? oldPlayer.currentMarketValue
@@ -212,7 +209,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
         );
       }
     } else {
-      // Tạo mới cầu thủ
+
       final newId = 'p_${DateTime.now().millisecondsSinceEpoch}';
       final defaultAttrs = MockData.getAttributesForPosition(_selectedPosition);
       final Map<String, double> statsMap = {for (var attr in defaultAttrs) attr: 82.0};
@@ -284,7 +281,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Dialog Header
+
               Row(
                 children: [
                   Container(
@@ -325,7 +322,6 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
               ),
               const Divider(color: AppTheme.borderSubtle, height: 24),
 
-              // Scrollable Form Content
               Flexible(
                 child: SingleChildScrollView(
                   child: Form(
@@ -333,7 +329,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Avatar Section
+
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -404,7 +400,6 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Row 1: Tên & Số áo
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -454,7 +449,6 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Row 2: Vị trí & Quốc tịch
                         Row(
                           children: [
                             Expanded(
@@ -506,7 +500,6 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Row 3: Chiều cao & Cân nặng
                         Row(
                           children: [
                             Expanded(
@@ -536,7 +529,6 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Row 4: Chân thuận & Trạng thái thi đấu
                         Row(
                           children: [
                             Expanded(
@@ -583,7 +575,6 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Row 5: Ngày sinh & Hạn hợp đồng
                         Row(
                           children: [
                             Expanded(
@@ -623,7 +614,6 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Row 6: Giá thị trường & Nhà tài trợ
                         Row(
                           children: [
                             Expanded(
@@ -669,7 +659,6 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
               const Divider(color: AppTheme.borderSubtle, height: 1),
               const SizedBox(height: 16),
 
-              // Action Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [

@@ -30,7 +30,7 @@ class UserProfile {
       phone: '+1 (617) 226-6000',
       role: 'Principal Owner & Club Chairman',
       department: 'Board of Directors & Club Ownership (FSG)',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+      avatarUrl: 'assets/images/john.jpg',
       bio: 'Principal Owner of Liverpool Football Club & Fenway Sports Group (FSG). Overseeing global club investments, Anfield stadium expansions, commercial deals with Adidas, and championship pursuits.',
     );
   }

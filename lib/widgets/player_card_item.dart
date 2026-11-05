@@ -44,7 +44,7 @@ class PlayerCardItem extends StatelessWidget {
           padding: const EdgeInsets.all(14.0),
           child: Row(
             children: [
-              // Jersey Number Badge & Avatar
+
               Stack(
                 alignment: Alignment.bottomRight,
                 children: [
@@ -72,7 +72,7 @@ class PlayerCardItem extends StatelessWidget {
                 ],
               ),
               const SizedBox(width: 14),
-              // Player Info
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +143,7 @@ class PlayerCardItem extends StatelessWidget {
                   ],
                 ),
               ),
-              // Trailing action
+
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

@@ -99,10 +99,9 @@ class ProfileScreen extends StatelessWidget {
                 department: deptCtrl.text.trim(),
                 bio: bioCtrl.text.trim(),
               );
-              if (!context.mounted) return;
-                      await context.read<AppStateProvider>().updateUserProfile(updated);
+              Navigator.of(dialogCtx).pop();
+              await context.read<AppStateProvider>().updateUserProfile(updated);
               if (context.mounted) {
-                Navigator.of(dialogCtx).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Đã cập nhật hồ sơ cá nhân lên SQL Database!')),
                 );
@@ -142,27 +141,29 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: oldPassCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Mật khẩu hiện tại'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: newPassCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Mật khẩu mới'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: confirmPassCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Xác nhận mật khẩu mới'),
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: oldPassCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Mật khẩu hiện tại'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: newPassCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Mật khẩu mới'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: confirmPassCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Xác nhận mật khẩu mới'),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -264,9 +265,9 @@ class ProfileScreen extends StatelessWidget {
                       final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
                       final updated = current.copyWith(avatarUrl: base64Image);
                       if (!context.mounted) return;
+                      Navigator.of(dialogCtx).pop();
                       await context.read<AppStateProvider>().updateUserProfile(updated);
                       if (context.mounted) {
-                        Navigator.of(dialogCtx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Đã cập nhật ảnh đại diện Base64!')),
                         );
@@ -296,10 +297,9 @@ class ProfileScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   onTap: () async {
                     final updated = current.copyWith(avatarUrl: item['url']!);
-                    if (!context.mounted) return;
-                      await context.read<AppStateProvider>().updateUserProfile(updated);
+                    Navigator.of(dialogCtx).pop();
+                    await context.read<AppStateProvider>().updateUserProfile(updated);
                     if (context.mounted) {
-                      Navigator.of(dialogCtx).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Đã chọn ảnh ${item['name']}!')),
                       );
@@ -348,7 +348,7 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Quản lý Hồ sơ Cá nhân'),
         actions: [
-          // Theme Toggle Icon Button
+
           IconButton(
             icon: Icon(
               state.isDarkMode ? Icons.light_mode : Icons.dark_mode,
@@ -368,7 +368,7 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Profile Card
+
                 Card(
                   color: AppTheme.cardColor(context),
                   shape: RoundedRectangleBorder(
@@ -403,18 +403,13 @@ class ProfileScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 14),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              profile.fullName,
+                        Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, spacing: 8, runSpacing: 6, children: [Text(profile.fullName,
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textColor(context),
                               ),
                             ),
-                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
@@ -458,12 +453,7 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.lfcRed,
+                        Wrap(alignment: WrapAlignment.center, spacing: 10, runSpacing: 10, children: [ElevatedButton.icon(style: ElevatedButton.styleFrom(backgroundColor: AppTheme.lfcRed,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -472,7 +462,6 @@ class ProfileScreen extends StatelessWidget {
                               label: const Text('Chỉnh sửa thông tin', style: TextStyle(fontWeight: FontWeight.bold)),
                               onPressed: () => _showEditProfileDialog(context, profile),
                             ),
-                            const SizedBox(width: 12),
                             OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppTheme.textColor(context),
@@ -492,7 +481,6 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // Personal Details Card
                 Card(
                   color: AppTheme.cardColor(context),
                   shape: RoundedRectangleBorder(
@@ -530,7 +518,6 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // SQL Database & Backend Status Card
                 Card(
                   color: AppTheme.cardColor(context),
                   shape: RoundedRectangleBorder(
@@ -543,22 +530,21 @@ class ProfileScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.storage_rounded, color: AppTheme.lfcYellow, size: 20),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Cơ sở dữ liệu SQL & Backend',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.textColor(context),
-                                  ),
+                            const Icon(Icons.storage_rounded, color: AppTheme.lfcYellow, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Cơ sở dữ liệu SQL & Backend',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textColor(context),
                                 ),
-                              ],
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
@@ -620,7 +606,6 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // Theme Mode Switch Card
                 Card(
                   color: AppTheme.cardColor(context),
                   shape: RoundedRectangleBorder(
@@ -651,7 +636,6 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Nút Đăng Xuất Tài Khoản (Logout)
                 Card(
                   color: state.isDarkMode ? AppTheme.surfaceNavy : Colors.white,
                   elevation: 0,
@@ -737,7 +721,7 @@ class ProfileScreen extends StatelessWidget {
           Icon(icon, size: 18, color: AppTheme.subtextColor(context)),
           const SizedBox(width: 12),
           SizedBox(
-            width: 130,
+            width: 105,
             child: Text(
               label,
               style: TextStyle(fontSize: 12, color: AppTheme.subtextColor(context)),

@@ -23,7 +23,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final ScrollController _squadScrollController = ScrollController();
   int _viewMode =
-      1; // 0: Strategic Dashboard, 1: Daily Schedule & Squad Overview
+      1;
 
   @override
   void dispose() {
@@ -44,8 +44,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Hộp thoại thêm tân binh / Ký hợp đồng players mới
-  void _showAddPlayerDialog(BuildContext context) {
+  void _showAddPlayerDialog(BuildContext parentContext) {
     final nameController = TextEditingController();
     final numberController = TextEditingController(text: '10');
     final valController = TextEditingController(text: '45.0');
@@ -55,9 +54,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     PlayerPosition selectedPos = PlayerPosition.forward;
 
     showDialog(
-      context: context,
+      context: parentContext,
       builder: (dialogCtx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (dialogStateCtx, setDialogState) => AlertDialog(
           backgroundColor: AppTheme.surfaceNavy,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -205,10 +204,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   mediaList: [],
                 );
 
-                await context.read<AppStateProvider>().addPlayer(newPlayer);
-                if (context.mounted) {
-                  Navigator.of(dialogCtx).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                Navigator.of(dialogCtx).pop();
+                await parentContext.read<AppStateProvider>().addPlayer(newPlayer);
+                if (parentContext.mounted) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
                     SnackBar(
                       content: Text(
                         'Đã hoàn tất ký hợp đồng với tân binh $name!',
@@ -225,7 +224,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Hộp thoại Sao lưu & Quản lý dữ liệu người dùng
   void _showDataManagementDialog(BuildContext context) {
     final state = context.read<AppStateProvider>();
     showDialog(
@@ -326,9 +324,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
               ),
               onTap: () async {
+                Navigator.of(dialogCtx).pop();
                 await state.resetToDefaultMockData();
                 if (context.mounted) {
-                  Navigator.of(dialogCtx).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
@@ -430,7 +428,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .where((p) => p.status == 'Doubtful' || p.status == 'On Duty')
         .length;
 
-    // Phân bổ players theo 4 tuyến
     final fwCount = state.players
         .where((p) => p.position == PlayerPosition.forward)
         .length;
@@ -457,7 +454,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .where((p) => p.position == PlayerPosition.goalkeeper)
         .fold(0.0, (s, p) => s + p.currentMarketValue);
 
-    // Cầu thủ có giá trị cao nhất & Cầu thủ đang chấn thương
     final topPlayer =
         (List<Player>.from(state.players)..sort(
               (a, b) => b.currentMarketValue.compareTo(a.currentMarketValue),
@@ -502,7 +498,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
-          // Nút Đồng bộ Live Data (Real-time Sync)
+
           IconButton(
             icon: state.isSyncing
                 ? const SizedBox(
@@ -540,7 +536,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Column(
         children: [
-          // Banner Chào mừng Ban Lãnh đạo / Góc nhìn Ông Bầu CLB
+
           Container(
             margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -677,7 +673,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-          // Segmented Bar chuyển đổi Dashboard Chuyên nghiệp
+
           Container(
             margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             padding: const EdgeInsets.all(4),
@@ -789,7 +785,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Welcome Club Banner với trạng thái Backend & Realtime
+
                         Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
@@ -874,7 +870,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              // Real-time Status Bar
+
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
@@ -926,7 +922,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // --- THANH TÁC VỤ QUẢN LÝ NHANH CHO ÔNG BẦU / HLV (3 QUICK ACTION BUTTONS) ---
                         Row(
                           children: [
                             Expanded(
@@ -1013,7 +1008,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // --- KHỐI 1: SQUAD READINESS MATRIX (TRẠNG THÁI THỂ LỰC & Y TẾ TOÀN ĐỘI) ---
                         const Text(
                           'Squad Readiness & Medical Status',
                           style: TextStyle(
@@ -1064,7 +1058,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Cảnh báo y tế chi tiết nếu có ca chấn thương
                         if (injuredPlayers.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -1100,7 +1093,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         const SizedBox(height: 20),
 
-                        // --- KHỐI 2: SPOTLIGHT CẦU THỦ ĐẮT GIÁ NHẤT & ĐỘI TRƯỞNG ---
                         if (topPlayer != null) ...[
                           const Text(
                             'Squad Valuation Leader (Transfermarkt Top Asset)',
@@ -1234,7 +1226,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(height: 20),
                         ],
 
-                        // --- KHỐI 3: BIỂU ĐỒ CHIỀU SÂU ĐỘI HÌNH & PHÂN BỔ TUYẾN (POSITION MATRIX) ---
                         const Text(
                           'Squad Depth & Valuation by Position',
                           style: TextStyle(
@@ -1273,7 +1264,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 14),
-                                // 4 thanh đo chiều sâu theo tuyến
+
                                 _buildPositionDepthBar(
                                   'Forwards',
                                   fwCount,
@@ -1311,7 +1302,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        // --- KHỐI 4: KEY SQUAD PROFILES HÀNG NGANG CUỘN MƯỢT ---
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
@@ -1348,7 +1338,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 8),
 
-                        // Horizontal Scrollable Key Squad Profiles
                         SizedBox(
                           height: 180,
                           child: Scrollbar(
@@ -1438,7 +1427,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // --- KHỐI 5: LỊCH TẬP HUẤN HÔM NAY CỦA CÁC CẦU THỦ ---
                         Wrap(
                           spacing: 12,
                           runSpacing: 8,

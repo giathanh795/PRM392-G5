@@ -60,8 +60,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     _playerId = null;
   });
 
-  // Hộp thoại tạo buổi tập mới
-  void _showAddSessionDialog(BuildContext context) {
+  void _showAddSessionDialog(BuildContext parentContext) {
     final titleController = TextEditingController();
     final locationController = TextEditingController(
       text: 'AXA Training Ground - Pitch 1',
@@ -74,13 +73,13 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     String selectedType = 'Tactical';
     final selectedPlayers = <String>{};
 
-    final allPlayers = context.read<AppStateProvider>().players;
+    final allPlayers = parentContext.read<AppStateProvider>().players;
     final currentDateStr = _dateKey(_selectedDate);
 
     showDialog(
-      context: context,
+      context: parentContext,
       builder: (dialogCtx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (dialogStateCtx, setDialogState) => AlertDialog(
           backgroundColor: AppTheme.surfaceNavy,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -274,14 +273,16 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                   playerIds: selectedPlayers.toList(),
                 );
 
-                context.read<AppStateProvider>().addTrainingSession(newSession);
                 Navigator.of(dialogCtx).pop();
+                parentContext.read<AppStateProvider>().addTrainingSession(newSession);
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Added session "$title" on $currentDateStr!'),
-                  ),
-                );
+                if (parentContext.mounted) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    SnackBar(
+                      content: Text('Added session "$title" on $currentDateStr!'),
+                    ),
+                  );
+                }
               },
               child: const Text(
                 'Create session',

@@ -160,7 +160,7 @@ class PlayerListScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Search Bar
+
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
@@ -178,7 +178,6 @@ class PlayerListScreen extends StatelessWidget {
             ),
           ),
 
-          // Position Filter Horizontal Chips
           SizedBox(
             height: 48,
             child: ListView.separated(
@@ -206,7 +205,6 @@ class PlayerListScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // Total Count Info
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: Row(
@@ -227,7 +225,6 @@ class PlayerListScreen extends StatelessWidget {
             ),
           ),
 
-          // Player List View
           Expanded(
             child: state.filteredPlayers.isEmpty
                 ? Center(

@@ -53,7 +53,7 @@ class SponsorshipManagementScreen extends StatelessWidget {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (dialogStateContext, setDialogState) => AlertDialog(
           backgroundColor: AppTheme.surfaceNavy,
           title: Text(
             sponsorship == null ? 'Thêm nhà tài trợ' : 'Sửa nhà tài trợ',
@@ -311,22 +311,21 @@ class SponsorshipManagementScreen extends StatelessWidget {
                   email: email.text.trim(),
                   contactPerson: contactPerson.text.trim(),
                 );
-                try {
-                  final provider = context.read<AppStateProvider>();
-                  if (sponsorship == null) {
-                    await provider.addSponsorship(item);
-                  } else {
-                    await provider.updateSponsorship(item);
-                  }
-                  if (dialogContext.mounted) Navigator.pop(dialogContext);
-                } catch (error) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Không thể lưu nhà tài trợ: $error'),
-                      ),
-                    );
-                  }
+                Navigator.pop(dialogContext);
+                final provider = context.read<AppStateProvider>();
+                if (sponsorship == null) {
+                  await provider.addSponsorship(item);
+                } else {
+                  await provider.updateSponsorship(item);
+                }
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(sponsorship == null
+                          ? 'Đã thêm nhà tài trợ "${item.name}"'
+                          : 'Đã cập nhật nhà tài trợ "${item.name}"'),
+                    ),
+                  );
                 }
               },
               child: const Text('Lưu'),

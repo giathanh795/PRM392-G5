@@ -1,7 +1,5 @@
 import '../models/training_session.dart';
 
-/// Fixed demonstration programme, shared by Training and Dashboard.
-/// No remote service, database or device storage is used for this schedule.
 class TrainingScheduleData {
   static const year = 2026;
   static const months = [10, 11];
@@ -169,7 +167,6 @@ class TrainingScheduleData {
               'Guided cooldown, hydration review, mobility and recovery treatments.',
             );
           case DateTime.sunday:
-            // Scheduled rest day. No sessions are created.
             break;
         }
       }

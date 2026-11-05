@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,7 +16,6 @@ class PlayerDetailScreen extends StatelessWidget {
 
   const PlayerDetailScreen({super.key, required this.player});
 
-  // Mở trình phát / Xem URL (Hỗ trợ Youtube, trang Web, file video MP4, ảnh Base64, v.v.)
   Future<void> _launchMediaUrl(BuildContext context, PlayerMediaItem item) async {
     final rawUrl = item.url.trim();
     if (rawUrl.isEmpty) {
@@ -26,7 +25,6 @@ class PlayerDetailScreen extends StatelessWidget {
       return;
     }
 
-    // Nếu là ảnh tải lên từ thiết bị dạng base64
     if (rawUrl.startsWith('data:image')) {
       showDialog(
         context: context,
@@ -92,8 +90,7 @@ class PlayerDetailScreen extends StatelessWidget {
     }
   }
 
-  // Hộp thoại chỉnh sửa Avatar (Cho phép dán URL, chọn từ Thư viện máy, hoặc chọn Preset)
-  void _showEditAvatarDialog(BuildContext context, Player currentPlayer) {
+  void _showEditAvatarDialog(BuildContext parentContext, Player currentPlayer) {
     final controller = TextEditingController(text: currentPlayer.avatarUrl);
     final picker = ImagePicker();
 
@@ -106,9 +103,9 @@ class PlayerDetailScreen extends StatelessWidget {
     ];
 
     showDialog(
-      context: context,
+      context: parentContext,
       builder: (dialogCtx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (dialogStateCtx, setDialogState) => AlertDialog(
           backgroundColor: AppTheme.surfaceNavy,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -126,7 +123,7 @@ class PlayerDetailScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nút chọn ảnh trực tiếp từ bộ sưu tập máy tính / điện thoại
+
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -153,8 +150,8 @@ class PlayerDetailScreen extends StatelessWidget {
                           });
                         }
                       } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                        if (parentContext.mounted) {
+                          ScaffoldMessenger.of(parentContext).showSnackBar(
                             SnackBar(content: Text('Không thể mở thư viện: $e')),
                           );
                         }
@@ -195,7 +192,6 @@ class PlayerDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // Xem trước ảnh (Live Preview)
                 Center(
                   child: Column(
                     children: [
@@ -246,10 +242,10 @@ class PlayerDetailScreen extends StatelessWidget {
               onPressed: () async {
                 final newUrl = controller.text.trim();
                 final updated = currentPlayer.copyWith(avatarUrl: newUrl);
-                await context.read<AppStateProvider>().updatePlayer(updated);
-                if (context.mounted) {
-                  Navigator.of(dialogCtx).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                Navigator.of(dialogCtx).pop();
+                await parentContext.read<AppStateProvider>().updatePlayer(updated);
+                if (parentContext.mounted) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
                     SnackBar(content: Text('Đã cập nhật và lưu ảnh đại diện cho ${currentPlayer.name}!')),
                   );
                 }
@@ -262,8 +258,7 @@ class PlayerDetailScreen extends StatelessWidget {
     );
   }
 
-  // Hộp thoại Thêm Video / Ảnh PR mới từ máy tính hoặc link
-  void _showAddMediaDialog(BuildContext context, Player currentPlayer) {
+  void _showAddMediaDialog(BuildContext parentContext, Player currentPlayer) {
     final titleController = TextEditingController();
     final urlController = TextEditingController();
     String mediaType = 'video';
@@ -271,9 +266,9 @@ class PlayerDetailScreen extends StatelessWidget {
     final picker = ImagePicker();
 
     showDialog(
-      context: context,
+      context: parentContext,
       builder: (dialogCtx) => StatefulBuilder(
-        builder: (context, setDialogState) {
+        builder: (dialogStateCtx, setDialogState) {
           Future<void> pickMediaFile() async {
             try {
               if (mediaType == 'video') {
@@ -307,8 +302,8 @@ class PlayerDetailScreen extends StatelessWidget {
                 }
               }
             } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
+              if (parentContext.mounted) {
+                ScaffoldMessenger.of(parentContext).showSnackBar(
                   SnackBar(content: Text('Không thể chọn tệp: $e')),
                 );
               }
@@ -362,7 +357,6 @@ class PlayerDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
 
-                  // Khu vực tải file trực tiếp từ máy tính / điện thoại
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -469,13 +463,15 @@ class PlayerDetailScreen extends StatelessWidget {
                     );
                     final updatedList = List<PlayerMediaItem>.from(currentPlayer.mediaList)..add(newItem);
                     final updated = currentPlayer.copyWith(mediaList: updatedList);
-                    context.read<AppStateProvider>().updatePlayer(updated);
                     Navigator.of(dialogCtx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Đã thêm tư liệu PR mới: $title')),
-                    );
+                    parentContext.read<AppStateProvider>().updatePlayer(updated);
+                    if (parentContext.mounted) {
+                      ScaffoldMessenger.of(parentContext).showSnackBar(
+                        SnackBar(content: Text('Đã thêm tư liệu PR mới: $title')),
+                      );
+                    }
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    ScaffoldMessenger.of(parentContext).showSnackBar(
                       const SnackBar(content: Text('Vui lòng chọn tệp từ máy hoặc điền đầy đủ tiêu đề và đường dẫn!')),
                     );
                   }
@@ -577,7 +573,7 @@ class PlayerDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero Player Card Header với PlayerAvatar & Nút Edit Avatar
+
             Card(
               clipBehavior: Clip.antiAlias,
               child: Container(
@@ -677,7 +673,6 @@ class PlayerDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Nổi bật: PHÂN TÍCH CHUYÊN MÔN & BIỂU ĐỒ RADAR (OWNER ANALYTICS CARD)
             InkWell(
               onTap: () {
                 Navigator.of(context).push(
@@ -793,7 +788,7 @@ class PlayerDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            // Bio & Contract Information
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -836,7 +831,6 @@ class PlayerDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Player PR & Media Section với Nút "+ Thêm Tư Liệu PR"
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -946,7 +940,7 @@ class PlayerDetailScreen extends StatelessWidget {
                 },
               ),
             const SizedBox(height: 24),
-            // Khu vực quản lý / Xóa cầu thủ (Danger Zone)
+
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),

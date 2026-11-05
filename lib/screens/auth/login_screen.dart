@@ -12,15 +12,13 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  int _activeTab = 0; // 0: Login, 1: Register
+  int _activeTab = 0;
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  // Controllers cho Đăng nhập
   final _loginEmailController = TextEditingController(text: 'john.henry@liverpoolfc.com');
   final _loginPasswordController = TextEditingController(text: '123');
 
-  // Controllers cho Đăng ký
   final _regNameController = TextEditingController(text: 'John W. Henry');
   final _regEmailController = TextEditingController(text: 'john.henry@gmail.com');
   final _regPasswordController = TextEditingController(text: '123456');
@@ -42,7 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Đăng nhập thường
   Future<void> _handleEmailLogin() async {
     final email = _loginEmailController.text.trim();
     final pass = _loginPasswordController.text;
@@ -62,7 +59,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // Đăng nhập bằng Google / Gmail
   Future<void> _handleGoogleSignIn() async {
     final gmailController = TextEditingController(text: 'john.henry@gmail.com');
 
@@ -145,7 +141,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // Đăng ký tài khoản mới
   Future<void> _handleRegister() async {
     final name = _regNameController.text.trim();
     final email = _regEmailController.text.trim();
@@ -194,14 +189,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo CLB Liverpool chính thức từ Assets
+
                   Center(
                     child: Container(
-                      width: 90,
-                      height: 90,
+                      width: 96,
+                      height: 96,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.lfcRed.withValues(alpha: 0.3), width: 2),
                         boxShadow: [
                           BoxShadow(
                             color: AppTheme.lfcRed.withValues(alpha: 0.35),
@@ -211,14 +207,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.all(10),
-                      child: Image.asset(
-                        'assets/images/liverpool.png',
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.sports_soccer,
-                          size: 54,
-                          color: AppTheme.lfcRed,
+                      child: ClipOval(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Image.asset(
+                            'assets/images/liverpool.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => const Icon(
+                              Icons.sports_soccer,
+                              size: 54,
+                              color: AppTheme.lfcRed,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -245,7 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Partner Badge
+
                   Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -273,7 +273,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Segmented Tabs: Đăng nhập vs Đăng ký
                   Container(
                     decoration: BoxDecoration(
                       color: isDark ? AppTheme.surfaceNavy : Colors.grey.shade200,
@@ -330,7 +329,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // =================== FORM ĐĂNG NHẬP ===================
                   if (_activeTab == 0) ...[
                     TextField(
                       controller: _loginEmailController,
@@ -371,7 +369,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 18),
 
-                    // Divider Hoặc
                     Row(
                       children: [
                         Expanded(child: Divider(color: AppTheme.borderColor(context))),
@@ -387,7 +384,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Nút Đăng nhập bằng Google / Gmail
                     OutlinedButton(
                       onPressed: _isLoading ? null : _handleGoogleSignIn,
                       style: OutlinedButton.styleFrom(
@@ -415,7 +411,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
 
-                  // =================== FORM ĐĂNG KÝ ===================
                   if (_activeTab == 1) ...[
                     TextField(
                       controller: _regNameController,

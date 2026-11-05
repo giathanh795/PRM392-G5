@@ -52,7 +52,7 @@ class PlayerAvatar extends StatelessWidget {
     if (trimmed.isEmpty) {
       imageWidget = placeholder;
     } else if (trimmed.startsWith('data:image') || trimmed.contains(';base64,')) {
-      // Base64 Data URI (Hỗ trợ 100% Web, Mobile, Desktop, lưu trữ vĩnh viễn)
+
       try {
         final base64Str = trimmed.contains(',') ? trimmed.split(',').last : trimmed;
         final bytes = base64Decode(base64Str);
@@ -67,7 +67,7 @@ class PlayerAvatar extends StatelessWidget {
         imageWidget = placeholder;
       }
     } else if (trimmed.startsWith('blob:')) {
-      // Blob URL từ trình duyệt Web
+
       imageWidget = Image.network(
         trimmed,
         width: size,
@@ -76,7 +76,7 @@ class PlayerAvatar extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) => placeholder,
       );
     } else if (trimmed.startsWith('assets/')) {
-      // Local App Asset
+
       imageWidget = Image.asset(
         trimmed,
         width: size,
@@ -85,7 +85,7 @@ class PlayerAvatar extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) => placeholder,
       );
     } else if (!kIsWeb && (trimmed.startsWith('/') || trimmed.contains(':\\') || trimmed.contains(':/'))) {
-      // Local File Image trên Mobile / Desktop (Tuyệt đối không gọi trên Web để tránh lỗi Unsupported operation: _Namespace)
+
       try {
         final file = io.File(trimmed);
         if (file.existsSync()) {
@@ -103,7 +103,7 @@ class PlayerAvatar extends StatelessWidget {
         imageWidget = placeholder;
       }
     } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      // Network URL Image (Cached)
+
       imageWidget = CachedNetworkImage(
         imageUrl: trimmed,
         width: size,

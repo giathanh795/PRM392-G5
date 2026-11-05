@@ -1,48 +1,42 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Brand Colors - Deep Navy Blue as main, with Liverpool Gold/Teal/Red accents
-  static const Color primaryNavy = Color(0xFF0A192F);       // Deep Navy background
-  static const Color surfaceNavy = Color(0xFF112240);       // Surface / Card Deep Navy
-  static const Color surfaceNavyLight = Color(0xFF1E3A5F);  // Elevated Surface Navy Light
-  
-  // Light Mode Colors
-  static const Color primaryLightBg = Color(0xFFF1F5F9);    // Clean Slate 100
-  static const Color surfaceLight = Color(0xFFFFFFFF);      // Pure White Card
-  static const Color surfaceLightElevated = Color(0xFFE2E8F0); // Slate 200
-  static const Color textDarkPrimary = Color(0xFF0F172A);   // Deep Slate 900
-  static const Color textDarkSecondary = Color(0xFF475569); // Slate 600
-  static const Color borderLight = Color(0xFFCBD5E1);       // Slate 300
 
-  // Backwards compatible aliases
+  static const Color primaryNavy = Color(0xFF0A192F);
+  static const Color surfaceNavy = Color(0xFF112240);
+  static const Color surfaceNavyLight = Color(0xFF1E3A5F);
+
+  static const Color primaryLightBg = Color(0xFFF1F5F9);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
+  static const Color surfaceLightElevated = Color(0xFFE2E8F0);
+  static const Color textDarkPrimary = Color(0xFF0F172A);
+  static const Color textDarkSecondary = Color(0xFF475569);
+  static const Color borderLight = Color(0xFFCBD5E1);
+
   static const Color bgDark = primaryNavy;
   static const Color bgCard = surfaceNavy;
   static const Color bgCardLight = surfaceNavyLight;
-  
-  static const Color accentCyan = Color(0xFF64FFDA);        // Vibrant Aqua / Cyan accent
-  static const Color accentBlue = Color(0xFF1E88E5);        // Royal Blue
-  
-  // Accents & Brand Elements
-  static const Color lfcRed = Color(0xFFE63946);           // Signature LFC Red highlight
+
+  static const Color accentCyan = Color(0xFF64FFDA);
+  static const Color accentBlue = Color(0xFF1E88E5);
+
+  static const Color lfcRed = Color(0xFFE63946);
   static const Color lfcDarkRed = Color(0xFF9B0A22);
   static const Color lfcYellow = Color(0xFFFFD166);
-  static const Color accentGold = Color(0xFFFFD166);        // Gold / Yellow highlight
-  static const Color lfcTeal = Color(0xFF00B2A9);          // Liverpool Liverbird Teal
-  
-  // Text colors
-  static const Color textPrimary = Color(0xFFE2E8F0);      // High contrast crisp text
-  static const Color textSecondary = Color(0xFF94A3B8);    // Soft Slate Gray
-  static const Color textMuted = Color(0xFF64748B);
-  static const Color borderSubtle = Color(0xFF233554);     // Deep navy border
+  static const Color accentGold = Color(0xFFFFD166);
+  static const Color lfcTeal = Color(0xFF00B2A9);
 
-  // Status Colors
+  static const Color textPrimary = Color(0xFFE2E8F0);
+  static const Color textSecondary = Color(0xFF94A3B8);
+  static const Color textMuted = Color(0xFF64748B);
+  static const Color borderSubtle = Color(0xFF233554);
+
   static const Color success = Color(0xFF10B981);
   static const Color warning = Color(0xFFF59E0B);
   static const Color danger = Color(0xFFEF4444);
   static const Color info = Color(0xFF38BDF8);
   static const Color adidasBlack = Color(0xFF0B0F17);
 
-  // Dynamic Theme Helpers
   static bool isDark(BuildContext context) => Theme.of(context).brightness == Brightness.dark;
   static Color cardColor(BuildContext context) => isDark(context) ? surfaceNavy : surfaceLight;
   static Color bgColor(BuildContext context) => isDark(context) ? primaryNavy : primaryLightBg;

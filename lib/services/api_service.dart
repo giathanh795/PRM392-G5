@@ -21,7 +21,6 @@ class ApiService {
 
   static String get baseUrl => '$apiBaseUrl/players';
 
-  // Lấy toàn bộ danh sách cầu thủ từ Backend Spring Boot
   static Future<List<Player>?> fetchPlayers() async {
     try {
       final response = await http
@@ -42,7 +41,6 @@ class ApiService {
     return null;
   }
 
-  // Cập nhật thông tin cầu thủ (đổi avatar, thêm video PR, sửa chỉ số)
   static Future<bool> updatePlayer(Player player) async {
     try {
       final response = await http
@@ -60,7 +58,6 @@ class ApiService {
     }
   }
 
-  // Thêm cầu thủ mới
   static Future<bool> addPlayer(Player player) async {
     try {
       final response = await http
@@ -78,7 +75,6 @@ class ApiService {
     }
   }
 
-  // Xóa cầu thủ
   static Future<bool> deletePlayer(String id) async {
     try {
       final response = await http
@@ -92,7 +88,6 @@ class ApiService {
     }
   }
 
-  // Khôi phục danh sách Liverpool mặc định ban đầu
   static Future<List<Player>?> resetToDefault() async {
     try {
       final response = await http
@@ -196,7 +191,6 @@ class ApiService {
   static String sponsorshipContractUrl(String id) =>
       '$apiBaseUrl/sponsorships/${Uri.encodeComponent(id)}/contract';
 
-  // --- USER PROFILE ENDPOINTS (SQL BACKEND) ---
   static Future<UserProfile?> fetchUserProfile() async {
     try {
       final response = await http

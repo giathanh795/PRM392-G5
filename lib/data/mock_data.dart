@@ -1,3 +1,4 @@
+import '../models/sponsorship.dart';
 import '../models/player.dart';
 import '../models/training_session.dart';
 import 'training_schedule_data.dart';
@@ -17,14 +18,7 @@ class MockData {
     }
   }
 
-  // =========================================================================
-  // TOÀN BỘ ĐỘI HÌNH LIVERPOOL FC MÙA GIẢI NGOẠI HẠNG ANH 2026/2027
-  // HLV trưởng: Andoni Iraola | Nhà tài trợ chính thức: Adidas
-  // Bao gồm các tân binh đỉnh cao: Florian Wirtz, Alexander Isak, Bradley Barcola,
-  // Giorgi Mamardashvili, Ronald Araujo, Milos Kerkez, Hugo Ekitike...
-  // =========================================================================
   static List<Player> players = [
-    // --- GOALKEEPERS ---
     Player(
       id: 'p1',
       name: 'Giorgi Mamardashvili',
@@ -36,7 +30,7 @@ class MockData {
       height: '199 cm',
       weight: '93 kg',
       contractUntil: '2031-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+      avatarUrl: 'assets/images/mamardashvilli.jpg',
       currentMarketValue: 50.0,
       previousMarketValue: 45.0,
       status: 'Active',
@@ -68,7 +62,7 @@ class MockData {
       height: '193 cm',
       weight: '91 kg',
       contractUntil: '2027-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+      avatarUrl: 'assets/images/alisson.jpg',
       currentMarketValue: 24.0,
       previousMarketValue: 28.0,
       status: 'Active',
@@ -94,7 +88,7 @@ class MockData {
       height: '190 cm',
       weight: '82 kg',
       contractUntil: '2028-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
+      avatarUrl: 'assets/images/jaros.jpg',
       currentMarketValue: 6.0,
       previousMarketValue: 5.0,
       status: 'Active',
@@ -118,7 +112,7 @@ class MockData {
       height: '188 cm',
       weight: '82 kg',
       contractUntil: '2028-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80',
+      avatarUrl: 'assets/images/woodman.jpg',
       currentMarketValue: 4.5,
       previousMarketValue: 4.0,
       status: 'Active',
@@ -132,7 +126,6 @@ class MockData {
       mediaList: [],
     ),
 
-    // --- DEFENDERS ---
     Player(
       id: 'p5',
       name: 'Virgil van Dijk',
@@ -144,7 +137,7 @@ class MockData {
       height: '195 cm',
       weight: '92 kg',
       contractUntil: '2027-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80',
+      avatarUrl: 'assets/images/vandijk.jpg',
       currentMarketValue: 22.0,
       previousMarketValue: 25.0,
       status: 'Active',
@@ -172,7 +165,7 @@ class MockData {
       height: '192 cm',
       weight: '91 kg',
       contractUntil: '2027-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&q=80',
+      avatarUrl: 'assets/images/araujo.jpg',
       currentMarketValue: 65.0,
       previousMarketValue: 60.0,
       status: 'Active',
@@ -200,7 +193,7 @@ class MockData {
       height: '180 cm',
       weight: '73 kg',
       contractUntil: '2031-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
+      avatarUrl: 'assets/images/kerkez.jpg',
       currentMarketValue: 45.0,
       previousMarketValue: 38.0,
       status: 'Active',
@@ -226,7 +219,7 @@ class MockData {
       height: '188 cm',
       weight: '82 kg',
       contractUntil: '2030-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1513956589380-bad6acb9b9d4?w=400&q=80',
+      avatarUrl: 'assets/images/jacquet.jpg',
       currentMarketValue: 22.0,
       previousMarketValue: 14.0,
       status: 'Active',
@@ -250,7 +243,7 @@ class MockData {
       height: '181 cm',
       weight: '70 kg',
       contractUntil: '2029-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80',
+      avatarUrl: 'assets/images/bradley.jpg',
       currentMarketValue: 32.0,
       previousMarketValue: 25.0,
       status: 'Active',
@@ -276,7 +269,7 @@ class MockData {
       height: '188 cm',
       weight: '77 kg',
       contractUntil: '2028-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&q=80',
+      avatarUrl: 'assets/images/gomez.jpg',
       currentMarketValue: 24.0,
       previousMarketValue: 25.0,
       status: 'Active',
@@ -300,7 +293,7 @@ class MockData {
       height: '179 cm',
       weight: '77 kg',
       contractUntil: '2027-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=400&q=80',
+      avatarUrl: 'assets/images/tsimikas.jpg',
       currentMarketValue: 18.0,
       previousMarketValue: 20.0,
       status: 'Active',
@@ -314,7 +307,6 @@ class MockData {
       mediaList: [],
     ),
 
-    // --- MIDFIELDERS ---
     Player(
       id: 'p12',
       name: 'Florian Wirtz',
@@ -326,7 +318,7 @@ class MockData {
       height: '177 cm',
       weight: '71 kg',
       contractUntil: '2031-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80',
+      avatarUrl: 'assets/images/wirtz.jpg',
       currentMarketValue: 130.0,
       previousMarketValue: 120.0,
       status: 'Active',
@@ -359,7 +351,7 @@ class MockData {
       height: '176 cm',
       weight: '72 kg',
       contractUntil: '2029-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80',
+      avatarUrl: 'assets/images/macallister.jpg',
       currentMarketValue: 80.0,
       previousMarketValue: 75.0,
       status: 'Active',
@@ -385,7 +377,7 @@ class MockData {
       height: '186 cm',
       weight: '74 kg',
       contractUntil: '2029-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
+      avatarUrl: 'assets/images/szoboszlai.jpg',
       currentMarketValue: 80.0,
       previousMarketValue: 75.0,
       status: 'Active',
@@ -411,7 +403,7 @@ class MockData {
       height: '190 cm',
       weight: '83 kg',
       contractUntil: '2029-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+      avatarUrl: 'assets/images/gravenberch.jpg',
       currentMarketValue: 65.0,
       previousMarketValue: 55.0,
       status: 'Active',
@@ -437,7 +429,7 @@ class MockData {
       height: '178 cm',
       weight: '76 kg',
       contractUntil: '2027-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&q=80',
+      avatarUrl: 'assets/images/endo.jpg',
       currentMarketValue: 9.0,
       previousMarketValue: 12.0,
       status: 'Active',
@@ -461,7 +453,7 @@ class MockData {
       height: '181 cm',
       weight: '70 kg',
       contractUntil: '2030-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
+      avatarUrl: 'assets/images/nyoni.jpg',
       currentMarketValue: 18.0,
       previousMarketValue: 8.0,
       status: 'Active',
@@ -485,7 +477,7 @@ class MockData {
       height: '183 cm',
       weight: '74 kg',
       contractUntil: '2029-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1513956589380-bad6acb9b9d4?w=400&q=80',
+      avatarUrl: 'assets/images/mcconnel.jpg',
       currentMarketValue: 10.0,
       previousMarketValue: 6.0,
       status: 'Active',
@@ -499,7 +491,6 @@ class MockData {
       mediaList: [],
     ),
 
-    // --- FORWARDS ---
     Player(
       id: 'p19',
       name: 'Alexander Isak',
@@ -511,7 +502,7 @@ class MockData {
       height: '192 cm',
       weight: '77 kg',
       contractUntil: '2031-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400&q=80',
+      avatarUrl: 'assets/images/isak.jpg',
       currentMarketValue: 100.0,
       previousMarketValue: 85.0,
       status: 'Active',
@@ -544,7 +535,7 @@ class MockData {
       height: '186 cm',
       weight: '75 kg',
       contractUntil: '2031-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=400&q=80',
+      avatarUrl: 'assets/images/barcola.jpg',
       currentMarketValue: 85.0,
       previousMarketValue: 70.0,
       status: 'Active',
@@ -576,7 +567,7 @@ class MockData {
       height: '193 cm',
       weight: '83 kg',
       contractUntil: '2028-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+      avatarUrl: 'assets/images/gakpo.jpg',
       currentMarketValue: 65.0,
       previousMarketValue: 60.0,
       status: 'Active',
@@ -602,7 +593,7 @@ class MockData {
       height: '189 cm',
       weight: '75 kg',
       contractUntil: '2031-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80',
+      avatarUrl: 'assets/images/ekitike.jpg',
       currentMarketValue: 45.0,
       previousMarketValue: 35.0,
       status: 'Active',
@@ -628,7 +619,7 @@ class MockData {
       height: '175 cm',
       weight: '70 kg',
       contractUntil: '2028-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&q=80',
+      avatarUrl: 'assets/images/chiesa.jpg',
       currentMarketValue: 28.0,
       previousMarketValue: 30.0,
       status: 'Active',
@@ -652,7 +643,7 @@ class MockData {
       height: '182 cm',
       weight: '73 kg',
       contractUntil: '2030-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=400&q=80',
+      avatarUrl: 'assets/images/munoz.jpg',
       currentMarketValue: 15.0,
       previousMarketValue: 8.0,
       status: 'Active',
@@ -676,7 +667,7 @@ class MockData {
       height: '183 cm',
       weight: '74 kg',
       contractUntil: '2029-06-30',
-      avatarUrl: 'https://images.unsplash.com/photo-1513956589380-bad6acb9b9d4?w=400&q=80',
+      avatarUrl: 'assets/images/danns.jpg',
       currentMarketValue: 12.0,
       previousMarketValue: 6.0,
       status: 'Active',
@@ -728,6 +719,60 @@ class MockData {
   ];
 
   static List<TrainingSession> trainingSessions = TrainingScheduleData.sessions;
+  static List<Sponsorship> sponsorships = [
+    const Sponsorship(
+      id: 'sp_adidas_01',
+      name: 'Adidas',
+      logo: 'assets/images/liverpool.png',
+      description: 'Nhà tài trợ trang phục thi đấu & Đối tác toàn cầu chiến lược của Liverpool FC.',
+      value: 75.0,
+      startDate: '2026-07-01',
+      endDate: '2031-06-30',
+      status: 'Active',
+      phone: '+49 (9132) 84-0',
+      email: 'partnership@adidas.com',
+      contactPerson: 'Bjørn Gulden (CEO Adidas)',
+    ),
+    const Sponsorship(
+      id: 'sp_sc_02',
+      name: 'Standard Chartered',
+      logo: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=200&q=80',
+      description: 'Đối tác ngân hàng chính thức & Nhà tài trợ mặt trước áo thi đấu chính thức.',
+      value: 50.0,
+      startDate: '2023-07-01',
+      endDate: '2027-06-30',
+      status: 'Active',
+      phone: '+44 20 7885 8888',
+      email: 'commercial@sc.com',
+      contactPerson: 'Bill Winters (Group Chief Executive)',
+    ),
+    const Sponsorship(
+      id: 'sp_expedia_03',
+      name: 'Expedia',
+      logo: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=200&q=80',
+      description: 'Đối tác du lịch chính thức & Nhà tài trợ tay áo thi đấu Liverpool FC.',
+      value: 15.0,
+      startDate: '2023-07-01',
+      endDate: '2027-06-30',
+      status: 'Active',
+      phone: '+1 (206) 481-7200',
+      email: 'sponsorships@expedia.com',
+      contactPerson: 'Ariane Gorin (CEO Expedia)',
+    ),
+    const Sponsorship(
+      id: 'sp_axa_04',
+      name: 'AXA',
+      logo: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&q=80',
+      description: 'Đối tác đào tạo & Tên trung tâm huấn luyện AXA Training Centre tại Kirkby.',
+      value: 20.0,
+      startDate: '2024-07-01',
+      endDate: '2029-06-30',
+      status: 'Active',
+      phone: '+33 1 40 75 57 00',
+      email: 'partner@axa.com',
+      contactPerson: 'Thomas Buberl (CEO AXA)',
+    ),
+  ];
 
   static List<SponsorCampaign> sponsorCampaigns = [
     SponsorCampaign(

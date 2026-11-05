@@ -76,7 +76,6 @@ class _RadarChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
-    // Draw concentric polygons (25%, 50%, 75%, 100%)
     const levels = 4;
     for (int lvl = 1; lvl <= levels; lvl++) {
       final currentRadius = radius * (lvl / levels);
@@ -95,7 +94,6 @@ class _RadarChartPainter extends CustomPainter {
       canvas.drawPath(gridPath, gridPaint);
     }
 
-    // Draw axes and labels
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
       textAlign: TextAlign.center,
@@ -107,11 +105,10 @@ class _RadarChartPainter extends CustomPainter {
       final endY = center.dy + radius * sin(angle);
       canvas.drawLine(center, Offset(endX, endY), axisPaint);
 
-      // Label text
       final key = keys[i];
       final val = attributes[key] ?? 0;
       final label = '$key\n${val.toInt()}';
-      
+
       final labelDist = radius + 22;
       final labelX = center.dx + labelDist * cos(angle);
       final labelY = center.dy + labelDist * sin(angle);
@@ -132,7 +129,6 @@ class _RadarChartPainter extends CustomPainter {
       );
     }
 
-    // Draw player data polygon
     final dataPath = Path();
     final dataPoints = <Offset>[];
 
@@ -154,20 +150,17 @@ class _RadarChartPainter extends CustomPainter {
     }
     dataPath.close();
 
-    // Fill
     final fillPaint = Paint()
       ..color = fillColor
       ..style = PaintingStyle.fill;
     canvas.drawPath(dataPath, fillPaint);
 
-    // Stroke
     final strokePaint = Paint()
       ..color = lineColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
     canvas.drawPath(dataPath, strokePaint);
 
-    // Points
     final dotPaint = Paint()..color = AppTheme.lfcYellow;
     for (final pt in dataPoints) {
       canvas.drawCircle(pt, 3.5, dotPaint);

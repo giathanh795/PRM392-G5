@@ -3,7 +3,6 @@ import '../core/theme/app_theme.dart';
 import '../models/player.dart';
 import 'player_avatar.dart';
 
-/// Hộp thoại xác nhận xóa cầu thủ với giao diện Liverpool FC
 Future<bool?> showDeletePlayerConfirmationDialog(BuildContext context, Player player) {
   return showDialog<bool>(
     context: context,
@@ -82,7 +81,7 @@ Future<bool?> showDeletePlayerConfirmationDialog(BuildContext context, Player pl
           children: [
             const Divider(color: AppTheme.borderSubtle, height: 1),
             const SizedBox(height: 16),
-            // Thẻ tóm tắt thông tin cầu thủ cần xóa
+
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
