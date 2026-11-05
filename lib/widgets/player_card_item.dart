@@ -28,6 +28,15 @@ class PlayerCardItem extends StatelessWidget {
   /// Hàm callback kích hoạt khi nhấn nút Xóa (mở hộp thoại xác nhận xóa)
   final VoidCallback? onDelete;
 
+  /// --------------------------------------------------------------------------
+  /// HÀM KHỞI TẠO (CONSTRUCTOR) CỦA PLAYER CARD ITEM
+  /// Đóng vai trò làm "cổng nhận dữ liệu & hành động" từ màn hình danh sách (PlayerListScreen):
+  /// - super.key: Khóa định danh của Widget trong cây giao diện Flutter.
+  /// - player: Thông tin đối tượng cầu thủ cần hiển thị lên thẻ (Bắt buộc).
+  /// - onTap: Hành động kích hoạt khi chạm vào thẻ để xem chi tiết (Bắt buộc).
+  /// - onEdit: Hành động kích hoạt khi nhấn nút Sửa (icon cây bút) để mở form sửa (Tùy chọn).
+  /// - onDelete: Hành động kích hoạt khi nhấn nút Xóa (icon thùng rác) để mở dialog xác nhận (Tùy chọn).
+  /// --------------------------------------------------------------------------
   const PlayerCardItem({
     super.key,
     required this.player,
