@@ -24,7 +24,9 @@ class CommercialScreen extends StatelessWidget {
           IconButton(
             icon: Icon(
               state.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: state.isDarkMode ? AppTheme.accentGold : Colors.amber.shade700,
+              color: state.isDarkMode
+                  ? AppTheme.accentGold
+                  : Colors.amber.shade700,
             ),
             tooltip: state.isDarkMode
                 ? 'Chuyển sang Giao diện Sáng'

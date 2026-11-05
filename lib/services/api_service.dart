@@ -120,8 +120,8 @@ class ApiService {
     final response = await http
         .get(Uri.parse('$apiBaseUrl/campaigns'))
         .timeout(const Duration(seconds: 5));
-    _ensureSuccess(response, const {200}, 'Tải danh sách chiến dịch');
-    final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
+    _ensureSuccess(response, const {200}, 'Tải chiến dịch');
+    final list = jsonDecode(utf8.decode(response.bodyBytes)) as List<dynamic>;
     return list
         .map(
           (item) =>
@@ -167,11 +167,12 @@ class ApiService {
     final response = await http
         .get(Uri.parse('$apiBaseUrl/sponsorships'))
         .timeout(const Duration(seconds: 5));
-    _ensureSuccess(response, const {200}, 'Tải danh sách nhà tài trợ');
-    final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
+    _ensureSuccess(response, const {200}, 'Tải nhà tài trợ');
+    final list = jsonDecode(utf8.decode(response.bodyBytes)) as List<dynamic>;
     return list
         .map(
-          (item) => Sponsorship.fromJson(Map<String, dynamic>.from(item as Map)),
+          (item) =>
+              Sponsorship.fromJson(Map<String, dynamic>.from(item as Map)),
         )
         .toList();
   }
@@ -239,7 +240,7 @@ class ApiService {
     try {
       final response = await http
           .post(
-            Uri.parse('/user/register'),
+            Uri.parse('$apiBaseUrl/user/register'),
             headers: _jsonHeaders,
             body: jsonEncode({
               'fullName': fullName,
@@ -251,7 +252,8 @@ class ApiService {
           )
           .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        final data =
+            jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
         if (data['user'] != null) {
           return UserProfile.fromJson(data['user'] as Map<String, dynamic>);
         }
@@ -270,7 +272,7 @@ class ApiService {
     try {
       final response = await http
           .post(
-            Uri.parse('/user/google-login'),
+            Uri.parse('$apiBaseUrl/user/google-login'),
             headers: _jsonHeaders,
             body: jsonEncode({
               'email': email,
@@ -280,7 +282,8 @@ class ApiService {
           )
           .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        final data =
+            jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
         if (data['user'] != null) {
           return UserProfile.fromJson(data['user'] as Map<String, dynamic>);
         }
@@ -291,7 +294,10 @@ class ApiService {
     return null;
   }
 
-  static Future<bool> changePassword(String currentPassword, String newPassword) async {
+  static Future<bool> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
     try {
       final response = await http
           .post(

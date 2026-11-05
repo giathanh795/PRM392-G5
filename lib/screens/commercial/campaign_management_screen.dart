@@ -13,243 +13,16 @@ class CampaignManagementScreen extends StatelessWidget {
     BuildContext context, {
     SponsorCampaign? campaign,
   }) async {
-    final formKey = GlobalKey<FormState>();
-    final name = TextEditingController(text: campaign?.name ?? '');
-    final sponsor = TextEditingController(text: campaign?.sponsorName ?? '');
-    final description = TextEditingController(
-      text: campaign?.description ?? '',
-    );
-    final reach = TextEditingController(text: campaign?.reach ?? '');
-    final engagement = TextEditingController(text: campaign?.engagement ?? '');
-    final budget = TextEditingController(
-      text: (campaign?.budgetMillions ?? 1.5).toString(),
-    );
-    final startDate = TextEditingController(text: campaign?.startDate ?? '');
-    final endDate = TextEditingController(text: campaign?.endDate ?? '');
-    final featuredPlayers = <String>{...?campaign?.featuredPlayerNames};
-    var status = campaign?.status ?? 'Upcoming';
-    const categories = ['Footwear', 'Apparel', 'Digital Content', 'Community'];
-    var category = categories.contains(campaign?.category)
-        ? campaign!.category
-        : categories.first;
-    final players = context.read<AppStateProvider>().players;
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: AppTheme.surfaceNavy,
-          title: Text(campaign == null ? 'Tạo chiến dịch' : 'Sửa chiến dịch'),
-          content: SizedBox(
-            width: 520,
-            child: Form(
-              key: formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _input(name, 'Tên chiến dịch', required: true),
-                    const SizedBox(height: 10),
-                    _input(sponsor, 'Nhà tài trợ', required: true),
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      initialValue: category,
-                      decoration: const InputDecoration(labelText: 'Danh mục'),
-                      items: categories
-                          .map(
-                            (item) => DropdownMenuItem(
-                              value: item,
-                              child: Text(item),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setDialogState(() => category = value);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      initialValue: status,
-                      decoration: const InputDecoration(
-                        labelText: 'Trạng thái',
-                      ),
-                      items: const ['Upcoming', 'Active', 'Completed', 'Paused']
-                          .map(
-                            (item) => DropdownMenuItem(
-                              value: item,
-                              child: Text(item),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setDialogState(() => status = value);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _dateInput(context, startDate, 'Ngày bắt đầu'),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _dateInput(context, endDate, 'Ngày kết thúc'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(child: _input(reach, 'Reach')),
-                        const SizedBox(width: 10),
-                        Expanded(child: _input(engagement, 'Engagement')),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    _input(
-                      budget,
-                      'Ngân sách (€M)',
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return null;
-                        }
-                        if (double.tryParse(value.trim()) == null) {
-                          return 'Nhập giá trị số hợp lệ';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    _input(description, 'Mô tả', maxLines: 3),
-                    const SizedBox(height: 14),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Cầu thủ tham gia',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: players.map((player) {
-                        return FilterChip(
-                          label: Text(player.name),
-                          selected: featuredPlayers.contains(player.name),
-                          onSelected: (selected) {
-                            setDialogState(() {
-                              if (selected) {
-                                featuredPlayers.add(player.name);
-                              } else {
-                                featuredPlayers.remove(player.name);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Hủy'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                if (!formKey.currentState!.validate()) return;
-                final start = startDate.text.trim();
-                final end = endDate.text.trim();
-                final parsedStart = DateTime.tryParse(start);
-                final parsedEnd = DateTime.tryParse(end);
-                if (parsedStart == null || parsedEnd == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Vui lòng chọn ngày hợp lệ.')),
-                  );
-                  return;
-                }
-                if (parsedEnd.isBefore(parsedStart)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Ngày kết thúc phải sau ngày bắt đầu.'),
-                    ),
-                  );
-                  return;
-                }
-                final item = SponsorCampaign(
-                  id:
-                      campaign?.id ??
-                      'camp_${DateTime.now().microsecondsSinceEpoch}',
-                  name: name.text.trim(),
-                  sponsorName: sponsor.text.trim(),
-                  startDate: start,
-                  endDate: end,
-                  status: status,
-                  reach: reach.text.trim(),
-                  engagement: engagement.text.trim(),
-                  description: description.text.trim(),
-                  category: category,
-                  budgetMillions: double.tryParse(budget.text.trim()) ?? 0,
-                  featuredPlayerNames: featuredPlayers.toList(),
-                );
-                final provider = context.read<AppStateProvider>();
-                try {
-                  if (campaign == null) {
-                    await provider.addCampaign(item);
-                  } else {
-                    await provider.updateCampaign(item);
-                  }
-                } catch (error) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Không thể lưu chiến dịch: $error'),
-                      ),
-                    );
-                  }
-                  return;
-                }
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        campaign == null
-                            ? 'Đã thêm chiến dịch.'
-                            : 'Đã cập nhật chiến dịch.',
-                      ),
-                    ),
-                  );
-                }
-              },
-              child: const Text('Lưu'),
-            ),
-          ],
-        ),
-      ),
-    );
-    name.dispose();
-    sponsor.dispose();
-    description.dispose();
-    reach.dispose();
-    engagement.dispose();
-    budget.dispose();
-    startDate.dispose();
-    endDate.dispose();
+    final controllers = _CampaignFormControllers(campaign);
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (_) =>
+            _CampaignFormDialog(campaign: campaign, controllers: controllers),
+      );
+    } finally {
+      controllers.dispose();
+    }
   }
 
   Future<void> _deleteCampaign(
@@ -487,7 +260,7 @@ class CampaignManagementScreen extends StatelessWidget {
           firstDate: DateTime(2000),
           lastDate: DateTime(2100),
         );
-        if (date != null) {
+        if (date != null && context.mounted) {
           controller.text =
               '${date.year.toString().padLeft(4, '0')}-'
               '${date.month.toString().padLeft(2, '0')}-'
@@ -506,6 +279,319 @@ class CampaignManagementScreen extends StatelessWidget {
         Text(
           text,
           style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+        ),
+      ],
+    );
+  }
+}
+
+class _CampaignFormControllers {
+  _CampaignFormControllers(SponsorCampaign? campaign)
+    : name = TextEditingController(text: campaign?.name ?? ''),
+      sponsor = TextEditingController(text: campaign?.sponsorName ?? ''),
+      description = TextEditingController(text: campaign?.description ?? ''),
+      reach = TextEditingController(text: campaign?.reach ?? ''),
+      engagement = TextEditingController(text: campaign?.engagement ?? ''),
+      budget = TextEditingController(
+        text: (campaign?.budgetMillions ?? 1.5).toString(),
+      ),
+      startDate = TextEditingController(text: campaign?.startDate ?? ''),
+      endDate = TextEditingController(text: campaign?.endDate ?? '');
+
+  final TextEditingController name;
+  final TextEditingController sponsor;
+  final TextEditingController description;
+  final TextEditingController reach;
+  final TextEditingController engagement;
+  final TextEditingController budget;
+  final TextEditingController startDate;
+  final TextEditingController endDate;
+
+  void dispose() {
+    name.dispose();
+    sponsor.dispose();
+    description.dispose();
+    reach.dispose();
+    engagement.dispose();
+    budget.dispose();
+    startDate.dispose();
+    endDate.dispose();
+  }
+}
+
+class _CampaignFormDialog extends StatefulWidget {
+  const _CampaignFormDialog({required this.controllers, this.campaign});
+
+  final _CampaignFormControllers controllers;
+  final SponsorCampaign? campaign;
+
+  @override
+  State<_CampaignFormDialog> createState() => _CampaignFormDialogState();
+}
+
+class _CampaignFormDialogState extends State<_CampaignFormDialog> {
+  static const _categories = [
+    'Footwear',
+    'Apparel',
+    'Digital Content',
+    'Community',
+  ];
+
+  final _formKey = GlobalKey<FormState>();
+  late final Set<String> _featuredPlayers;
+  late String _status;
+  late String _category;
+  bool _isSaving = false;
+
+  TextEditingController get _name => widget.controllers.name;
+  TextEditingController get _sponsor => widget.controllers.sponsor;
+  TextEditingController get _description => widget.controllers.description;
+  TextEditingController get _reach => widget.controllers.reach;
+  TextEditingController get _engagement => widget.controllers.engagement;
+  TextEditingController get _budget => widget.controllers.budget;
+  TextEditingController get _startDate => widget.controllers.startDate;
+  TextEditingController get _endDate => widget.controllers.endDate;
+
+  @override
+  void initState() {
+    super.initState();
+    final campaign = widget.campaign;
+    _featuredPlayers = {...?campaign?.featuredPlayerNames};
+    _status = campaign?.status ?? 'Upcoming';
+    _category = _categories.contains(campaign?.category)
+        ? campaign!.category
+        : _categories.first;
+  }
+
+  Future<void> _save() async {
+    if (_isSaving || !_formKey.currentState!.validate()) return;
+
+    final start = _startDate.text.trim();
+    final end = _endDate.text.trim();
+    final parsedStart = DateTime.tryParse(start);
+    final parsedEnd = DateTime.tryParse(end);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+
+    if (parsedStart == null || parsedEnd == null) {
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('Vui lòng chọn ngày hợp lệ.')),
+      );
+      return;
+    }
+    if (parsedEnd.isBefore(parsedStart)) {
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('Ngày kết thúc phải sau ngày bắt đầu.')),
+      );
+      return;
+    }
+
+    final campaign = widget.campaign;
+    final item = SponsorCampaign(
+      id: campaign?.id ?? 'camp_${DateTime.now().microsecondsSinceEpoch}',
+      name: _name.text.trim(),
+      sponsorName: _sponsor.text.trim(),
+      startDate: start,
+      endDate: end,
+      status: _status,
+      reach: _reach.text.trim(),
+      engagement: _engagement.text.trim(),
+      description: _description.text.trim(),
+      category: _category,
+      budgetMillions: double.tryParse(_budget.text.trim()) ?? 0,
+      featuredPlayerNames: _featuredPlayers.toList(),
+    );
+    final provider = context.read<AppStateProvider>();
+
+    setState(() => _isSaving = true);
+    try {
+      if (campaign == null) {
+        await provider.addCampaign(item);
+      } else {
+        await provider.updateCampaign(item);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      messenger?.showSnackBar(
+        SnackBar(content: Text('Không thể lưu chiến dịch: $error')),
+      );
+      return;
+    }
+
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final campaign = widget.campaign;
+    final players = context.read<AppStateProvider>().players;
+
+    return AlertDialog(
+      backgroundColor: AppTheme.surfaceNavy,
+      title: Text(campaign == null ? 'Tạo chiến dịch' : 'Sửa chiến dịch'),
+      content: SizedBox(
+        width: 520,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CampaignManagementScreen._input(
+                  _name,
+                  'Tên chiến dịch',
+                  required: true,
+                ),
+                const SizedBox(height: 10),
+                CampaignManagementScreen._input(
+                  _sponsor,
+                  'Nhà tài trợ',
+                  required: true,
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: _category,
+                  decoration: const InputDecoration(labelText: 'Danh mục'),
+                  items: _categories
+                      .map(
+                        (item) =>
+                            DropdownMenuItem(value: item, child: Text(item)),
+                      )
+                      .toList(),
+                  onChanged: _isSaving
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            setState(() => _category = value);
+                          }
+                        },
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: _status,
+                  decoration: const InputDecoration(labelText: 'Trạng thái'),
+                  items: const ['Upcoming', 'Active', 'Completed', 'Paused']
+                      .map(
+                        (item) =>
+                            DropdownMenuItem(value: item, child: Text(item)),
+                      )
+                      .toList(),
+                  onChanged: _isSaving
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            setState(() => _status = value);
+                          }
+                        },
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: CampaignManagementScreen._dateInput(
+                        context,
+                        _startDate,
+                        'Ngày bắt đầu',
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: CampaignManagementScreen._dateInput(
+                        context,
+                        _endDate,
+                        'Ngày kết thúc',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: CampaignManagementScreen._input(_reach, 'Reach'),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: CampaignManagementScreen._input(
+                        _engagement,
+                        'Engagement',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                CampaignManagementScreen._input(
+                  _budget,
+                  'Ngân sách (€M)',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) return null;
+                    if (double.tryParse(value.trim()) == null) {
+                      return 'Nhập giá trị số hợp lệ';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 10),
+                CampaignManagementScreen._input(
+                  _description,
+                  'Mô tả',
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 14),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Cầu thủ tham gia',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: players.map((player) {
+                    return FilterChip(
+                      label: Text(player.name),
+                      selected: _featuredPlayers.contains(player.name),
+                      onSelected: _isSaving
+                          ? null
+                          : (selected) {
+                              setState(() {
+                                if (selected) {
+                                  _featuredPlayers.add(player.name);
+                                } else {
+                                  _featuredPlayers.remove(player.name);
+                                }
+                              });
+                            },
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+          child: const Text('Hủy'),
+        ),
+        FilledButton(
+          onPressed: _isSaving ? null : _save,
+          child: _isSaving
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Lưu'),
         ),
       ],
     );

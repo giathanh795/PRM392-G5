@@ -235,7 +235,9 @@ class AppStateProvider extends ChangeNotifier {
       for (final id in playerMap.keys) {
         final savedAvatar = prefs.getString('lfc_avatar_$id');
         if (savedAvatar != null && savedAvatar.trim().isNotEmpty) {
-          playerMap[id] = playerMap[id]!.copyWith(avatarUrl: savedAvatar.trim());
+          playerMap[id] = playerMap[id]!.copyWith(
+            avatarUrl: savedAvatar.trim(),
+          );
         }
       }
 
@@ -296,10 +298,9 @@ class AppStateProvider extends ChangeNotifier {
         final List<dynamic> list = jsonDecode(savedJson);
         _campaigns = list
             .map(
-              (item) =>
-                  SponsorCampaign.fromJson(
-                    Map<String, dynamic>.from(item as Map),
-                  ),
+              (item) => SponsorCampaign.fromJson(
+                Map<String, dynamic>.from(item as Map),
+              ),
             )
             .toList();
       } else {
@@ -342,7 +343,9 @@ class AppStateProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final encoded = jsonEncode(_sponsorships.map((s) => s.toJson()).toList());
       await prefs.setString(_sponsorshipsStorageKey, encoded);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[AppState] Lỗi ghi sponsorship local: $e');
+    }
   }
 
   Future<void> reloadCommercialData() async {
@@ -484,23 +487,31 @@ class AppStateProvider extends ChangeNotifier {
         final pIdx = _players.indexWhere((p) => p.id == playerId);
         if (pIdx != -1) {
           final p = _players[pIdx];
-          final newAttrs = Map<String, double>.from(p.attributes);
-          final oldStamina =
-              (newAttrs['stamina'] as num?)?.toDouble() ??
-              (newAttrs['physical'] as num?)?.toDouble() ??
-              80.0;
-          final updatedVal = min(99.0, oldStamina + 0.5);
-          if (newAttrs.containsKey('stamina')) {
-            newAttrs['stamina'] = updatedVal;
-          } else {
-            newAttrs['physical'] = updatedVal;
+          final updatedAttrs = Map<String, double>.from(p.attributes);
+          final staminaKey = updatedAttrs.keys.firstWhere(
+            (key) => key.toLowerCase() == 'stamina',
+            orElse: () => updatedAttrs.keys.firstWhere(
+              (key) => key.toLowerCase() == 'physical',
+              orElse: () => '',
+            ),
+          );
+          if (staminaKey.isNotEmpty) {
+            updatedAttrs[staminaKey] = (updatedAttrs[staminaKey]! + 0.5)
+                .clamp(40.0, 99.0)
+                .toDouble();
           }
           final updatedHistory = List<PlayerStatistic>.from(p.progressHistory);
           if (updatedHistory.isNotEmpty) {
             final last = updatedHistory.removeLast();
-            updatedHistory.add(PlayerStatistic(date: last.date, attributes: newAttrs));
+            updatedHistory.add(
+              PlayerStatistic(date: last.date, attributes: updatedAttrs),
+            );
           } else {
-            updatedHistory.add(PlayerStatistic(date: '2024-10', attributes: newAttrs));
+            final now = DateTime.now();
+            final date = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+            updatedHistory.add(
+              PlayerStatistic(date: date, attributes: updatedAttrs),
+            );
           }
           _players[pIdx] = p.copyWith(progressHistory: updatedHistory);
           ApiService.updatePlayer(_players[pIdx]);
@@ -513,20 +524,20 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   Future<void> addCampaign(SponsorCampaign campaign) async {
-    final created = await ApiService.addCampaign(campaign);
-    _campaigns.insert(0, created);
+    final saved = await ApiService.addCampaign(campaign);
+    _campaigns.insert(0, saved);
     _campaignsError = null;
     notifyListeners();
     await _saveCampaignsToLocalStorage();
   }
 
   Future<void> updateCampaign(SponsorCampaign campaign) async {
-    final updated = await ApiService.updateCampaign(campaign);
-    final index = _campaigns.indexWhere((c) => c.id == updated.id);
+    final saved = await ApiService.updateCampaign(campaign);
+    final index = _campaigns.indexWhere((c) => c.id == saved.id);
     if (index == -1) {
-      _campaigns.insert(0, updated);
+      _campaigns.insert(0, saved);
     } else {
-      _campaigns[index] = updated;
+      _campaigns[index] = saved;
     }
     _campaignsError = null;
     notifyListeners();
@@ -540,7 +551,6 @@ class AppStateProvider extends ChangeNotifier {
     notifyListeners();
     await _saveCampaignsToLocalStorage();
   }
-
   Future<void> addSponsorship(Sponsorship sponsorship) async {
     final saved = await ApiService.addSponsorship(sponsorship);
     _sponsorships.insert(0, saved);
