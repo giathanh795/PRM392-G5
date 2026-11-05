@@ -8,14 +8,42 @@ import '../../widgets/delete_player_dialog.dart';
 import '../../widgets/player_form_dialog.dart';
 import 'player_detail_screen.dart';
 
+/// ============================================================================
+/// MÀN HÌNH DANH SÁCH CẦU THỦ (PLAYER LIST SCREEN)
+/// ============================================================================
+/// Mục đích:
+/// - Hiển thị toàn bộ danh sách đội hình Liverpool FC.
+/// - Tìm kiếm theo tên, số áo, quốc tịch bằng TextField thời gian thực.
+/// - Lọc theo các tuyến vị trí thi đấu (All, Tiền đạo, Tiền vệ, Hậu vệ, Thủ môn).
+/// - Khởi tạo luồng Thêm mới cầu thủ qua nút Add (+) trên AppBar.
+/// - Hỗ trợ thao tác Xóa cầu thủ (qua nút bấm hoặc vuốt thẻ sang trái) kèm
+///   hộp thoại xác nhận an toàn và chức năng HOÀN TÁC (Undo) trong 4 giây.
+/// - Chuyển sang màn hình Chi tiết cầu thủ khi nhấn vào thẻ.
+/// ============================================================================
+
 class PlayerListScreen extends StatelessWidget {
   const PlayerListScreen({super.key});
 
+  /// ==========================================================================
+  /// LUỒNG XỬ LÝ XÓA CẦU THỦ VÀ HOÀN TÁC (DELETE & UNDO FLOW):
+  /// 1. Hiển thị hộp thoại cảnh báo showDeletePlayerConfirmationDialog.
+  /// 2. Nếu người dùng chọn "Xóa":
+  ///    - Ghi nhận vị trí (index) gốc của cầu thủ trong danh sách.
+  ///    - Gọi AppStateProvider.deletePlayer() để xóa khỏi RAM và lưu SharedPreferences.
+  ///    - Hiển thị SnackBar nổi thông báo xóa thành công với nút "HOÀN TÁC".
+  /// 3. Nếu bấm "HOÀN TÁC" trước khi SnackBar đóng (4s):
+  ///    - Gọi AppStateProvider.restorePlayer() để khôi phục lại cầu thủ về đúng vị trí cũ.
+  /// ==========================================================================
   Future<void> _handleDeletePlayer(BuildContext context, Player player) async {
+    // Bước 1: Hiển thị Dialog xác nhận
     final confirmed = await showDeletePlayerConfirmationDialog(context, player);
+
+    // Bước 2: Thực hiện xóa nếu người dùng đã xác nhận
     if (confirmed == true && context.mounted) {
       final originalIndex = context.read<AppStateProvider>().players.indexWhere((p) => p.id == player.id);
       final deleted = await context.read<AppStateProvider>().deletePlayer(player.id);
+
+      // Bước 3: Hiển thị SnackBar thông báo kèm nút "HOÀN TÁC"
       if (context.mounted && deleted != null) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -43,6 +71,7 @@ class PlayerListScreen extends StatelessWidget {
               label: 'HOÀN TÁC',
               textColor: AppTheme.lfcYellow,
               onPressed: () {
+                // Khôi phục lại cầu thủ vào đúng index cũ
                 context.read<AppStateProvider>().restorePlayer(
                   originalIndex >= 0 ? originalIndex : 0,
                   deleted,
@@ -56,6 +85,11 @@ class PlayerListScreen extends StatelessWidget {
     }
   }
 
+  /// ==========================================================================
+  /// LUỒNG KHÔI PHỤC DANH SÁCH GỐC (RESET TO DEFAULT ROSTER):
+  /// - Dùng khi người dùng xóa hết cầu thủ hoặc muốn nạp lại 25 cầu thủ gốc chuẩn LFC.
+  /// - Xóa dữ liệu tùy chỉnh trong SharedPreferences và tải lại MockData.
+  /// ==========================================================================
   void _showResetConfirmation(BuildContext context) {
     showDialog(
       context: context,
@@ -106,6 +140,7 @@ class PlayerListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Lắng nghe thay đổi danh sách cầu thủ, bộ lọc vị trí và từ khóa tìm kiếm
     final state = context.watch<AppStateProvider>();
     final positions = ['All', 'Forward', 'Midfielder', 'Defender', 'Goalkeeper'];
 
@@ -113,11 +148,13 @@ class PlayerListScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Liverpool Squad'),
         actions: [
+          // Nút mở Dialog Thêm mới cầu thủ (Create)
           IconButton(
             icon: const Icon(Icons.person_add_alt_1),
             tooltip: 'Thêm cầu thủ mới',
             onPressed: () => showPlayerFormDialog(context),
           ),
+          // Menu chức năng phụ: Khôi phục danh sách mặc định
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             color: AppTheme.surfaceNavy,
@@ -150,7 +187,9 @@ class PlayerListScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Search Bar
+          // ------------------------------------------------------------------
+          // 1. THANH TÌM KIẾM CẦU THỦ (Tên, Số áo, Quốc tịch)
+          // ------------------------------------------------------------------
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
@@ -168,7 +207,9 @@ class PlayerListScreen extends StatelessWidget {
             ),
           ),
 
-          // Position Filter Horizontal Chips
+          // ------------------------------------------------------------------
+          // 2. THANH CUỘN BỘ LỌC VỊ THI ĐẤU (Position Filter Chips)
+          // ------------------------------------------------------------------
           SizedBox(
             height: 48,
             child: ListView.separated(
@@ -196,7 +237,9 @@ class PlayerListScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // Total Count Info
+          // ------------------------------------------------------------------
+          // 3. THÔNG BÁO SỐ LƯỢNG CẦU THỦ KHỚP BỘ LỌC
+          // ------------------------------------------------------------------
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: Row(
@@ -217,7 +260,9 @@ class PlayerListScreen extends StatelessWidget {
             ),
           ),
 
-          // Player List View
+          // ------------------------------------------------------------------
+          // 4. DANH SÁCH CẦU THỦ HOẶC MÀN HÌNH BÁO TRỐNG
+          // ------------------------------------------------------------------
           Expanded(
             child: state.filteredPlayers.isEmpty
                 ? Center(
@@ -238,6 +283,7 @@ class PlayerListScreen extends StatelessWidget {
                                 : 'Không tìm thấy cầu thủ nào phù hợp.',
                             style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                           ),
+                          // Nút khôi phục nhanh nếu toàn bộ danh sách đã bị xóa
                           if (state.players.isEmpty) ...[
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
@@ -258,6 +304,8 @@ class PlayerListScreen extends StatelessWidget {
                     itemCount: state.filteredPlayers.length,
                     itemBuilder: (context, index) {
                       final player = state.filteredPlayers[index];
+
+                      // Widget Dismissible cho phép thao tác vuốt sang trái để Xóa
                       return Dismissible(
                         key: ValueKey('player_${player.id}'),
                         direction: DismissDirection.endToStart,
@@ -285,9 +333,11 @@ class PlayerListScreen extends StatelessWidget {
                             ],
                           ),
                         ),
+                        // Xác nhận trước khi kích hoạt vuốt xóa
                         confirmDismiss: (direction) async {
                           return await showDeletePlayerConfirmationDialog(context, player);
                         },
+                        // Xóa cầu thủ khi hoàn thành thao tác vuốt
                         onDismissed: (direction) async {
                           final originalIndex = context.read<AppStateProvider>().players.indexWhere((p) => p.id == player.id);
                           final deleted = await context.read<AppStateProvider>().deletePlayer(player.id);
@@ -329,9 +379,11 @@ class PlayerListScreen extends StatelessWidget {
                             );
                           }
                         },
+                        // Thẻ cầu thủ chính
                         child: PlayerCardItem(
                           player: player,
                           onTap: () {
+                            // Chọn cầu thủ và chuyển đến màn hình chi tiết
                             context.read<AppStateProvider>().selectPlayer(player);
                             Navigator.of(context).push(
                               MaterialPageRoute(
@@ -339,7 +391,9 @@ class PlayerListScreen extends StatelessWidget {
                               ),
                             );
                           },
+                          // Nút sửa thông tin cầu thủ
                           onEdit: () => showPlayerFormDialog(context, player: player),
+                          // Nút xóa cầu thủ
                           onDelete: () => _handleDeletePlayer(context, player),
                         ),
                       );

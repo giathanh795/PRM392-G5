@@ -3,7 +3,16 @@ import '../core/theme/app_theme.dart';
 import '../models/player.dart';
 import 'player_avatar.dart';
 
-/// Hộp thoại xác nhận xóa cầu thủ với giao diện Liverpool FC
+/// ============================================================================
+/// HỘP THOẠI XÁC NHẬN XÓA CẦU THỦ (DELETE PLAYER CONFIRMATION DIALOG)
+/// ============================================================================
+/// Mục đích:
+/// - Hiển thị hộp thoại cảnh báo trước khi xóa cầu thủ khỏi đội hình.
+/// - Trình bày tóm tắt: Avatar, tên, số áo, vị trí, quốc tịch, định giá.
+/// - Cảnh báo rõ ràng hành động xóa để tránh thao tác nhầm lẫn.
+/// - Trả về `true` nếu người dùng chọn "Xóa vĩnh viễn", hoặc `false`/`null` nếu "Hủy".
+/// ============================================================================
+
 Future<bool?> showDeletePlayerConfirmationDialog(BuildContext context, Player player) {
   return showDialog<bool>(
     context: context,

@@ -11,6 +11,19 @@ import '../../widgets/delete_player_dialog.dart';
 import '../../widgets/player_form_dialog.dart';
 import 'player_stats_screen.dart';
 
+/// ============================================================================
+/// MÀN HÌNH CHI TIẾT CẦU THỦ (PLAYER DETAIL SCREEN)
+/// ============================================================================
+/// Mục đích:
+/// - Hiển thị hồ sơ toàn diện của một cầu thủ Liverpool FC.
+/// - Đồng bộ dữ liệu theo thời gian thực (Reactive) qua AppStateProvider.
+/// - Cho phép Chỉnh sửa toàn bộ thông tin (nút Edit trên AppBar).
+/// - Quản lý tư liệu PR & Video (tải video/ảnh trực tiếp từ thiết bị, xem/phát).
+/// - Thay đổi ảnh đại diện (chọn từ máy hoặc preset).
+/// - Hiển thị biểu đồ năng lực kỹ thuật (Radar chart / Bar chart).
+/// - Xem lịch sử biến động giá trị chuyển nhượng trên thị trường.
+/// - Vùng xóa cầu thủ (Danger Zone) kèm cảnh báo và chức năng HOÀN TÁC.
+/// ============================================================================
 class PlayerDetailScreen extends StatelessWidget {
   final Player player;
 
@@ -263,6 +276,16 @@ class PlayerDetailScreen extends StatelessWidget {
   }
 
   // Hộp thoại Thêm Video / Ảnh PR mới từ máy tính hoặc link
+  /// ==========================================================================
+  /// LUỒNG THÊM TƯ LIỆU PR / VIDEO TỪ MÁY HOẶC ĐƯỜNG DẪN:
+  /// 1. Cho phép người dùng chọn phân loại: "Video PR" hoặc "Ảnh chụp (Photo)".
+  /// 2. Hỗ trợ nút "Tải file từ máy lên":
+  ///    - Nếu là Video: picker.pickVideo(source: ImageSource.gallery) lấy đường dẫn file.
+  ///    - Nếu là Ảnh: picker.pickImage(...) đọc bytes và mã hóa Base64 Data URI.
+  /// 3. Tự động trích xuất tên file làm tiêu đề mặc định.
+  /// 4. Khi nhấn "Thêm ngay": Khởi tạo đối tượng PlayerMediaItem, chèn vào mediaList,
+  ///    và gọi AppStateProvider.updatePlayer() để lưu trữ bền vững.
+  /// ==========================================================================
   void _showAddMediaDialog(BuildContext context, Player currentPlayer) {
     final titleController = TextEditingController();
     final urlController = TextEditingController();
@@ -489,6 +512,14 @@ class PlayerDetailScreen extends StatelessWidget {
     );
   }
 
+  /// ==========================================================================
+  /// LUỒNG XÓA CẦU THỦ TẠI MÀN HÌNH CHI TIẾT:
+  /// 1. Hiển thị Dialog cảnh báo showDeletePlayerConfirmationDialog.
+  /// 2. Nếu người dùng xác nhận xóa:
+  ///    - Gọi AppStateProvider.deletePlayer(id).
+  ///    - Navigator.of(context).pop() để đóng màn hình chi tiết và quay về danh sách.
+  ///    - Hiển thị SnackBar nổi thông báo xóa kèm nút "HOÀN TÁC" (4 giây).
+  /// ==========================================================================
   Future<void> _handleDeletePlayer(BuildContext context, Player currentPlayer) async {
     final confirmed = await showDeletePlayerConfirmationDialog(context, currentPlayer);
     if (confirmed == true && context.mounted) {

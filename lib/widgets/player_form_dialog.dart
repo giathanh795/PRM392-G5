@@ -8,7 +8,22 @@ import '../models/player.dart';
 import '../providers/app_state_provider.dart';
 import 'player_avatar.dart';
 
-/// Hộp thoại Thêm mới hoặc Chỉnh sửa thông tin cầu thủ
+/// ============================================================================
+/// HỘP THOẠI BIỂU MẪU CẦU THỦ (PLAYER FORM DIALOG)
+/// ============================================================================
+/// Mục đích:
+/// - Dùng chung cho cả 2 thao tác: THÊM MỚI (Create) và CHỈNH SỬA (Update) cầu thủ.
+/// - Nhận vào tham số tùy chọn `player`:
+///   + Nếu `player == null`: Chế độ THÊM MỚI -> khởi tạo giá trị mặc định.
+///   + Nếu `player != null`: Chế độ SỬA -> nạp dữ liệu hiện có của cầu thủ vào form.
+/// - Cho phép tải ảnh đại diện trực tiếp từ thiết bị (ImagePicker) và mã hóa
+///   dưới dạng Base64 Data URI để lưu trữ offline không lo mất liên kết.
+/// - Kiểm tra tính hợp lệ dữ liệu (Form validation) trước khi lưu.
+/// - Tự động khởi tạo bộ chỉ số năng lực mặc định dựa theo vị trí thi đấu
+///   (MockData.getAttributesForPosition) khi tạo cầu thủ mới.
+/// - Ghi đè hoặc thêm mới vào AppStateProvider và đồng bộ SharedPreferences.
+/// ============================================================================
+
 Future<bool?> showPlayerFormDialog(BuildContext context, {Player? player}) {
   return showDialog<bool>(
     context: context,
@@ -89,6 +104,10 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
     super.dispose();
   }
 
+  /// LUỒNG CHỌN ẢNH TỪ THIẾT BỊ:
+  /// 1. Mở thư viện ảnh (gallery) của máy qua plugin image_picker.
+  /// 2. Đọc luồng byte của ảnh đã chọn và mã hóa thành chuỗi Base64 Data URI ('data:image/jpeg;base64,...').
+  /// 3. Lưu vào _avatarUrlController để PlayerAvatar hiển thị ngay tức thì và lưu trữ vĩnh viễn.
   Future<void> _pickImageFromGallery() async {
     try {
       final picked = await _picker.pickImage(
@@ -144,6 +163,21 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
     }
   }
 
+  /// ==========================================================================
+  /// LUỒNG XỬ LÝ LƯU BIỂU MẪU (SUBMIT FORM FLOW):
+  /// 1. Kiểm tra validation toàn bộ các trường nhập liệu (validate form).
+  /// 2. Thu thập và chuẩn hóa dữ liệu từ các Controller và Dropdown.
+  /// 3. Phân nhánh xử lý:
+  ///    - NẾU LÀ CHỈNH SỬA (widget.isEdit == true):
+  ///      + Sao chép dữ liệu cũ kèm thông tin mới qua phương thức copyWith.
+  ///      + Cập nhật lịch sử biến động định giá (marketValueHistory) nếu giá thị trường thay đổi.
+  ///      + Gọi AppStateProvider.updatePlayer(updated) để cập nhật danh sách và lưu SharedPreferences.
+  ///    - NẾU LÀ THÊM MỚI (widget.isEdit == false):
+  ///      + Tạo mã định danh duy nhất (id) theo thời gian thực (p_${timestamp}).
+  ///      + Sinh bộ chỉ số kỹ năng ban đầu (82 điểm) phù hợp với vị trí thi đấu đã chọn.
+  ///      + Khởi tạo đối tượng Player mới và gọi AppStateProvider.addPlayer(newPlayer).
+  /// 4. Đóng hộp thoại và hiển thị SnackBar thông báo thành công.
+  /// ==========================================================================
   void _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 

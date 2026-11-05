@@ -3,6 +3,18 @@ import '../../core/theme/app_theme.dart';
 import '../../models/player.dart';
 import 'player_avatar.dart';
 
+/// ============================================================================
+/// THẺ CẦU THỦ TRONG DANH SÁCH (PLAYER CARD ITEM WIDGET)
+/// ============================================================================
+/// Mục đích:
+/// - Hiển thị thông tin tóm tắt của một cầu thủ trong danh sách chính:
+///   + Ảnh đại diện (PlayerAvatar).
+///   + Tên, số áo, vị trí thi đấu (với dải màu nhận diện tương ứng).
+///   + Quốc tịch, giá trị chuyển nhượng thị trường hiện tại.
+///   + Nút hành động nhanh: Chỉnh sửa (onEdit) và Xóa (onDelete).
+///   + Nhấn vào thẻ để kích hoạt chuyển màn hình chi tiết (onTap).
+/// ============================================================================
+
 class PlayerCardItem extends StatelessWidget {
   final Player player;
   final VoidCallback onTap;

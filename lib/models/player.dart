@@ -1,3 +1,15 @@
+// ============================================================================
+// MÔ HÌNH DỮ LIỆU CẦU THỦ (PLAYER DATA MODEL)
+// ============================================================================
+// File này định nghĩa toàn bộ cấu trúc dữ liệu cho phân hệ Quản lý Cầu thủ:
+// - PlayerPosition: Enum xác định 4 tuyến thi đấu (Tiền đạo, Tiền vệ, Hậu vệ, Thủ môn).
+// - PlayerStatistic: Bộ chỉ số kỹ năng động theo thời gian (Tấn công, Phòng ngự, Thể lực...).
+// - MarketValuePoint: Điểm mốc định giá chuyển nhượng (phục vụ vẽ biểu đồ xu hướng giá).
+// - PlayerMediaItem: Tư liệu PR / Video chiến dịch truyền thông (Video highlight, ảnh chụp).
+// - Player: Lớp đối tượng chính chứa toàn bộ thông tin cá nhân, chỉ số, hợp đồng,
+//   phương thức copyWith, toJson & fromJson hỗ trợ lưu trữ SharedPreferences.
+// ============================================================================
+
 enum PlayerPosition { forward, midfielder, defender, goalkeeper }
 
 class PlayerStatistic {
