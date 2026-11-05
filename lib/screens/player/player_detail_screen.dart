@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -824,28 +824,6 @@ class PlayerDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            // Bio & Contract Information
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Profile & Contract Information',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                ),
-                TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.accentCyan,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  icon: const Icon(Icons.edit, size: 14),
-                  label: const Text('Chỉnh sửa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  onPressed: () => showPlayerFormDialog(context, player: currentPlayer),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
             // Bio & Contract Information
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
