@@ -449,6 +449,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: _regRole,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Chức danh / Vai trò',
                         prefixIcon: Icon(Icons.assignment_ind_outlined),

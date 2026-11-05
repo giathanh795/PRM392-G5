@@ -545,6 +545,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                             Expanded(
                               child: DropdownButtonFormField<PlayerPosition>(
                                 initialValue: _selectedPosition,
+                                isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Vị trí thi đấu *',
                                   prefixIcon: Icon(Icons.sports_soccer, size: 20),
@@ -567,7 +568,14 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                                       label = 'Goalkeeper (Thủ môn)';
                                       break;
                                   }
-                                  return DropdownMenuItem(value: pos, child: Text(label, style: const TextStyle(fontSize: 13)));
+                                  return DropdownMenuItem(
+                                    value: pos,
+                                    child: Text(
+                                      label,
+                                      style: const TextStyle(fontSize: 13),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
                                 }).toList(),
                                 onChanged: (val) {
                                   if (val != null) setState(() => _selectedPosition = val);
@@ -633,6 +641,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                             Expanded(
                               child: DropdownButtonFormField<String>(
                                 initialValue: _selectedFoot,
+                                isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Chân thuận',
                                   prefixIcon: Icon(Icons.directions_walk, size: 20),
@@ -640,9 +649,18 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                                 dropdownColor: AppTheme.surfaceNavy,
                                 style: const TextStyle(color: Colors.white),
                                 items: const [
-                                  DropdownMenuItem(value: 'Right', child: Text('Right (Chân phải)')),
-                                  DropdownMenuItem(value: 'Left', child: Text('Left (Chân trái)')),
-                                  DropdownMenuItem(value: 'Both', child: Text('Both (Hai chân)')),
+                                  DropdownMenuItem(
+                                    value: 'Right',
+                                    child: Text('Right (Chân phải)', overflow: TextOverflow.ellipsis),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Left',
+                                    child: Text('Left (Chân trái)', overflow: TextOverflow.ellipsis),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Both',
+                                    child: Text('Both (Hai chân)', overflow: TextOverflow.ellipsis),
+                                  ),
                                 ],
                                 onChanged: (val) {
                                   if (val != null) setState(() => _selectedFoot = val);
@@ -654,6 +672,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                             Expanded(
                               child: DropdownButtonFormField<String>(
                                 initialValue: _selectedStatus,
+                                isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Trạng thái đội hình',
                                   prefixIcon: Icon(Icons.health_and_safety_outlined, size: 20),
@@ -661,10 +680,22 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                                 dropdownColor: AppTheme.surfaceNavy,
                                 style: const TextStyle(color: Colors.white),
                                 items: const [
-                                  DropdownMenuItem(value: 'Active', child: Text('Active (Sẵn sàng)')),
-                                  DropdownMenuItem(value: 'Injured', child: Text('Injured (Chấn thương)')),
-                                  DropdownMenuItem(value: 'On Duty', child: Text('On Duty (Nghĩa vụ)')),
-                                  DropdownMenuItem(value: 'Loaned', child: Text('Loaned (Cho mượn)')),
+                                  DropdownMenuItem(
+                                    value: 'Active',
+                                    child: Text('Active (Sẵn sàng)', overflow: TextOverflow.ellipsis),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Injured',
+                                    child: Text('Injured (Chấn thương)', overflow: TextOverflow.ellipsis),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'On Duty',
+                                    child: Text('On Duty (Nghĩa vụ)', overflow: TextOverflow.ellipsis),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Loaned',
+                                    child: Text('Loaned (Cho mượn)', overflow: TextOverflow.ellipsis),
+                                  ),
                                 ],
                                 onChanged: (val) {
                                   if (val != null) setState(() => _selectedStatus = val);
