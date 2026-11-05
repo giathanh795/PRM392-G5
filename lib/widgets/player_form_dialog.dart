@@ -1,3 +1,18 @@
+// ============================================================================
+// HỘP THOẠI BIỂU MẪU CẦU THỦ (PLAYER FORM DIALOG)
+// ============================================================================
+// Mục đích:
+// - Cung cấp biểu mẫu hợp nhất dùng chung cho cả 2 thao tác:
+//   1. THÊM MỚI CẦU THỦ (Create): Khởi tạo cầu thủ mới kèm bộ 6 chỉ số tự động.
+//   2. CHỈNH SỬA CẦU THỦ (Update): Nạp toàn bộ dữ liệu sẵn có và cho phép cập nhật.
+// - Tính năng nổi bật:
+//   + Chọn ảnh trực tiếp từ thư viện máy (ImagePicker), tự động mã hóa Base64 Data URI
+//     để lưu trữ bền vững trong SharedPreferences mà không cần server lưu trữ ngoài.
+//   + Bộ chọn ngày tháng (DatePicker) trực quan cho ngày sinh và hạn hợp đồng.
+//   + Xác thực form nghiêm ngặt (Form Validation) trước khi gửi.
+//   + Tự động cập nhật biểu đồ lịch sử định giá chuyển nhượng (Market Value History).
+// ============================================================================
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,22 +23,9 @@ import '../models/player.dart';
 import '../providers/app_state_provider.dart';
 import 'player_avatar.dart';
 
-/// ============================================================================
-/// HỘP THOẠI BIỂU MẪU CẦU THỦ (PLAYER FORM DIALOG)
-/// ============================================================================
-/// Mục đích:
-/// - Dùng chung cho cả 2 thao tác: THÊM MỚI (Create) và CHỈNH SỬA (Update) cầu thủ.
-/// - Nhận vào tham số tùy chọn `player`:
-///   + Nếu `player == null`: Chế độ THÊM MỚI -> khởi tạo giá trị mặc định.
-///   + Nếu `player != null`: Chế độ SỬA -> nạp dữ liệu hiện có của cầu thủ vào form.
-/// - Cho phép tải ảnh đại diện trực tiếp từ thiết bị (ImagePicker) và mã hóa
-///   dưới dạng Base64 Data URI để lưu trữ offline không lo mất liên kết.
-/// - Kiểm tra tính hợp lệ dữ liệu (Form validation) trước khi lưu.
-/// - Tự động khởi tạo bộ chỉ số năng lực mặc định dựa theo vị trí thi đấu
-///   (MockData.getAttributesForPosition) khi tạo cầu thủ mới.
-/// - Ghi đè hoặc thêm mới vào AppStateProvider và đồng bộ SharedPreferences.
-/// ============================================================================
-
+/// Hàm tiện ích mở Hộp thoại biểu mẫu cầu thủ
+/// - Tham số `player`: Nếu truyền vào sẽ mở chế độ CHỈNH SỬA, nếu null là THÊM MỚI.
+/// - Trả về `true` nếu lưu thành công, `false` hoặc `null` nếu bấm Hủy.
 Future<bool?> showPlayerFormDialog(BuildContext context, {Player? player}) {
   return showDialog<bool>(
     context: context,
@@ -33,10 +35,12 @@ Future<bool?> showPlayerFormDialog(BuildContext context, {Player? player}) {
 }
 
 class PlayerFormDialog extends StatefulWidget {
+  /// Cầu thủ cần chỉnh sửa (nếu null là tạo mới)
   final Player? player;
 
   const PlayerFormDialog({super.key, this.player});
 
+  /// Kiểm tra xem biểu mẫu đang ở chế độ Sửa hay Tạo mới
   bool get isEdit => player != null;
 
   @override
@@ -44,8 +48,12 @@ class PlayerFormDialog extends StatefulWidget {
 }
 
 class _PlayerFormDialogState extends State<PlayerFormDialog> {
+  /// Khóa quản lý trạng thái form và kiểm tra hợp lệ
   final _formKey = GlobalKey<FormState>();
 
+  // --------------------------------------------------------------------------
+  // CÁC BỘ ĐIỀU KHIỂN DỮ LIỆU NHẬP (TEXT EDITING CONTROLLERS)
+  // --------------------------------------------------------------------------
   late TextEditingController _nameController;
   late TextEditingController _numberController;
   late TextEditingController _nationalityController;
@@ -57,18 +65,26 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
   late TextEditingController _sponsorController;
   late TextEditingController _avatarUrlController;
 
+  /// Vị trí thi đấu được chọn trong Dropdown
   late PlayerPosition _selectedPosition;
+
+  /// Chân thuận được chọn trong Dropdown (Right, Left, Both)
   late String _selectedFoot;
+
+  /// Trạng thái thi đấu được chọn trong Dropdown (Active, Injured, On Duty, Loaned)
   late String _selectedStatus;
 
+  /// Công cụ chọn tệp/ảnh từ hệ thống máy tính/điện thoại
   final ImagePicker _picker = ImagePicker();
-
-
 
   @override
   void initState() {
     super.initState();
     final p = widget.player;
+
+    // Khởi tạo giá trị ban đầu cho các Controller:
+    // Nếu là chế độ Sửa (p != null) -> Lấy dữ liệu hiện tại của cầu thủ
+    // Nếu là chế độ Thêm mới (p == null) -> Đặt giá trị gợi ý chuẩn Liverpool FC
     _nameController = TextEditingController(text: p?.name ?? '');
     _numberController = TextEditingController(text: p != null ? p.number.toString() : '');
     _nationalityController = TextEditingController(text: p?.nationality ?? 'England');
@@ -80,9 +96,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
       text: p != null ? p.currentMarketValue.toStringAsFixed(0) : '35',
     );
     _sponsorController = TextEditingController(text: p?.sponsorPartner ?? 'Adidas');
-    _avatarUrlController = TextEditingController(
-      text: p?.avatarUrl ?? '',
-    );
+    _avatarUrlController = TextEditingController(text: p?.avatarUrl ?? '');
 
     _selectedPosition = p?.position ?? PlayerPosition.forward;
     _selectedFoot = p?.preferredFoot ?? 'Right';
@@ -91,6 +105,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
 
   @override
   void dispose() {
+    // Giải phóng toàn bộ Controller khỏi bộ nhớ RAM khi đóng Dialog
     _nameController.dispose();
     _numberController.dispose();
     _nationalityController.dispose();
@@ -104,10 +119,13 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
     super.dispose();
   }
 
-  /// LUỒNG CHỌN ẢNH TỪ THIẾT BỊ:
-  /// 1. Mở thư viện ảnh (gallery) của máy qua plugin image_picker.
-  /// 2. Đọc luồng byte của ảnh đã chọn và mã hóa thành chuỗi Base64 Data URI ('data:image/jpeg;base64,...').
-  /// 3. Lưu vào _avatarUrlController để PlayerAvatar hiển thị ngay tức thì và lưu trữ vĩnh viễn.
+  /// ==========================================================================
+  /// LUỒNG CHỌN ẢNH ĐẠI DIỆN TỪ THIẾT BỊ:
+  /// 1. Mở thư viện ảnh (gallery) của máy tính hoặc điện thoại.
+  /// 2. Giới hạn độ phân giải (600x600) và chất lượng (85%) để tối ưu kích thước.
+  /// 3. Đọc dữ liệu nhị phân (bytes) và mã hóa thành chuỗi Base64 Data URI.
+  /// 4. Cập nhật vào _avatarUrlController để PlayerAvatar hiển thị xem trước tức thì.
+  /// ==========================================================================
   Future<void> _pickImageFromGallery() async {
     try {
       final picked = await _picker.pickImage(
@@ -132,6 +150,11 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
     }
   }
 
+  /// ==========================================================================
+  /// LUỒNG CHỌN NGÀY BẰNG BỘ LỊCH (DATE PICKER):
+  /// - Hiển thị hộp thoại lịch chuẩn dark theme Liverpool FC.
+  /// - Format ngày được chọn thành chuỗi YYYY-MM-DD và gán vào controller tương ứng.
+  /// ==========================================================================
   Future<void> _selectDate(TextEditingController controller) async {
     DateTime initial = DateTime.tryParse(controller.text) ?? DateTime(2000, 1, 1);
     final picked = await showDatePicker(
@@ -148,7 +171,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
               surface: AppTheme.surfaceNavy,
               onSurface: Colors.white,
             ),
-                      ),
+          ),
           child: child!,
         );
       },
@@ -165,22 +188,24 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
 
   /// ==========================================================================
   /// LUỒNG XỬ LÝ LƯU BIỂU MẪU (SUBMIT FORM FLOW):
-  /// 1. Kiểm tra validation toàn bộ các trường nhập liệu (validate form).
+  /// 1. Gọi validate() kiểm tra tất cả các trường bắt buộc (Tên, Số áo, Giá trị).
   /// 2. Thu thập và chuẩn hóa dữ liệu từ các Controller và Dropdown.
   /// 3. Phân nhánh xử lý:
   ///    - NẾU LÀ CHỈNH SỬA (widget.isEdit == true):
   ///      + Sao chép dữ liệu cũ kèm thông tin mới qua phương thức copyWith.
-  ///      + Cập nhật lịch sử biến động định giá (marketValueHistory) nếu giá thị trường thay đổi.
+  ///      + Nếu giá thị trường thay đổi, bổ sung mốc định giá mới vào marketValueHistory.
   ///      + Gọi AppStateProvider.updatePlayer(updated) để cập nhật danh sách và lưu SharedPreferences.
   ///    - NẾU LÀ THÊM MỚI (widget.isEdit == false):
-  ///      + Tạo mã định danh duy nhất (id) theo thời gian thực (p_${timestamp}).
-  ///      + Sinh bộ chỉ số kỹ năng ban đầu (82 điểm) phù hợp với vị trí thi đấu đã chọn.
+  ///      + Sinh mã định danh duy nhất (p_timestamp).
+  ///      + Tự động sinh bộ chỉ số kỹ năng 82 điểm phù hợp với vị trí thi đấu đã chọn.
   ///      + Khởi tạo đối tượng Player mới và gọi AppStateProvider.addPlayer(newPlayer).
   /// 4. Đóng hộp thoại và hiển thị SnackBar thông báo thành công.
   /// ==========================================================================
   void _submitForm() async {
+    // Bước 1: Kiểm tra tính hợp lệ của dữ liệu nhập
     if (!_formKey.currentState!.validate()) return;
 
+    // Bước 2: Thu thập dữ liệu từ các ô nhập liệu
     final name = _nameController.text.trim();
     final number = int.tryParse(_numberController.text.trim()) ?? 0;
     final nationality = _nationalityController.text.trim();
@@ -195,17 +220,21 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
     final provider = context.read<AppStateProvider>();
 
     if (widget.isEdit) {
-      // Cập nhật cầu thủ đã có
+      // ----------------------------------------------------------------------
+      // CHẾ ĐỘ 1: CẬP NHẬT CẦU THỦ HIỆN TẠI (UPDATE)
+      // ----------------------------------------------------------------------
       final oldPlayer = widget.player!;
       final double previousValue = (marketValue != oldPlayer.currentMarketValue)
           ? oldPlayer.currentMarketValue
           : oldPlayer.previousMarketValue;
 
+      // Cập nhật lịch sử biến động giá trị thị trường
       List<MarketValuePoint> updatedMarketHistory = List.from(oldPlayer.marketValueHistory);
       if (marketValue != oldPlayer.currentMarketValue) {
         updatedMarketHistory.add(MarketValuePoint(date: 'Now', valueInMillionsEuro: marketValue));
       }
 
+      // Tạo đối tượng Player mới với thông tin cập nhật
       final updated = oldPlayer.copyWith(
         name: name,
         number: number,
@@ -224,6 +253,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
         marketValueHistory: updatedMarketHistory,
       );
 
+      // Cập nhật State và đồng bộ SharedPreferences
       await provider.updatePlayer(updated);
       if (mounted) {
         Navigator.of(context).pop(true);
@@ -246,11 +276,15 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
         );
       }
     } else {
-      // Tạo mới cầu thủ
+      // ----------------------------------------------------------------------
+      // CHẾ ĐỘ 2: TẠO MỚI CẦU THỦ (CREATE)
+      // ----------------------------------------------------------------------
       final newId = 'p_${DateTime.now().millisecondsSinceEpoch}';
+      // Lấy danh sách tên thuộc tính kỹ thuật tương ứng với tuyến thi đấu đã chọn
       final defaultAttrs = MockData.getAttributesForPosition(_selectedPosition);
       final Map<String, double> statsMap = {for (var attr in defaultAttrs) attr: 82.0};
 
+      // Tạo đối tượng Player hoàn chỉnh
       final newPlayer = Player(
         id: newId,
         name: name,
@@ -276,6 +310,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
         mediaList: [],
       );
 
+      // Thêm vào State và lưu SharedPreferences
       await provider.addPlayer(newPlayer);
       if (mounted) {
         Navigator.of(context).pop(true);
@@ -318,7 +353,9 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Dialog Header
+              // --------------------------------------------------------------
+              // 1. TIÊU ĐỀ HỘP THOẠI (DIALOG HEADER)
+              // --------------------------------------------------------------
               Row(
                 children: [
                   Container(
@@ -359,7 +396,9 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
               ),
               const Divider(color: AppTheme.borderSubtle, height: 24),
 
-              // Scrollable Form Content
+              // --------------------------------------------------------------
+              // 2. KHU VỰC CUỘN NỘI DUNG FORM (SCROLLABLE FORM CONTENT)
+              // --------------------------------------------------------------
               Flexible(
                 child: SingleChildScrollView(
                   child: Form(
@@ -367,7 +406,9 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Avatar Section
+                        // ----------------------------------------------------
+                        // MỤC ẢNH ĐẠI DIỆN: TẢI TỪ MÁY & XEM TRƯỚC (LIVE PREVIEW)
+                        // ----------------------------------------------------
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -377,6 +418,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                           ),
                           child: Row(
                             children: [
+                              // Avatar xem trước thời gian thực
                               PlayerAvatar(
                                 imageUrl: _avatarUrlController.text,
                                 radius: 34,
@@ -396,6 +438,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                                     const SizedBox(height: 8),
                                     Row(
                                       children: [
+                                        // Nút chọn ảnh từ máy tính/thiết bị
                                         ElevatedButton.icon(
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: AppTheme.accentBlue.withValues(alpha: 0.25),
@@ -409,6 +452,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                                           label: const Text('Chọn ảnh từ máy', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                                           onPressed: _pickImageFromGallery,
                                         ),
+                                        // Nút gỡ ảnh nếu đã có
                                         if (_avatarUrlController.text.isNotEmpty) ...[
                                           const SizedBox(width: 8),
                                           OutlinedButton.icon(
@@ -438,10 +482,13 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Row 1: Tên & Số áo
+                        // ----------------------------------------------------
+                        // DÒNG 1: HỌ VÀ TÊN & SỐ ÁO THI ĐẤU
+                        // ----------------------------------------------------
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Ô nhập Họ và tên cầu thủ
                             Expanded(
                               flex: 3,
                               child: TextFormField(
@@ -462,6 +509,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                               ),
                             ),
                             const SizedBox(width: 12),
+                            // Ô nhập Số áo thi đấu
                             Expanded(
                               flex: 1,
                               child: TextFormField(
@@ -488,9 +536,12 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Row 2: Vị trí & Quốc tịch
+                        // ----------------------------------------------------
+                        // DÒNG 2: VỊ TRÍ THI ĐẤU & QUỐC TỊCH
+                        // ----------------------------------------------------
                         Row(
                           children: [
+                            // Tuyến vị trí thi đấu
                             Expanded(
                               child: DropdownButtonFormField<PlayerPosition>(
                                 initialValue: _selectedPosition,
@@ -524,6 +575,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                               ),
                             ),
                             const SizedBox(width: 12),
+                            // Ô nhập Quốc tịch
                             Expanded(
                               child: TextFormField(
                                 controller: _nationalityController,
@@ -540,7 +592,9 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Row 3: Chiều cao & Cân nặng
+                        // ----------------------------------------------------
+                        // DÒNG 3: CHIỀU CAO & CÂN NẶNG
+                        // ----------------------------------------------------
                         Row(
                           children: [
                             Expanded(
@@ -570,9 +624,12 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Row 4: Chân thuận & Trạng thái thi đấu
+                        // ----------------------------------------------------
+                        // DÒNG 4: CHÂN THUẬN & TRẠNG THÁI ĐỘI HÌNH
+                        // ----------------------------------------------------
                         Row(
                           children: [
+                            // Chọn chân thuận
                             Expanded(
                               child: DropdownButtonFormField<String>(
                                 initialValue: _selectedFoot,
@@ -593,6 +650,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                               ),
                             ),
                             const SizedBox(width: 12),
+                            // Trạng thái sức khỏe / tham gia đội hình
                             Expanded(
                               child: DropdownButtonFormField<String>(
                                 initialValue: _selectedStatus,
@@ -605,7 +663,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                                 items: const [
                                   DropdownMenuItem(value: 'Active', child: Text('Active (Sẵn sàng)')),
                                   DropdownMenuItem(value: 'Injured', child: Text('Injured (Chấn thương)')),
-                                  DropdownMenuItem(value: 'On Duty', child: Text('On Duty (Nghỉ vụ)')),
+                                  DropdownMenuItem(value: 'On Duty', child: Text('On Duty (Nghĩa vụ)')),
                                   DropdownMenuItem(value: 'Loaned', child: Text('Loaned (Cho mượn)')),
                                 ],
                                 onChanged: (val) {
@@ -617,9 +675,12 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Row 5: Ngày sinh & Hạn hợp đồng
+                        // ----------------------------------------------------
+                        // DÒNG 5: NGÀY SINH & HẠN HỢP ĐỒNG (BỘ CHỌN LỊCH)
+                        // ----------------------------------------------------
                         Row(
                           children: [
+                            // Ngày sinh
                             Expanded(
                               child: TextFormField(
                                 controller: _dobController,
@@ -637,6 +698,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                               ),
                             ),
                             const SizedBox(width: 12),
+                            // Hạn hợp đồng
                             Expanded(
                               child: TextFormField(
                                 controller: _contractController,
@@ -657,9 +719,12 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Row 6: Giá thị trường & Nhà tài trợ
+                        // ----------------------------------------------------
+                        // DÒNG 6: GIÁ TRỊ THỊ TRƯỜNG & NHÀ TÀI TRỢ CÁ NHÂN
+                        // ----------------------------------------------------
                         Row(
                           children: [
+                            // Định giá thị trường
                             Expanded(
                               child: TextFormField(
                                 controller: _marketValueController,
@@ -679,6 +744,7 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                               ),
                             ),
                             const SizedBox(width: 12),
+                            // Nhà tài trợ
                             Expanded(
                               child: TextFormField(
                                 controller: _sponsorController,
@@ -692,7 +758,6 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
                             ),
                           ],
                         ),
-
                       ],
                     ),
                   ),
@@ -703,15 +768,19 @@ class _PlayerFormDialogState extends State<PlayerFormDialog> {
               const Divider(color: AppTheme.borderSubtle, height: 1),
               const SizedBox(height: 16),
 
-              // Action Buttons
+              // --------------------------------------------------------------
+              // 3. CÁC NÚT HÀNH ĐỘNG HỦY / LƯU BIỂU MẪU (ACTION BUTTONS)
+              // --------------------------------------------------------------
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  // Nút Hủy
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
                     child: const Text('Hủy bỏ', style: TextStyle(color: AppTheme.textSecondary)),
                   ),
                   const SizedBox(width: 12),
+                  // Nút Lưu thay đổi hoặc Thêm vào đội hình
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isEdit ? AppTheme.accentBlue : AppTheme.lfcRed,

@@ -1,24 +1,31 @@
+// ============================================================================
+// THẺ CẦU THỦ TRONG DANH SÁCH (PLAYER CARD ITEM WIDGET)
+// ============================================================================
+// Mục đích:
+// - Hiển thị tóm tắt thông tin của một cầu thủ dưới dạng thẻ Card trong danh sách:
+//   1. Ảnh đại diện kết hợp số áo thi đấu (#number) ở góc dưới.
+//   2. Họ tên cầu thủ, huy hiệu vị trí thi đấu (FW, MF, DF, GK) theo dải màu nhận diện.
+//   3. Quốc tịch, chiều cao, chân thuận.
+//   4. Định giá thị trường chuyển nhượng hiện tại (€...M) và nhãn nhà tài trợ cá nhân.
+//   5. Cụm nút hành động: Sửa (onEdit), Xóa (onDelete) và Mũi tên chuyển trang chi tiết (onTap).
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/player.dart';
 import 'player_avatar.dart';
 
-/// ============================================================================
-/// THẺ CẦU THỦ TRONG DANH SÁCH (PLAYER CARD ITEM WIDGET)
-/// ============================================================================
-/// Mục đích:
-/// - Hiển thị thông tin tóm tắt của một cầu thủ trong danh sách chính:
-///   + Ảnh đại diện (PlayerAvatar).
-///   + Tên, số áo, vị trí thi đấu (với dải màu nhận diện tương ứng).
-///   + Quốc tịch, giá trị chuyển nhượng thị trường hiện tại.
-///   + Nút hành động nhanh: Chỉnh sửa (onEdit) và Xóa (onDelete).
-///   + Nhấn vào thẻ để kích hoạt chuyển màn hình chi tiết (onTap).
-/// ============================================================================
-
 class PlayerCardItem extends StatelessWidget {
+  /// Đối tượng cầu thủ cần hiển thị thông tin
   final Player player;
+
+  /// Hàm callback kích hoạt khi người dùng nhấn vào thẻ (mở màn hình chi tiết)
   final VoidCallback onTap;
+
+  /// Hàm callback kích hoạt khi nhấn nút Chỉnh sửa (mở Form cập nhật)
   final VoidCallback? onEdit;
+
+  /// Hàm callback kích hoạt khi nhấn nút Xóa (mở hộp thoại xác nhận xóa)
   final VoidCallback? onDelete;
 
   const PlayerCardItem({
@@ -31,6 +38,13 @@ class PlayerCardItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ------------------------------------------------------------------------
+    // Xác định màu sắc đại diện cho từng tuyến vị trí thi đấu
+    // - Tiền đạo (Forward): Màu đỏ truyền thống Liverpool FC
+    // - Tiền vệ (Midfielder): Màu xanh dương năng động
+    // - Hậu vệ (Defender): Màu vàng cam cảnh giác
+    // - Thủ môn (Goalkeeper): Màu xanh ngọc độc đáo
+    // ------------------------------------------------------------------------
     Color positionColor;
     switch (player.position) {
       case PlayerPosition.forward:
@@ -56,7 +70,9 @@ class PlayerCardItem extends StatelessWidget {
           padding: const EdgeInsets.all(14.0),
           child: Row(
             children: [
-              // Jersey Number Badge & Avatar
+              // --------------------------------------------------------------
+              // 1. CỤM ẢNH ĐẠI DIỆN KÈM HUY HIỆU SỐ ÁO THI ĐẤU
+              // --------------------------------------------------------------
               Stack(
                 alignment: Alignment.bottomRight,
                 children: [
@@ -65,6 +81,7 @@ class PlayerCardItem extends StatelessWidget {
                     radius: 28,
                     initials: player.name.isNotEmpty ? player.name[0] : null,
                   ),
+                  // Huy hiệu số áo nổi bật ở góc dưới bên phải avatar
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
@@ -84,11 +101,15 @@ class PlayerCardItem extends StatelessWidget {
                 ],
               ),
               const SizedBox(width: 14),
-              // Player Info
+
+              // --------------------------------------------------------------
+              // 2. CỤM THÔNG TIN CÁ NHÂN VÀ ĐỊNH GIÁ CHUYỂN NHƯỢNG
+              // --------------------------------------------------------------
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Dòng tên cầu thủ và nhãn vị trí thi đấu
                     Row(
                       children: [
                         Flexible(
@@ -103,6 +124,7 @@ class PlayerCardItem extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 6),
+                        // Nhãn vị trí thi đấu có màu nền đồng bộ
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
@@ -122,11 +144,15 @@ class PlayerCardItem extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
+
+                    // Quốc tịch, chiều cao, chân thuận
                     Text(
                       '${player.nationality} • ${player.height} • Foot: ${player.preferredFoot}',
                       style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                     ),
                     const SizedBox(height: 6),
+
+                    // Định giá chuyển nhượng và logo nhà tài trợ
                     Row(
                       children: [
                         Text(
@@ -155,10 +181,14 @@ class PlayerCardItem extends StatelessWidget {
                   ],
                 ),
               ),
-              // Trailing action
+
+              // --------------------------------------------------------------
+              // 3. CỤM NÚT THAO TÁC NHANH (SỬA, XÓA, XEM CHI TIẾT)
+              // --------------------------------------------------------------
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Nút Sửa thông tin cầu thủ
                   if (onEdit != null) ...[
                     IconButton(
                       icon: const Icon(Icons.edit_outlined, size: 19),
@@ -169,6 +199,7 @@ class PlayerCardItem extends StatelessWidget {
                     ),
                     const SizedBox(width: 2),
                   ],
+                  // Nút Xóa cầu thủ
                   if (onDelete != null) ...[
                     IconButton(
                       icon: const Icon(Icons.delete_outline, size: 20),
@@ -179,6 +210,7 @@ class PlayerCardItem extends StatelessWidget {
                     ),
                     const SizedBox(width: 2),
                   ],
+                  // Mũi tên chỉ dẫn điều hướng sang chi tiết
                   const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.textMuted),
                 ],
               ),

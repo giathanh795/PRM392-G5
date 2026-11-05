@@ -1,22 +1,24 @@
+// ============================================================================
+// HỘP THOẠI XÁC NHẬN XÓA CẦU THỦ (DELETE PLAYER CONFIRMATION DIALOG)
+// ============================================================================
+// Mục đích:
+// - Hiển thị hộp thoại cảnh báo trước khi xóa cầu thủ khỏi đội hình.
+// - Trình bày tóm tắt: Avatar, họ tên, số áo, vị trí thi đấu, quốc tịch, định giá.
+// - Cảnh báo rõ ràng hành động xóa để phòng tránh bấm nhầm.
+// - Trả về `true` nếu người dùng xác nhận "Xóa cầu thủ", hoặc `false`/`null` nếu "Hủy bỏ".
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../models/player.dart';
 import 'player_avatar.dart';
 
-/// ============================================================================
-/// HỘP THOẠI XÁC NHẬN XÓA CẦU THỦ (DELETE PLAYER CONFIRMATION DIALOG)
-/// ============================================================================
-/// Mục đích:
-/// - Hiển thị hộp thoại cảnh báo trước khi xóa cầu thủ khỏi đội hình.
-/// - Trình bày tóm tắt: Avatar, tên, số áo, vị trí, quốc tịch, định giá.
-/// - Cảnh báo rõ ràng hành động xóa để tránh thao tác nhầm lẫn.
-/// - Trả về `true` nếu người dùng chọn "Xóa vĩnh viễn", hoặc `false`/`null` nếu "Hủy".
-/// ============================================================================
-
+/// Hiển thị hộp thoại xác nhận xóa cầu thủ với giao diện phong cách Liverpool FC
 Future<bool?> showDeletePlayerConfirmationDialog(BuildContext context, Player player) {
   return showDialog<bool>(
     context: context,
     builder: (dialogCtx) {
+      // Xác định màu sắc tương ứng với vị trí thi đấu của cầu thủ
       Color positionColor;
       switch (player.position) {
         case PlayerPosition.forward:
@@ -45,6 +47,9 @@ Future<bool?> showDeletePlayerConfirmationDialog(BuildContext context, Player pl
         titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20),
         actionsPadding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        // --------------------------------------------------------------------
+        // TIÊU ĐỀ HỘP THOẠI KÈM ICON CẢNH BÁO ĐỎ
+        // --------------------------------------------------------------------
         title: Row(
           children: [
             Container(
@@ -85,13 +90,16 @@ Future<bool?> showDeletePlayerConfirmationDialog(BuildContext context, Player pl
             ),
           ],
         ),
+        // --------------------------------------------------------------------
+        // NỘI DUNG TÓM TẮT CẦU THỦ CẦN XÓA
+        // --------------------------------------------------------------------
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Divider(color: AppTheme.borderSubtle, height: 1),
             const SizedBox(height: 16),
-            // Thẻ tóm tắt thông tin cầu thủ cần xóa
+            // Thẻ tóm tắt thông tin cầu thủ
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -196,7 +204,11 @@ Future<bool?> showDeletePlayerConfirmationDialog(BuildContext context, Player pl
             ),
           ],
         ),
+        // --------------------------------------------------------------------
+        // CÁC NÚT HÀNH ĐỘNG HỦY / XÁC NHẬN XÓA
+        // --------------------------------------------------------------------
         actions: [
+          // Nút Hủy bỏ (trả về false)
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(false),
             child: const Text(
@@ -204,6 +216,7 @@ Future<bool?> showDeletePlayerConfirmationDialog(BuildContext context, Player pl
               style: TextStyle(color: AppTheme.textSecondary),
             ),
           ),
+          // Nút Xác nhận Xóa (trả về true)
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.lfcRed,
