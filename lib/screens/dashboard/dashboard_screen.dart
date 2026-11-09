@@ -417,6 +417,167 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _showActivityNotificationCenter(BuildContext context) {
+    final state = context.read<AppStateProvider>();
+    final injured = state.players.where((p) => p.isInjured || p.isDoubtful).toList();
+    final expiring = state.players.where((p) => p.isContractExpiringSoon).toList();
+    final campaigns = state.campaigns;
+    final trainings = state.trainings;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surfaceNavy,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        expand: false,
+        builder: (_, scrollController) => Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.borderSubtle,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.lfcRed.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.notifications_active, color: AppTheme.lfcRed, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Nhật ký Hoạt động & Thông báo CLB',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: AppTheme.borderSubtle),
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                children: [
+                  _buildNotificationTile(
+                    icon: Icons.medical_services_outlined,
+                    iconColor: AppTheme.danger,
+                    title: 'Báo cáo Y tế AXA: ${injured.length} cầu thủ cần lưu ý',
+                    subtitle: injured.isNotEmpty
+                        ? injured.map((p) => '${p.name} (${p.status})').join(', ')
+                        : 'Toàn bộ đội hình đều đạt 100% thể lực thi đấu.',
+                    time: 'Hôm nay',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      widget.onNavigateTab(1);
+                    },
+                  ),
+                  _buildNotificationTile(
+                    icon: Icons.timer_outlined,
+                    iconColor: AppTheme.lfcYellow,
+                    title: 'Cảnh báo Hợp đồng: ${expiring.length} cầu thủ sắp đáo hạn',
+                    subtitle: expiring.isNotEmpty
+                        ? 'Cần lên kế hoạch gia hạn cho: ${expiring.map((p) => p.name).take(3).join(", ")}'
+                        : 'Không có cầu thủ nào sắp hết hạn hợp đồng.',
+                    time: 'Ưu tiên',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      widget.onNavigateTab(1);
+                    },
+                  ),
+                  _buildNotificationTile(
+                    icon: Icons.campaign_outlined,
+                    iconColor: AppTheme.accentCyan,
+                    title: 'Chiến dịch Đối tác: ${campaigns.length} chiến dịch đang hoạt động',
+                    subtitle: campaigns.isNotEmpty
+                        ? campaigns.first.name
+                        : 'Đang đàm phán hợp đồng thương mại mới.',
+                    time: 'Đang diễn ra',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      widget.onNavigateTab(3);
+                    },
+                  ),
+                  _buildNotificationTile(
+                    icon: Icons.fitness_center_outlined,
+                    iconColor: AppTheme.success,
+                    title: 'Lịch tập Huấn luyện: ${trainings.length} buổi tập tại AXA Ground',
+                    subtitle: trainings.isNotEmpty
+                        ? trainings.first.title
+                        : 'Chưa có buổi tập nào được lên lịch.',
+                    time: 'Tuần này',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      widget.onNavigateTab(2);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationTile({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required String time,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      color: AppTheme.surfaceNavyLight,
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppTheme.borderSubtle),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        title: Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.black26,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(time, style: TextStyle(fontSize: 10, color: iconColor, fontWeight: FontWeight.bold)),
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppStateProvider>();
@@ -460,16 +621,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ))
             .firstOrNull;
     final injuredPlayers = state.players
-        .where((p) => p.status == 'Injured')
+        .where((p) => p.isInjured)
+        .toList();
+    final expiringSoonPlayers = state.players
+        .where((p) => p.isContractExpiringSoon)
         .toList();
 
     return Scaffold(
       appBar: AppBar(
+        leadingWidth: 84,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8.0, top: 8.0, bottom: 8.0),
+          child: InkWell(
+            key: const ValueKey('language-toggle-btn'),
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => state.toggleLanguage(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceNavyLight,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppTheme.accentCyan.withValues(alpha: 0.6),
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    state.isVietnamese ? '🇻🇳 VI' : '🇬🇧 EN',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
         title: Row(
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white,
@@ -481,16 +679,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.sports_soccer,
-                    size: 18,
+                    size: 16,
                     color: AppTheme.lfcRed,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            const Flexible(
+            const SizedBox(width: 8),
+            Flexible(
               child: Text(
-                'Liverpool FC - Player Management System',
+                state.isVietnamese
+                    ? 'Liverpool FC - Quản lý Cầu thủ'
+                    : 'Liverpool FC - Player Management',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -525,6 +725,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       );
                     }
                   },
+          ),
+          IconButton(
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: AppTheme.lfcRed,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                    child: Text(
+                      '${(state.players.where((p) => p.isInjured || p.isDoubtful).length + state.players.where((p) => p.isContractExpiringSoon).length).clamp(1, 9)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            tooltip: 'Nhật ký & Thông báo CLB',
+            onPressed: () => _showActivityNotificationCenter(context),
           ),
           IconButton(
             icon: const Icon(Icons.cloud_sync_outlined),
@@ -635,7 +866,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Tổng giá trị đội hình: €M •  Cầu thủ đội 1',
+                        state.isVietnamese
+                            ? 'Tổng giá trị đội hình: €${state.totalMarketValue.toStringAsFixed(1)}M • ${state.players.length} Cầu thủ đội 1'
+                            : 'Squad Value: €${state.totalMarketValue.toStringAsFixed(1)}M • ${state.players.length} Players',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
@@ -657,14 +890,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: AppTheme.lfcRed.withValues(alpha: 0.3)),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.manage_accounts_outlined, size: 14, color: AppTheme.lfcRed),
-                        SizedBox(width: 4),
+                        const Icon(Icons.manage_accounts_outlined, size: 14, color: AppTheme.lfcRed),
+                        const SizedBox(width: 4),
                         Text(
-                          'Hồ sơ',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.lfcRed),
+                          state.isVietnamese ? 'Hồ sơ' : 'Profile',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.lfcRed),
                         ),
                       ],
                     ),
@@ -937,9 +1170,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                                 icon: const Icon(Icons.person_add, size: 16),
-                                label: const Text(
-                                  'Ký Tân Binh',
-                                  style: TextStyle(
+                                label: Text(
+                                  state.tr('sign_player'),
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -967,9 +1200,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   Icons.fitness_center,
                                   size: 16,
                                 ),
-                                label: const Text(
-                                  'Lên Lịch AXA',
-                                  style: TextStyle(
+                                label: Text(
+                                  state.tr('schedule_axa'),
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -994,9 +1227,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                                 icon: const Icon(Icons.campaign, size: 16),
-                                label: const Text(
-                                  'Tài Trợ Adidas',
-                                  style: TextStyle(
+                                label: Text(
+                                  state.tr('sponsorship_action'),
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -1008,9 +1241,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        const Text(
-                          'Squad Readiness & Medical Status',
-                          style: TextStyle(
+                        Text(
+                          state.tr('squad_readiness'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.textPrimary,
@@ -1021,36 +1254,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           children: [
                             Expanded(
                               child: _buildReadinessCard(
-                                title: 'Match Fit',
+                                title: state.tr('match_fit'),
                                 count: activeCount,
                                 total: state.players.length,
                                 color: AppTheme.success,
                                 icon: Icons.check_circle_outline,
-                                subtitle: 'Sẵn sàng thi đấu 100%',
+                                subtitle: state.tr('match_fit_sub'),
                                 onTap: () => widget.onNavigateTab(1),
                               ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: _buildReadinessCard(
-                                title: 'Doubtful / Fatigue',
+                                title: state.tr('doubtful'),
                                 count: doubtfulCount,
                                 total: state.players.length,
                                 color: AppTheme.warning,
                                 icon: Icons.access_time,
-                                subtitle: 'Cần giảm tải giáo án',
+                                subtitle: state.tr('doubtful_sub'),
                                 onTap: () => widget.onNavigateTab(1),
                               ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: _buildReadinessCard(
-                                title: 'Injured',
+                                title: state.tr('injured'),
                                 count: injuredCount,
                                 total: state.players.length,
                                 color: AppTheme.danger,
                                 icon: Icons.healing,
-                                subtitle: 'Đang phục hồi tại AXA',
+                                subtitle: state.tr('injured_sub'),
                                 onTap: () => widget.onNavigateTab(1),
                               ),
                             ),
@@ -1081,7 +1314,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    'Phòng y tế AXA: ${injuredPlayers.map((p) => '#${p.number} ${p.name}').join(', ')} đang được điều trị chuyên sâu, không tham gia các bài tập đối kháng.',
+                                    state.isVietnamese
+                                        ? 'Phòng y tế AXA: ${injuredPlayers.map((p) => '#${p.number} ${p.name}').join(', ')} đang được điều trị chuyên sâu, không tham gia các bài tập đối kháng.'
+                                        : 'AXA Medical: ${injuredPlayers.map((p) => '#${p.number} ${p.name}').join(', ')} undergoing intensive treatment, excluded from contact training.',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: Colors.white,
@@ -1091,12 +1326,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ],
                             ),
                           ),
+                        if (expiringSoonPlayers.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.lfcYellow.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: AppTheme.lfcYellow.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.timer_outlined,
+                                  color: AppTheme.lfcYellow,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    state.isVietnamese
+                                        ? 'Cảnh báo nhân sự: ${expiringSoonPlayers.length} cầu thủ sắp đáo hạn hợp đồng (${expiringSoonPlayers.map((p) => '#${p.number} ${p.name}').take(3).join(', ')}...). Ban quản trị cần rà soát điều khoản gia hạn.'
+                                        : 'Contract Alert: ${expiringSoonPlayers.length} player(s) expiring soon (${expiringSoonPlayers.map((p) => '#${p.number} ${p.name}').take(3).join(', ')}...). Management renewal review required.',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 20),
 
                         if (topPlayer != null) ...[
-                          const Text(
-                            'Squad Valuation Leader (Transfermarkt Top Asset)',
-                            style: TextStyle(
+                          Text(
+                            state.tr('valuation_leader'),
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AppTheme.textPrimary,
@@ -1183,7 +1455,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          '${topPlayer.positionName} • Hợp đồng đến ${topPlayer.contractUntil}',
+                                          state.isVietnamese
+                                              ? '${topPlayer.positionName} • Hợp đồng đến ${topPlayer.contractUntil}'
+                                              : '${topPlayer.positionName} • Contract until ${topPlayer.contractUntil}',
                                           style: const TextStyle(
                                             fontSize: 11,
                                             color: AppTheme.textMuted,
@@ -1195,9 +1469,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      const Text(
-                                        'Định giá',
-                                        style: TextStyle(
+                                      Text(
+                                        state.isVietnamese ? 'Định giá' : 'Valuation',
+                                        style: const TextStyle(
                                           fontSize: 10,
                                           color: AppTheme.textMuted,
                                         ),
@@ -1226,9 +1500,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(height: 20),
                         ],
 
-                        const Text(
-                          'Squad Depth & Valuation by Position',
-                          style: TextStyle(
+                        Text(
+                          state.tr('squad_allocation'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.textPrimary,
@@ -1307,15 +1581,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           runSpacing: 8,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            const Text(
-                              'Key Squad Profiles',
-                              style: TextStyle(
+                            Text(
+                              state.isVietnamese ? 'Cầu thủ tiêu biểu' : 'Key Squad Profiles',
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
-                              '${state.players.length} players',
+                              state.isVietnamese
+                                  ? '${state.players.length} cầu thủ'
+                                  : '${state.players.length} players',
                               style: const TextStyle(
                                 color: AppTheme.textSecondary,
                               ),
@@ -1332,7 +1608,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             TextButton(
                               onPressed: () => widget.onNavigateTab(1),
-                              child: const Text('All Players'),
+                              child: Text(state.isVietnamese ? 'Xem tất cả' : 'All Players'),
                             ),
                           ],
                         ),
@@ -1431,9 +1707,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           spacing: 12,
                           runSpacing: 8,
                           children: [
-                            const Text(
-                              'Upcoming Training Sessions at AXA',
-                              style: TextStyle(
+                            Text(
+                              state.isVietnamese
+                                  ? 'Lịch tập luyện tại AXA Ground'
+                                  : 'Upcoming Training Sessions at AXA',
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textPrimary,
@@ -1441,9 +1719,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             TextButton(
                               onPressed: () => widget.onNavigateTab(2),
-                              child: const Text(
-                                'View Calendar',
-                                style: TextStyle(
+                              child: Text(
+                                state.isVietnamese ? 'Xem lịch tập' : 'View Calendar',
+                                style: const TextStyle(
                                   color: AppTheme.lfcRed,
                                   fontSize: 13,
                                 ),

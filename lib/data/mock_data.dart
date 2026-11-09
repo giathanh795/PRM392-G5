@@ -65,7 +65,8 @@ class MockData {
       avatarUrl: 'assets/images/alisson.jpg',
       currentMarketValue: 24.0,
       previousMarketValue: 28.0,
-      status: 'Active',
+      status: 'Doubtful',
+      injuryDetails: 'Quá tải cơ khép (Theo dõi thể lực)',
       sponsorPartner: 'Adidas',
       progressHistory: [
         PlayerStatistic(date: 'Jul', attributes: {'Reflexes': 89.0, 'Diving': 88.0, 'Handling': 88.0, 'Positioning': 91.0, 'Kicking': 85.0, 'One-on-one': 91.0}),
@@ -622,7 +623,8 @@ class MockData {
       avatarUrl: 'assets/images/chiesa.jpg',
       currentMarketValue: 28.0,
       previousMarketValue: 30.0,
-      status: 'Active',
+      status: 'Injured',
+      injuryDetails: 'Chấn thương gân khoeo (Dự kiến nghỉ 2 tuần)',
       sponsorPartner: 'Adidas',
       progressHistory: [
         PlayerStatistic(date: 'Oct', attributes: {'Pace': 87.0, 'Shooting': 83.0, 'Dribbling': 85.0, 'Positioning': 84.0, 'Passing': 80.0, 'Physical': 76.0}),

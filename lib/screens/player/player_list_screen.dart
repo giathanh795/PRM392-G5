@@ -7,9 +7,29 @@ import '../../widgets/player_card_item.dart';
 import '../../widgets/delete_player_dialog.dart';
 import '../../widgets/player_form_dialog.dart';
 import 'player_detail_screen.dart';
+import 'player_comparison_screen.dart';
+import '../../widgets/language_toggle_button.dart';
 
 class PlayerListScreen extends StatelessWidget {
   const PlayerListScreen({super.key});
+
+  String _positionChipLabel(String pos, bool isVi) {
+    if (!isVi) return pos;
+    switch (pos.toLowerCase()) {
+      case 'all':
+        return 'Tất cả';
+      case 'forward':
+        return 'Tiền đạo';
+      case 'midfielder':
+        return 'Tiền vệ';
+      case 'defender':
+        return 'Hậu vệ';
+      case 'goalkeeper':
+        return 'Thủ môn';
+      default:
+        return pos;
+    }
+  }
 
   Future<void> _handleDeletePlayer(BuildContext context, Player player) async {
     final confirmed = await showDeletePlayerConfirmationDialog(context, player);
@@ -111,21 +131,33 @@ class PlayerListScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Liverpool Squad'),
+        title: Text(state.isVietnamese ? 'Đội hình Liverpool FC' : 'Liverpool Squad'),
         actions: [
+          const LanguageToggleButton(),
           IconButton(
             icon: Icon(
               state.isDarkMode ? Icons.light_mode : Icons.dark_mode,
               color: state.isDarkMode ? AppTheme.accentGold : Colors.amber.shade700,
             ),
             tooltip: state.isDarkMode
-                ? 'Chuyển sang Giao diện Sáng'
-                : 'Chuyển sang Giao diện Tối',
+                ? (state.isVietnamese ? 'Chuyển sang Giao diện Sáng' : 'Switch to Light Mode')
+                : (state.isVietnamese ? 'Chuyển sang Giao diện Tối' : 'Switch to Dark Mode'),
             onPressed: () => context.read<AppStateProvider>().toggleTheme(),
           ),
           IconButton(
+            icon: const Icon(Icons.compare_arrows_rounded, color: AppTheme.lfcYellow),
+            tooltip: state.tr('compare_h2h'),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const PlayerComparisonScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.person_add_alt_1),
-            tooltip: 'Thêm cầu thủ mới',
+            tooltip: state.tr('add_player'),
             onPressed: () => showPlayerFormDialog(context),
           ),
           PopupMenuButton<String>(
@@ -141,15 +173,15 @@ class PlayerListScreen extends StatelessWidget {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'reset',
                 child: Row(
                   children: [
-                    Icon(Icons.restart_alt, size: 18, color: AppTheme.lfcYellow),
-                    SizedBox(width: 8),
+                    const Icon(Icons.restart_alt, size: 18, color: AppTheme.lfcYellow),
+                    const SizedBox(width: 8),
                     Text(
-                      'Khôi phục 25 cầu thủ gốc',
-                      style: TextStyle(fontSize: 13, color: Colors.white),
+                      state.tr('restore_squad'),
+                      style: const TextStyle(fontSize: 13, color: Colors.white),
                     ),
                   ],
                 ),
@@ -165,7 +197,7 @@ class PlayerListScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search player by name, number, nationality...',
+                hintText: state.tr('search_player_hint'),
                 prefixIcon: const Icon(Icons.search, color: AppTheme.textSecondary),
                 suffixIcon: state.searchQuery.isNotEmpty
                     ? IconButton(
@@ -190,7 +222,7 @@ class PlayerListScreen extends StatelessWidget {
                 final isSelected = state.selectedPositionFilter.toLowerCase() == pos.toLowerCase();
 
                 return ChoiceChip(
-                  label: Text(pos),
+                  label: Text(_positionChipLabel(pos, state.isVietnamese)),
                   selected: isSelected,
                   selectedColor: AppTheme.lfcRed,
                   labelStyle: TextStyle(
@@ -211,14 +243,19 @@ class PlayerListScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Showing ${state.filteredPlayers.length} players',
+                  state.isVietnamese
+                      ? 'Hiển thị ${state.filteredPlayers.length} cầu thủ'
+                      : 'Showing ${state.filteredPlayers.length} players',
                   style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.shield, size: 14, color: AppTheme.lfcRed),
-                    SizedBox(width: 4),
-                    Text('LFC Official Roster', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                    const Icon(Icons.shield, size: 14, color: AppTheme.lfcRed),
+                    const SizedBox(width: 4),
+                    Text(
+                      state.isVietnamese ? 'Đội hình LFC chính thức' : 'LFC Official Roster',
+                      style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                    ),
                   ],
                 ),
               ],
@@ -241,8 +278,10 @@ class PlayerListScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           Text(
                             state.players.isEmpty
-                                ? 'Danh sách đội hình hiện đang trống.'
-                                : 'Không tìm thấy cầu thủ nào phù hợp.',
+                                ? (state.isVietnamese
+                                    ? 'Danh sách đội hình hiện đang trống.'
+                                    : 'Squad roster is currently empty.')
+                                : state.tr('no_player_found'),
                             style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                           ),
                           if (state.players.isEmpty) ...[
@@ -253,7 +292,7 @@ class PlayerListScreen extends StatelessWidget {
                                 foregroundColor: Colors.white,
                               ),
                               icon: const Icon(Icons.restart_alt, size: 18),
-                              label: const Text('Khôi phục 25 cầu thủ gốc'),
+                              label: Text(state.tr('restore_squad')),
                               onPressed: () => context.read<AppStateProvider>().resetToDefaultMockData(),
                             ),
                           ],

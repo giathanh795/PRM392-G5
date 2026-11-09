@@ -62,6 +62,7 @@ void main() {
             await Future<void>.delayed(const Duration(milliseconds: 1));
           }
         });
+        state.setLanguage('en');
         await tester.pumpWidget(
           ChangeNotifierProvider.value(
             value: state,

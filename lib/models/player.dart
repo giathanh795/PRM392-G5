@@ -91,6 +91,7 @@ class Player {
   final double currentMarketValue;
   final double previousMarketValue;
   final String status;
+  final String injuryDetails;
   final String sponsorPartner;
   final List<PlayerStatistic> progressHistory;
   final List<MarketValuePoint> marketValueHistory;
@@ -111,6 +112,7 @@ class Player {
     required this.currentMarketValue,
     required this.previousMarketValue,
     this.status = 'Active',
+    this.injuryDetails = '',
     this.sponsorPartner = 'Adidas',
     required this.progressHistory,
     required this.marketValueHistory,
@@ -145,6 +147,27 @@ class Player {
     return progressHistory.last.attributes;
   }
 
+  bool get isInjured =>
+      status.toLowerCase().contains('injur') ||
+      status.toLowerCase().contains('chấn thương');
+
+  bool get isDoubtful =>
+      status.toLowerCase().contains('doubt') ||
+      status.toLowerCase().contains('nghi ngờ');
+
+  bool get isContractExpiringSoon {
+    final parsed = DateTime.tryParse(contractUntil);
+    if (parsed == null) return false;
+    final now = DateTime.now();
+    return parsed.isBefore(now.add(const Duration(days: 365 * 2)));
+  }
+
+  int get contractDaysRemaining {
+    final parsed = DateTime.tryParse(contractUntil);
+    if (parsed == null) return 999;
+    return parsed.difference(DateTime.now()).inDays;
+  }
+
   double get marketValueChangePercent {
     if (previousMarketValue == 0) return 0.0;
     return ((currentMarketValue - previousMarketValue) / previousMarketValue) * 100;
@@ -165,6 +188,7 @@ class Player {
     double? currentMarketValue,
     double? previousMarketValue,
     String? status,
+    String? injuryDetails,
     String? sponsorPartner,
     List<PlayerStatistic>? progressHistory,
     List<MarketValuePoint>? marketValueHistory,
@@ -185,6 +209,7 @@ class Player {
       currentMarketValue: currentMarketValue ?? this.currentMarketValue,
       previousMarketValue: previousMarketValue ?? this.previousMarketValue,
       status: status ?? this.status,
+      injuryDetails: injuryDetails ?? this.injuryDetails,
       sponsorPartner: sponsorPartner ?? this.sponsorPartner,
       progressHistory: progressHistory ?? this.progressHistory,
       marketValueHistory: marketValueHistory ?? this.marketValueHistory,
@@ -207,6 +232,7 @@ class Player {
     'currentMarketValue': currentMarketValue,
     'previousMarketValue': previousMarketValue,
     'status': status,
+    'injuryDetails': injuryDetails,
     'sponsorPartner': sponsorPartner,
     'progressHistory': progressHistory.map((s) => s.toJson()).toList(),
     'marketValueHistory': marketValueHistory.map((m) => m.toJson()).toList(),
@@ -232,6 +258,7 @@ class Player {
       currentMarketValue: (json['currentMarketValue'] as num?)?.toDouble() ?? 0.0,
       previousMarketValue: (json['previousMarketValue'] as num?)?.toDouble() ?? 0.0,
       status: json['status']?.toString() ?? 'Active',
+      injuryDetails: json['injuryDetails']?.toString() ?? '',
       sponsorPartner: json['sponsorPartner']?.toString() ?? 'Adidas',
       progressHistory: (json['progressHistory'] as List<dynamic>?)
               ?.map((e) => PlayerStatistic.fromJson(e as Map<String, dynamic>))

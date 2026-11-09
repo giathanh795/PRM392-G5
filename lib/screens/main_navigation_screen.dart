@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
+import '../providers/app_state_provider.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'player/player_list_screen.dart';
 import 'training/training_schedule_screen.dart';
@@ -25,6 +27,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AppStateProvider>();
     final screens = [
       DashboardScreen(onNavigateTab: _onSelectTab),
       const PlayerListScreen(),
@@ -85,31 +88,31 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           unselectedItemColor: AppTheme.subtextColor(context),
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard),
-              label: 'Dashboard',
+              icon: const Icon(Icons.dashboard_outlined),
+              activeIcon: const Icon(Icons.dashboard),
+              label: state.tr('tab_dashboard'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.sports_soccer_outlined),
-              activeIcon: Icon(Icons.sports_soccer),
-              label: 'Players',
+              icon: const Icon(Icons.sports_soccer_outlined),
+              activeIcon: const Icon(Icons.sports_soccer),
+              label: state.tr('tab_players'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today_outlined),
-              activeIcon: Icon(Icons.calendar_today),
-              label: 'Training',
+              icon: const Icon(Icons.calendar_today_outlined),
+              activeIcon: const Icon(Icons.calendar_today),
+              label: state.tr('tab_training'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.business_center_outlined),
-              activeIcon: Icon(Icons.business_center),
-              label: 'Commercial',
+              icon: const Icon(Icons.business_center_outlined),
+              activeIcon: const Icon(Icons.business_center),
+              label: state.tr('tab_commercial'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
+              icon: const Icon(Icons.person_outline),
+              activeIcon: const Icon(Icons.person),
+              label: state.tr('tab_profile'),
             ),
           ],
         ),

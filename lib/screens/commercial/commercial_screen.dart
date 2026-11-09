@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/app_state_provider.dart';
 import 'campaign_management_screen.dart';
 import 'sponsorship_management_screen.dart';
+import '../../widgets/language_toggle_button.dart';
 
 class CommercialScreen extends StatelessWidget {
   const CommercialScreen({super.key});
@@ -19,42 +20,47 @@ class CommercialScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Commercial & Sponsorship'),
+        title: Text(state.isVietnamese ? 'Thương mại & Đối tác' : 'Commercial & Sponsorship'),
         actions: [
+          const LanguageToggleButton(),
           IconButton(
             icon: Icon(
               state.isDarkMode ? Icons.light_mode : Icons.dark_mode,
               color: state.isDarkMode ? AppTheme.accentGold : Colors.amber.shade700,
             ),
             tooltip: state.isDarkMode
-                ? 'Chuyển sang Giao diện Sáng'
-                : 'Chuyển sang Giao diện Tối',
+                ? (state.isVietnamese ? 'Chuyển sang Giao diện Sáng' : 'Switch to Light Mode')
+                : (state.isVietnamese ? 'Chuyển sang Giao diện Tối' : 'Switch to Dark Mode'),
             onPressed: () => context.read<AppStateProvider>().toggleTheme(),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Quản lý hoạt động thương mại',
-            style: TextStyle(
+          Text(
+            state.isVietnamese ? 'Quản lý hoạt động thương mại' : 'Commercial Operations Management',
+            style: const TextStyle(
               color: AppTheme.textPrimary,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Chọn một mục để quản lý đối tác tài trợ hoặc chiến dịch.',
-            style: TextStyle(color: AppTheme.textSecondary),
+          Text(
+            state.isVietnamese
+                ? 'Chọn một mục để quản lý đối tác tài trợ hoặc chiến dịch.'
+                : 'Select an area to manage official sponsors or marketing campaigns.',
+            style: const TextStyle(color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 18),
           _NavigationCard(
             icon: Icons.handshake_outlined,
-            title: 'Sponsorship management',
-            subtitle:
-                '${state.sponsorships.length} nhà tài trợ • Danh sách logo & hợp đồng',
+            title: state.isVietnamese ? 'Quản lý Nhà tài trợ' : 'Sponsorship Management',
+            subtitle: state.isVietnamese
+                ? '${state.sponsorships.length} nhà tài trợ • Danh sách logo & hợp đồng'
+                : '${state.sponsorships.length} sponsors • Logos & contracts',
             color: AppTheme.accentCyan,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -65,8 +71,10 @@ class CommercialScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _NavigationCard(
             icon: Icons.campaign_outlined,
-            title: 'Campaign management',
-            subtitle: '${state.campaigns.length} chiến dịch ',
+            title: state.isVietnamese ? 'Quản lý Chiến dịch' : 'Campaign Management',
+            subtitle: state.isVietnamese
+                ? '${state.campaigns.length} chiến dịch thương mại'
+                : '${state.campaigns.length} commercial campaigns',
             color: AppTheme.lfcYellow,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -81,9 +89,9 @@ class CommercialScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Giá trị thị trường đội hình',
-                    style: TextStyle(
+                  Text(
+                    state.isVietnamese ? 'Giá trị thị trường đội hình' : 'Total Squad Market Value',
+                    style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -99,14 +107,16 @@ class CommercialScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Định giá Transfermarkt & bản quyền hình ảnh đội 1 Liverpool FC',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                  Text(
+                    state.isVietnamese
+                        ? 'Định giá Transfermarkt & bản quyền hình ảnh đội 1 Liverpool FC'
+                        : 'Transfermarkt valuation & first-team image rights overview',
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                   ),
                   const Divider(color: AppTheme.borderSubtle, height: 28),
-                  const Text(
-                    'Top 8 cầu thủ có giá trị cao nhất',
-                    style: TextStyle(
+                  Text(
+                    state.isVietnamese ? 'Top 8 cầu thủ có giá trị cao nhất' : 'Top 8 Valuation Leaders',
+                    style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,

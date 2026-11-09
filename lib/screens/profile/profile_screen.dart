@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/user_profile.dart';
 import '../../providers/app_state_provider.dart';
 import '../../widgets/player_avatar.dart';
+import '../../widgets/language_toggle_button.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -346,15 +347,17 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.bgColor(context),
       appBar: AppBar(
-        title: const Text('Quản lý Hồ sơ Cá nhân'),
+        title: Text(state.isVietnamese ? 'Quản lý Hồ sơ Quản trị' : 'Manager Profile Management'),
         actions: [
-
+          const LanguageToggleButton(),
           IconButton(
             icon: Icon(
               state.isDarkMode ? Icons.light_mode : Icons.dark_mode,
               color: state.isDarkMode ? AppTheme.lfcYellow : AppTheme.lfcRed,
             ),
-            tooltip: state.isDarkMode ? 'Chuyển sang Chế độ Sáng' : 'Chuyển sang Chế độ Tối',
+            tooltip: state.isDarkMode
+                ? (state.isVietnamese ? 'Chuyển sang Chế độ Sáng' : 'Switch to Light Mode')
+                : (state.isVietnamese ? 'Chuyển sang Chế độ Tối' : 'Switch to Dark Mode'),
             onPressed: () => state.toggleTheme(),
           ),
           const SizedBox(width: 8),
@@ -366,7 +369,7 @@ class ProfileScreen extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
 
                 Card(
@@ -417,14 +420,14 @@ class ProfileScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(color: AppTheme.success.withValues(alpha: 0.4)),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.verified, size: 12, color: AppTheme.success),
-                                  SizedBox(width: 4),
+                                  const Icon(Icons.verified, size: 12, color: AppTheme.success),
+                                  const SizedBox(width: 4),
                                   Text(
-                                    'ĐÃ ĐĂNG NHẬP',
-                                    style: TextStyle(
+                                    state.isVietnamese ? 'ĐÃ ĐĂNG NHẬP' : 'LOGGED IN',
+                                    style: const TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                       color: AppTheme.success,
@@ -438,6 +441,7 @@ class ProfileScreen extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           profile.role,
+                          textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -447,19 +451,30 @@ class ProfileScreen extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           profile.department,
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 12,
                             color: AppTheme.subtextColor(context),
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Wrap(alignment: WrapAlignment.center, spacing: 10, runSpacing: 10, children: [ElevatedButton.icon(style: ElevatedButton.styleFrom(backgroundColor: AppTheme.lfcRed,
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.lfcRed,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
                               icon: const Icon(Icons.edit, size: 16),
-                              label: const Text('Chỉnh sửa thông tin', style: TextStyle(fontWeight: FontWeight.bold)),
+                              label: Text(
+                                state.isVietnamese ? 'Chỉnh sửa thông tin' : 'Edit Profile',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
                               onPressed: () => _showEditProfileDialog(context, profile),
                             ),
                             OutlinedButton.icon(
@@ -470,7 +485,9 @@ class ProfileScreen extends StatelessWidget {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
                               icon: const Icon(Icons.lock_outline, size: 16),
-                              label: const Text('Đổi mật khẩu'),
+                              label: Text(
+                                state.isVietnamese ? 'Đổi mật khẩu' : 'Change Password',
+                              ),
                               onPressed: () => _showChangePasswordDialog(context),
                             ),
                           ],
@@ -497,7 +514,7 @@ class ProfileScreen extends StatelessWidget {
                             const Icon(Icons.badge_outlined, color: AppTheme.accentCyan, size: 20),
                             const SizedBox(width: 8),
                             Text(
-                              'Chi tiết Tài khoản & Liên hệ',
+                              state.isVietnamese ? 'Chi tiết Tài khoản & Liên hệ' : 'Account & Contact Details',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
@@ -507,11 +524,36 @@ class ProfileScreen extends StatelessWidget {
                           ],
                         ),
                         const Divider(height: 24),
-                        _buildDetailRow(context, Icons.account_circle_outlined, 'Tên đăng nhập', profile.username),
-                        _buildDetailRow(context, Icons.email_outlined, 'Email công vụ', profile.email),
-                        _buildDetailRow(context, Icons.phone_outlined, 'Số điện thoại', profile.phone),
-                        _buildDetailRow(context, Icons.business_outlined, 'Bộ phận', profile.department),
-                        _buildDetailRow(context, Icons.info_outline, 'Tiểu sử', profile.bio),
+                        _buildDetailRow(
+                          context,
+                          Icons.account_circle_outlined,
+                          state.isVietnamese ? 'Tên đăng nhập' : 'Username',
+                          profile.username,
+                        ),
+                        _buildDetailRow(
+                          context,
+                          Icons.email_outlined,
+                          state.isVietnamese ? 'Email công vụ' : 'Work Email',
+                          profile.email,
+                        ),
+                        _buildDetailRow(
+                          context,
+                          Icons.phone_outlined,
+                          state.isVietnamese ? 'Số điện thoại' : 'Phone Number',
+                          profile.phone,
+                        ),
+                        _buildDetailRow(
+                          context,
+                          Icons.business_outlined,
+                          state.isVietnamese ? 'Bộ phận' : 'Department',
+                          profile.department,
+                        ),
+                        _buildDetailRow(
+                          context,
+                          Icons.info_outline,
+                          state.isVietnamese ? 'Tiểu sử' : 'Bio',
+                          profile.bio,
+                        ),
                       ],
                     ),
                   ),
@@ -612,6 +654,50 @@ class ProfileScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     side: BorderSide(color: AppTheme.borderColor(context)),
                   ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    leading: const Icon(
+                      Icons.language_rounded,
+                      color: AppTheme.accentCyan,
+                      size: 24,
+                    ),
+                    title: Text(
+                      state.isVietnamese ? 'Ngôn ngữ hệ thống' : 'System Language',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textColor(context),
+                      ),
+                    ),
+                    subtitle: Text(
+                      state.isVietnamese
+                          ? 'Đang dùng: Tiếng Việt (Vietnamese)'
+                          : 'Currently: English (Tiếng Anh)',
+                      style: TextStyle(fontSize: 12, color: AppTheme.subtextColor(context)),
+                    ),
+                    trailing: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.accentCyan),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      ),
+                      icon: const Icon(Icons.swap_horiz, size: 16, color: AppTheme.accentCyan),
+                      label: Text(
+                        state.isVietnamese ? '🇻🇳 VI' : '🇬🇧 EN',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.accentCyan),
+                      ),
+                      onPressed: () => state.toggleLanguage(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                Card(
+                  color: AppTheme.cardColor(context),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: AppTheme.borderColor(context)),
+                  ),
                   child: SwitchListTile(
                     secondary: Icon(
                       state.isDarkMode ? Icons.dark_mode : Icons.light_mode,
@@ -653,16 +739,18 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       child: const Icon(Icons.logout, color: AppTheme.lfcRed, size: 20),
                     ),
-                    title: const Text(
-                      'Đăng Xuất Tài Khoản',
-                      style: TextStyle(
+                    title: Text(
+                      state.isVietnamese ? 'Đăng Xuất Tài Khoản' : 'Sign Out Account',
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.lfcRed,
                       ),
                     ),
                     subtitle: Text(
-                      'Thoát phiên làm việc và quay về màn hình Đăng nhập',
+                      state.isVietnamese
+                          ? 'Thoát phiên làm việc và quay về màn hình Đăng nhập'
+                          : 'End current session and return to Login screen',
                       style: TextStyle(fontSize: 12, color: AppTheme.subtextColor(context)),
                     ),
                     trailing: const Icon(Icons.chevron_right, color: AppTheme.lfcRed),
@@ -675,12 +763,16 @@ class ProfileScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(14),
                             side: BorderSide(color: AppTheme.borderColor(context)),
                           ),
-                          title: const Text('Xác nhận Đăng xuất'),
-                          content: const Text('Bạn có chắc chắn muốn đăng xuất khỏi cổng điều hành Liverpool FC?'),
+                          title: Text(state.isVietnamese ? 'Xác nhận Đăng xuất' : 'Confirm Sign Out'),
+                          content: Text(
+                            state.isVietnamese
+                                ? 'Bạn có chắc chắn muốn đăng xuất khỏi cổng điều hành Liverpool FC?'
+                                : 'Are you sure you want to sign out of Liverpool FC Management?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(ctx).pop(false),
-                              child: const Text('Hủy'),
+                              child: Text(state.isVietnamese ? 'Hủy' : 'Cancel'),
                             ),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.lfcRed),

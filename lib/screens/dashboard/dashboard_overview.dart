@@ -57,7 +57,7 @@ class _DashboardOverviewState extends State<DashboardOverview> {
     final state = widget.state;
     final players = state.players;
     final active = players.where((p) => p.status == 'Active').length;
-    final injured = players.where((p) => p.status == 'Injured').length;
+    final injured = players.where((p) => p.isInjured).length;
     final others = players.length - active - injured;
     final readiness = players.isEmpty ? 0.0 : active / players.length;
     final dateKey = DateFormat('yyyy-MM-dd').format(_date);

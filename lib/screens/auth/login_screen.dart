@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/app_state_provider.dart';
 import '../main_navigation_screen.dart';
+import '../../widgets/language_toggle_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -189,7 +190,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const LanguageToggleButton(),
+                      IconButton(
+                        icon: Icon(
+                          isDark ? Icons.light_mode : Icons.dark_mode,
+                          color: isDark ? AppTheme.lfcYellow : AppTheme.lfcRed,
+                        ),
+                        tooltip: isDark
+                            ? (state.isVietnamese ? 'Chuyển sang Giao diện Sáng' : 'Switch to Light Mode')
+                            : (state.isVietnamese ? 'Chuyển sang Giao diện Tối' : 'Switch to Dark Mode'),
+                        onPressed: () => state.toggleTheme(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   Center(
                     child: Container(
                       width: 96,

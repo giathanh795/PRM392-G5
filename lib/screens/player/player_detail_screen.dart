@@ -10,6 +10,8 @@ import '../../widgets/player_avatar.dart';
 import '../../widgets/delete_player_dialog.dart';
 import '../../widgets/player_form_dialog.dart';
 import 'player_stats_screen.dart';
+import 'player_comparison_screen.dart';
+import '../../widgets/language_toggle_button.dart';
 
 class PlayerDetailScreen extends StatelessWidget {
   final Player player;
@@ -208,7 +210,6 @@ class PlayerDetailScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 const Text('Hoặc chọn nhanh ảnh mẫu Liverpool:', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
                 const SizedBox(height: 8),
                 Wrap(
@@ -536,6 +537,7 @@ class PlayerDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppStateProvider>();
+    final isVi = state.isVietnamese;
     final currentPlayer = state.players.firstWhere(
       (p) => p.id == player.id,
       orElse: () => player,
@@ -545,9 +547,21 @@ class PlayerDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(currentPlayer.name),
         actions: [
+          const LanguageToggleButton(),
+          IconButton(
+            icon: const Icon(Icons.compare_arrows_rounded, color: AppTheme.lfcYellow),
+            tooltip: state.isVietnamese ? 'So sánh đối đầu' : 'Compare Head-to-Head',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PlayerComparisonScreen(initialPlayer1: currentPlayer),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.analytics_outlined),
-            tooltip: 'Xem chỉ số & Tiến độ',
+            tooltip: state.isVietnamese ? 'Xem chỉ số & Tiến độ' : 'View Stats & Progress',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -558,12 +572,12 @@ class PlayerDetailScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined, color: AppTheme.accentCyan),
-            tooltip: 'Chỉnh sửa cầu thủ',
+            tooltip: state.isVietnamese ? 'Chỉnh sửa cầu thủ' : 'Edit Player',
             onPressed: () => showPlayerFormDialog(context, player: currentPlayer),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppTheme.lfcRed),
-            tooltip: 'Xóa cầu thủ',
+            tooltip: state.isVietnamese ? 'Xóa cầu thủ' : 'Delete Player',
             onPressed: () => _handleDeletePlayer(context, currentPlayer),
           ),
         ],
@@ -592,12 +606,15 @@ class PlayerDetailScreen extends StatelessWidget {
                     Stack(
                       alignment: Alignment.bottomRight,
                       children: [
-                        PlayerAvatar(
-                          imageUrl: currentPlayer.avatarUrl,
-                          radius: 46,
-                          initials: currentPlayer.name.isNotEmpty ? currentPlayer.name[0] : '?',
-                          borderColor: AppTheme.accentCyan,
-                          borderWidth: 2,
+                        Hero(
+                          tag: 'player_avatar_${currentPlayer.id}',
+                          child: PlayerAvatar(
+                            imageUrl: currentPlayer.avatarUrl,
+                            radius: 46,
+                            initials: currentPlayer.name.isNotEmpty ? currentPlayer.name[0] : '?',
+                            borderColor: AppTheme.accentCyan,
+                            borderWidth: 2,
+                          ),
                         ),
                         InkWell(
                           onTap: () => _showEditAvatarDialog(context, currentPlayer),
@@ -671,6 +688,118 @@ class PlayerDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
+            if (currentPlayer.isInjured || currentPlayer.isDoubtful) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: (currentPlayer.isInjured ? AppTheme.danger : AppTheme.warning).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: (currentPlayer.isInjured ? AppTheme.danger : AppTheme.warning).withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (currentPlayer.isInjured ? AppTheme.danger : AppTheme.warning).withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        currentPlayer.isInjured ? Icons.medical_services_outlined : Icons.health_and_safety_outlined,
+                        color: currentPlayer.isInjured ? AppTheme.danger : AppTheme.warning,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            currentPlayer.isInjured
+                                ? (isVi ? 'TÌNH TRẠNG Y TẾ: CHẤN THƯƠNG' : 'MEDICAL STATUS: INJURED')
+                                : (isVi ? 'TÌNH TRẠNG Y TẾ: NGHI NGỜ THỂ LỰC' : 'MEDICAL STATUS: DOUBTFUL'),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: currentPlayer.isInjured ? AppTheme.danger : AppTheme.warning,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            currentPlayer.injuryDetails.isNotEmpty
+                                ? currentPlayer.injuryDetails
+                                : (currentPlayer.isInjured
+                                    ? (isVi
+                                        ? 'Cần theo dõi phục hồi cùng đội ngũ y tế AXA'
+                                        : 'Under rehabilitation monitoring with AXA medical team')
+                                    : (isVi
+                                        ? 'Cần kiểm tra thể lực trước buổi tập kế tiếp'
+                                        : 'Fitness check required before next session')),
+                            style: const TextStyle(fontSize: 12, color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (currentPlayer.isContractExpiringSoon) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.lfcYellow.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.lfcYellow.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.timer_outlined, color: AppTheme.lfcYellow, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        isVi
+                            ? 'Cảnh báo hợp đồng: Hạn hợp đồng đến ${currentPlayer.contractUntil} (còn ${currentPlayer.contractDaysRemaining} ngày). Ban lãnh đạo cần sớm đàm phán gia hạn.'
+                            : 'Contract Alert: Expires ${currentPlayer.contractUntil} (${currentPlayer.contractDaysRemaining} days remaining). Renewal review recommended.',
+                        style: const TextStyle(fontSize: 11, color: AppTheme.lfcYellow, height: 1.3),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.lfcYellow,
+                  side: const BorderSide(color: AppTheme.lfcYellow, width: 1.2),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                icon: const Icon(Icons.compare_arrows_rounded, size: 18),
+                label: Text(
+                  isVi ? 'So sánh đối đầu với cầu thủ khác' : 'Compare Head-to-Head with Another Player',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => PlayerComparisonScreen(initialPlayer1: currentPlayer),
+                    ),
+                  );
+                },
+              ),
+            ),
             const SizedBox(height: 16),
 
             InkWell(
@@ -732,7 +861,7 @@ class PlayerDetailScreen extends StatelessWidget {
                             children: [
                               Flexible(
                                 child: Text(
-                                  'Phân Tích Chuyên Môn & Radar',
+                                  isVi ? 'Phân Tích Chuyên Môn & Radar' : 'Technical & Radar Analysis',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w900,
@@ -763,7 +892,9 @@ class PlayerDetailScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Xem biểu đồ đa giác cho ${currentPlayer.positionName} & nút bật/tắt tiến độ kỹ thuật',
+                            isVi
+                                ? 'Xem biểu đồ đa giác cho ${currentPlayer.positionName} & nút bật/tắt tiến độ kỹ thuật'
+                                : 'View 6-axis polygon for ${currentPlayer.positionName} & progress history toggles',
                             style: TextStyle(
                               fontSize: 11,
                               color: AppTheme.subtextColor(context),
@@ -792,9 +923,9 @@ class PlayerDetailScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Profile & Contract Information',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                Text(
+                  isVi ? 'Thông tin Hồ sơ & Hợp đồng' : 'Profile & Contract Information',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                 ),
                 TextButton.icon(
                   style: TextButton.styleFrom(
@@ -803,7 +934,10 @@ class PlayerDetailScreen extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                   ),
                   icon: const Icon(Icons.edit, size: 14),
-                  label: const Text('Chỉnh sửa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  label: Text(
+                    isVi ? 'Chỉnh sửa' : 'Edit',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
                   onPressed: () => showPlayerFormDialog(context, player: currentPlayer),
                 ),
               ],
@@ -814,17 +948,31 @@ class PlayerDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    _buildInfoRow('Date of Birth', currentPlayer.dateOfBirth),
+                    _buildInfoRow(isVi ? 'Ngày sinh' : 'Date of Birth', currentPlayer.dateOfBirth),
                     const Divider(color: AppTheme.borderSubtle, height: 20),
-                    _buildInfoRow('Height / Weight', '${currentPlayer.height} / ${currentPlayer.weight}'),
+                    _buildInfoRow(isVi ? 'Chiều cao / Cân nặng' : 'Height / Weight', '${currentPlayer.height} / ${currentPlayer.weight}'),
                     const Divider(color: AppTheme.borderSubtle, height: 20),
-                    _buildInfoRow('Preferred Foot', currentPlayer.preferredFoot),
+                    _buildInfoRow(
+                      isVi ? 'Chân thuận' : 'Preferred Foot',
+                      isVi
+                          ? (currentPlayer.preferredFoot == 'Left'
+                              ? 'Trái'
+                              : (currentPlayer.preferredFoot == 'Right' ? 'Phải' : 'Cả hai'))
+                          : currentPlayer.preferredFoot,
+                    ),
                     const Divider(color: AppTheme.borderSubtle, height: 20),
-                    _buildInfoRow('Contract Until', currentPlayer.contractUntil),
+                    _buildInfoRow(isVi ? 'Hạn hợp đồng' : 'Contract Until', currentPlayer.contractUntil),
                     const Divider(color: AppTheme.borderSubtle, height: 20),
-                    _buildInfoRow('Squad Status', currentPlayer.status),
+                    _buildInfoRow(
+                      isVi ? 'Tình trạng đội hình' : 'Squad Status',
+                      isVi
+                          ? (currentPlayer.status == 'Active'
+                              ? 'Sẵn sàng thi đấu'
+                              : (currentPlayer.status == 'Injured' ? 'Chấn thương' : 'Nghi ngờ thể lực'))
+                          : currentPlayer.status,
+                    ),
                     const Divider(color: AppTheme.borderSubtle, height: 20),
-                    _buildInfoRow('Commercial Sponsor', currentPlayer.sponsorPartner),
+                    _buildInfoRow(isVi ? 'Nhà tài trợ cá nhân' : 'Commercial Sponsor', currentPlayer.sponsorPartner),
                   ],
                 ),
               ),
@@ -834,9 +982,9 @@ class PlayerDetailScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Media & PR Assets',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                Text(
+                  isVi ? 'Tư liệu Media & PR' : 'Media & PR Assets',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                 ),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
@@ -846,7 +994,10 @@ class PlayerDetailScreen extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                   ),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Thêm PR/Video', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  label: Text(
+                    isVi ? '+ Thêm PR/Video' : '+ Add PR/Video',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
                   onPressed: () => _showAddMediaDialog(context, currentPlayer),
                 ),
               ],
@@ -939,6 +1090,173 @@ class PlayerDetailScreen extends StatelessWidget {
                   );
                 },
               ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.campaign, color: AppTheme.lfcYellow, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      isVi ? 'Chiến dịch Thương mại Đại diện' : 'Featured Commercial Campaigns',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${state.campaigns.where((c) => c.featuredPlayerNames.contains(currentPlayer.name)).length} ${isVi ? 'chiến dịch' : 'campaigns'}',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.accentCyan, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Builder(
+              builder: (context) {
+                final campaigns = state.campaigns.where((c) => c.featuredPlayerNames.contains(currentPlayer.name)).toList();
+                if (campaigns.isEmpty) {
+                  return const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 20, color: AppTheme.textMuted),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Cầu thủ hiện chưa được phân công làm gương mặt đại diện cho chiến dịch tài trợ nào.',
+                              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return Column(
+                  children: campaigns.map((camp) {
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.surfaceNavyLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.star, color: AppTheme.lfcYellow, size: 20),
+                        ),
+                        title: Text(
+                          camp.name,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          'Đối tác: ${camp.sponsorName} • Reach: ${camp.reach} • Ngân sách: €${camp.budgetMillions}M',
+                          style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                        ),
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppTheme.accentCyan.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: AppTheme.accentCyan),
+                          ),
+                          child: Text(
+                            camp.status,
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.accentCyan),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.fitness_center, color: AppTheme.accentCyan, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      isVi ? 'Lịch sử Huấn luyện tại AXA Ground' : 'AXA Training Ground Attendance',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${state.trainings.where((t) => t.playerIds.contains(currentPlayer.id)).length} ${isVi ? 'buổi' : 'sessions'}',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.accentCyan, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Builder(
+              builder: (context) {
+                final trainings = state.trainings.where((t) => t.playerIds.contains(currentPlayer.id)).take(4).toList();
+                if (trainings.isEmpty) {
+                  return const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Icon(Icons.event_busy, size: 20, color: AppTheme.textMuted),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Cầu thủ chưa có mặt trong danh sách buổi tập nào gần đây.',
+                              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return Column(
+                  children: trainings.map((t) {
+                    final isCompleted = t.status == 'Completed';
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isCompleted ? AppTheme.success.withValues(alpha: 0.15) : AppTheme.surfaceNavyLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isCompleted ? Icons.check_circle : Icons.schedule,
+                            color: isCompleted ? AppTheme.success : AppTheme.accentCyan,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          t.title,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          '${t.date} (${t.startTime} - ${t.endTime}) • ${t.type} • ${t.location}',
+                          style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                        ),
+                        trailing: Text(
+                          t.status,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isCompleted ? AppTheme.success : AppTheme.warning,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+
             const SizedBox(height: 24),
 
             Container(

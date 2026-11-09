@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/sponsor_campaign.dart';
 import '../../providers/app_state_provider.dart';
+import '../player/player_detail_screen.dart';
 import 'commercial_api_notice.dart';
+import '../../widgets/language_toggle_button.dart';
 
 class CampaignManagementScreen extends StatelessWidget {
   const CampaignManagementScreen({super.key});
@@ -291,11 +293,17 @@ class CampaignManagementScreen extends StatelessWidget {
     final provider = context.watch<AppStateProvider>();
     final campaigns = provider.campaigns;
     return Scaffold(
-      appBar: AppBar(title: const Text('Campaign management')),
+      appBar: AppBar(
+        title: Text(provider.isVietnamese ? 'Quản lý Chiến dịch' : 'Campaign Management'),
+        actions: const [
+          LanguageToggleButton(),
+          SizedBox(width: 8),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _editCampaign(context),
         icon: const Icon(Icons.add),
-        label: const Text('Thêm chiến dịch'),
+        label: Text(provider.isVietnamese ? 'Thêm chiến dịch' : 'Add Campaign'),
       ),
       body: Column(
         children: [
@@ -388,15 +396,36 @@ class CampaignManagementScreen extends StatelessWidget {
                                 ],
                               ),
                               if (campaign.featuredPlayerNames.isNotEmpty) ...[
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Cầu thủ đại diện (Chạm để xem hồ sơ):',
+                                  style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                                ),
+                                const SizedBox(height: 4),
                                 Wrap(
                                   spacing: 6,
                                   runSpacing: 4,
                                   children: campaign.featuredPlayerNames
                                       .map(
-                                        (player) => Chip(
+                                        (playerName) => ActionChip(
+                                          avatar: const Icon(Icons.person, size: 14, color: AppTheme.accentCyan),
                                           visualDensity: VisualDensity.compact,
-                                          label: Text(player),
+                                          label: Text(playerName, style: const TextStyle(fontSize: 11)),
+                                          onPressed: () {
+                                            final allPlayers = context.read<AppStateProvider>().players;
+                                            final matched = allPlayers.where((p) => p.name.toLowerCase() == playerName.toLowerCase());
+                                            if (matched.isNotEmpty) {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (_) => PlayerDetailScreen(player: matched.first),
+                                                ),
+                                              );
+                                            } else {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('Không tìm thấy hồ sơ của "$playerName" trong đội hình.')),
+                                              );
+                                            }
+                                          },
                                         ),
                                       )
                                       .toList(),

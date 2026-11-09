@@ -12,6 +12,7 @@ import '../models/user_profile.dart';
 import '../data/mock_data.dart';
 import '../data/training_schedule_data.dart';
 import '../services/api_service.dart';
+import '../core/localization/app_translations.dart';
 
 class AppStateProvider extends ChangeNotifier {
   static const String _playersStorageKey = 'lfc_players_data_v1';
@@ -20,6 +21,7 @@ class AppStateProvider extends ChangeNotifier {
   static const String _sponsorshipsStorageKey = 'lfc_sponsorships_data_v1';
   static const String _themeModeStorageKey = 'lfc_theme_mode_v1';
   static const String _userProfileStorageKey = 'lfc_user_profile_data_v1';
+  static const String _languageStorageKey = 'lfc_app_language_v1';
 
   static List<TrainingSession> _getDefaultTrainings() {
     final list = List<TrainingSession>.from(TrainingScheduleData.sessions);
@@ -37,6 +39,7 @@ class AppStateProvider extends ChangeNotifier {
   List<Sponsorship> _sponsorships = List.from(MockData.sponsorships);
 
   ThemeMode _themeMode = ThemeMode.dark;
+  String _currentLanguage = 'vi';
 
   UserProfile _userProfile = UserProfile.defaultProfile();
   bool _isLoggedIn = false;
@@ -77,6 +80,10 @@ class AppStateProvider extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
 
+  String get currentLanguage => _currentLanguage;
+  bool get isVietnamese => _currentLanguage == 'vi';
+  String tr(String key) => AppTranslations.tr(key, _currentLanguage);
+
   UserProfile get userProfile => _userProfile;
   bool get isLoggedIn => _isLoggedIn;
 
@@ -111,7 +118,7 @@ class AppStateProvider extends ChangeNotifier {
 
   Future<void> _loadAllData() async {
     try {
-
+      await _loadLanguageFromLocalStorage();
       await _loadThemeModeFromLocalStorage();
       await _loadUserProfile();
 
@@ -135,6 +142,30 @@ class AppStateProvider extends ChangeNotifier {
       _isInitialized = true;
       notifyListeners();
     }
+  }
+
+  Future<void> _loadLanguageFromLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lang = prefs.getString(_languageStorageKey);
+      if (lang != null && (lang == 'vi' || lang == 'en')) {
+        _currentLanguage = lang;
+      }
+    } catch (_) {}
+  }
+
+  Future<void> setLanguage(String lang) async {
+    if (_currentLanguage == lang) return;
+    _currentLanguage = lang;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_languageStorageKey, _currentLanguage);
+    } catch (_) {}
+  }
+
+  Future<void> toggleLanguage() async {
+    await setLanguage(_currentLanguage == 'vi' ? 'en' : 'vi');
   }
 
   Future<void> _loadThemeModeFromLocalStorage() async {

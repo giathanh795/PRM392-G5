@@ -7,6 +7,8 @@ import '../../data/training_schedule_data.dart';
 import '../../models/player.dart';
 import '../../models/training_session.dart';
 import '../../providers/app_state_provider.dart';
+import '../player/player_detail_screen.dart';
+import '../../widgets/language_toggle_button.dart';
 
 class TrainingScheduleScreen extends StatefulWidget {
   const TrainingScheduleScreen({super.key});
@@ -59,6 +61,38 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     _type = 'All';
     _playerId = null;
   });
+
+  String _typeName(String type, bool isVi) {
+    if (!isVi) return type;
+    switch (type.toLowerCase()) {
+      case 'all':
+        return 'Tất cả';
+      case 'gym':
+        return 'Thể lực';
+      case 'tactical':
+        return 'Chiến thuật';
+      case 'recovery':
+        return 'Phục hồi';
+      case 'match prep':
+        return 'Chuẩn bị thi đấu';
+      default:
+        return type;
+    }
+  }
+
+  String _weekdayName(int weekday, bool isVi) {
+    if (!isVi) {
+      const enDays = ['', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+      return (weekday >= 1 && weekday <= 7) ? enDays[weekday] : '';
+    }
+    const viDays = ['', 'THỨ HAI', 'THỨ BA', 'THỨ TƯ', 'THỨ NĂM', 'THỨ SÁU', 'THỨ BẢY', 'CHỦ NHẬT'];
+    return (weekday >= 1 && weekday <= 7) ? viDays[weekday] : '';
+  }
+
+  String _monthName(int month, bool isVi) {
+    if (!isVi) return DateFormat('MMMM').format(DateTime(2026, month));
+    return 'Tháng $month';
+  }
 
   void _showAddSessionDialog(BuildContext parentContext) {
     final titleController = TextEditingController();
@@ -326,23 +360,25 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     );
     final today = DateUtils.dateOnly(DateTime.now());
 
+    final isVi = state.isVietnamese;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Training & Schedule'),
+        title: Text(isVi ? 'Kế hoạch Huấn luyện AXA' : 'Training & Schedule'),
         actions: [
+          const LanguageToggleButton(),
           IconButton(
             icon: Icon(
               state.isDarkMode ? Icons.light_mode : Icons.dark_mode,
               color: state.isDarkMode ? AppTheme.accentGold : Colors.amber.shade700,
             ),
             tooltip: state.isDarkMode
-                ? 'Chuyển sang Giao diện Sáng'
-                : 'Chuyển sang Giao diện Tối',
+                ? (isVi ? 'Chuyển sang Giao diện Sáng' : 'Switch to Light Mode')
+                : (isVi ? 'Chuyển sang Giao diện Tối' : 'Switch to Dark Mode'),
             onPressed: () => context.read<AppStateProvider>().toggleTheme(),
           ),
           IconButton(
             icon: const Icon(Icons.add_task, color: AppTheme.accentCyan),
-            tooltip: 'Create training session',
+            tooltip: isVi ? 'Tạo buổi tập mới' : 'Create training session',
             onPressed: () => _showAddSessionDialog(context),
           ),
         ],
@@ -351,9 +387,9 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
         backgroundColor: AppTheme.accentCyan,
         foregroundColor: Colors.black,
         icon: const Icon(Icons.add_task),
-        label: const Text(
-          'Schedule training',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        label: Text(
+          isVi ? 'Lên lịch tập luyện' : 'Schedule training',
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         onPressed: () => _showAddSessionDialog(context),
       ),
@@ -379,19 +415,24 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _tag('FIRST TEAM · OCT – NOV 2026', AppTheme.accentCyan),
+                      _tag(
+                        isVi ? 'ĐỘI 1 · THÁNG 10 – 11/2026' : 'FIRST TEAM · OCT – NOV 2026',
+                        AppTheme.accentCyan,
+                      ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'AXA Training Programme',
-                        style: TextStyle(
+                      Text(
+                        isVi ? 'Chương trình Huấn luyện AXA' : 'AXA Training Programme',
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Manage first-team training, tactical preparation, conditioning and recovery.',
-                        style: TextStyle(
+                      Text(
+                        isVi
+                            ? 'Quản lý huấn luyện đội 1, chuẩn bị chiến thuật, thể lực và phục hồi thể trạng.'
+                            : 'Manage first-team training, tactical preparation, conditioning and recovery.',
+                        style: const TextStyle(
                           fontSize: 13,
                           color: AppTheme.textSecondary,
                           height: 1.5,
@@ -412,9 +453,9 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                               ),
                             ),
                             icon: const Icon(Icons.add_task, size: 18),
-                            label: const Text(
-                              'Schedule for this date',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                            label: Text(
+                              isVi ? 'Lên lịch cho ngày này' : 'Schedule for this date',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             onPressed: () => _showAddSessionDialog(context),
                           ),
@@ -434,7 +475,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                               }
                             },
                             icon: const Icon(Icons.today, size: 18),
-                            label: const Text('Today'),
+                            label: Text(isVi ? 'Hôm nay' : 'Today'),
                           ),
                         ],
                       ),
@@ -454,7 +495,9 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                         SizedBox(
                           width: width,
                           child: _summary(
-                            'Sessions in ${DateFormat('MMMM').format(_selectedDate)}',
+                            isVi
+                                ? 'Buổi tập trong tháng ${_selectedDate.month}'
+                                : 'Sessions in ${DateFormat('MMMM').format(_selectedDate)}',
                             '${monthly.length}',
                             Icons.calendar_month,
                             AppTheme.info,
@@ -463,7 +506,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                         SizedBox(
                           width: width,
                           child: _summary(
-                            'Training days',
+                            isVi ? 'Ngày tập luyện' : 'Training days',
                             '$trainingDays',
                             Icons.event_available,
                             AppTheme.success,
@@ -472,7 +515,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                         SizedBox(
                           width: width,
                           child: _summary(
-                            'Programme minutes',
+                            isVi ? 'Phút giáo án' : 'Programme minutes',
                             '$minutes',
                             Icons.timer_outlined,
                             AppTheme.accentCyan,
@@ -487,9 +530,9 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Filter training calendar',
-                        style: TextStyle(
+                      Text(
+                        isVi ? 'Bộ lọc lịch tập luyện' : 'Filter training calendar',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -501,7 +544,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                         children: _types
                             .map(
                               (type) => ChoiceChip(
-                                label: Text(type),
+                                label: Text(_typeName(type, isVi)),
                                 selected: _type == type,
                                 selectedColor: _color(type),
                                 onSelected: (_) => setState(() => _type = type),
@@ -514,11 +557,13 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                         child: DropdownButton<String?>(
                           value: _playerId,
                           isExpanded: true,
-                          hint: const Text('Filter by participating player'),
+                          hint: Text(
+                            isVi ? 'Lọc theo cầu thủ tham gia' : 'Filter by participating player',
+                          ),
                           items: [
-                            const DropdownMenuItem(
+                            DropdownMenuItem(
                               value: null,
-                              child: Text('All players'),
+                              child: Text(isVi ? 'Tất cả cầu thủ' : 'All players'),
                             ),
                             ...playersByNumber.map(
                               (p) => DropdownMenuItem(
@@ -541,12 +586,14 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                             Icons.filter_alt_off_outlined,
                             size: 18,
                           ),
-                          label: const Text('Reset filters'),
+                          label: Text(isVi ? 'Đặt lại bộ lọc' : 'Reset filters'),
                         ),
                       const SizedBox(height: 10),
-                      const Text(
-                        'Calendar markers show sessions matching your filters.',
-                        style: TextStyle(
+                      Text(
+                        isVi
+                            ? 'Dấu chấm trên lịch thể hiện các buổi tập khớp với bộ lọc của bạn.'
+                            : 'Calendar markers show sessions matching your filters.',
+                        style: const TextStyle(
                           fontSize: 12,
                           color: AppTheme.textSecondary,
                           height: 1.5,
@@ -558,11 +605,12 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                 const SizedBox(height: 20),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final calendar = _calendar(filtered, monthly, today);
+                    final calendar = _calendar(filtered, monthly, today, isVi);
                     final agenda = _agenda(
                       selected,
                       daySessions,
                       state.players,
+                      isVi,
                     );
                     if (constraints.maxWidth < 900) {
                       return Column(
@@ -595,6 +643,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     List<TrainingSession> filtered,
     List<TrainingSession> monthly,
     DateTime today,
+    bool isVi,
   ) {
     final first = DateTime(_selectedDate.year, _selectedDate.month, 1);
     final leading = first.weekday - 1;
@@ -611,7 +660,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
               for (final month in TrainingScheduleData.months)
                 ChoiceChip(
                   key: ValueKey('training-month-$month'),
-                  label: Text(DateFormat('MMMM').format(DateTime(2026, month))),
+                  label: Text(_monthName(month, isVi)),
                   selected: _selectedDate.month == month,
                   onSelected: (_) => _selectMonth(month),
                 ),
@@ -622,7 +671,9 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
             children: [
               Expanded(
                 child: Text(
-                  DateFormat('MMMM yyyy').format(first),
+                  isVi
+                      ? 'Tháng ${first.month}, ${first.year}'
+                      : DateFormat('MMMM yyyy').format(first),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -631,13 +682,13 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
               ),
               IconButton(
                 key: const ValueKey('training-previous-month'),
-                tooltip: 'Previous month',
+                tooltip: isVi ? 'Tháng trước' : 'Previous month',
                 onPressed: first.month == 10 ? null : () => _selectMonth(10),
                 icon: const Icon(Icons.chevron_left),
               ),
               IconButton(
                 key: const ValueKey('training-next-month'),
-                tooltip: 'Next month',
+                tooltip: isVi ? 'Tháng sau' : 'Next month',
                 onPressed: first.month == 11 ? null : () => _selectMonth(11),
                 icon: const Icon(Icons.chevron_right),
               ),
@@ -649,12 +700,14 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
               child: TextButton.icon(
                 onPressed: () => setState(() => _selectedDate = today),
                 icon: const Icon(Icons.today, size: 18),
-                label: const Text('Today'),
+                label: Text(isVi ? 'Hôm nay' : 'Today'),
               ),
             ),
           const SizedBox(height: 8),
           Row(
-            children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+            children: (isVi
+                    ? ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
+                    : ['M', 'T', 'W', 'T', 'F', 'S', 'S'])
                 .map(
                   (day) => Expanded(
                     child: Center(
@@ -695,7 +748,9 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                 label:
                     '${DateFormat('MMMM d, yyyy').format(date)}, $count matching sessions${isRest ? ', rest day' : ''}',
                 child: Tooltip(
-                  message: isRest ? 'Rest day' : '$count matching sessions',
+                  message: isRest
+                      ? (isVi ? 'Ngày nghỉ hồi phục' : 'Rest day')
+                      : (isVi ? '$count buổi tập khớp' : '$count matching sessions'),
                   child: Material(
                     color: isSelected
                         ? AppTheme.accentBlue
@@ -753,14 +808,18 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
             },
           ),
           const SizedBox(height: 14),
-          const Text(
-            'Number = matching sessions   ·   – = rest day',
-            style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+          Text(
+            isVi
+                ? 'Số = số buổi tập khớp bộ lọc   ·   – = ngày nghỉ hồi phục'
+                : 'Number = matching sessions   ·   – = rest day',
+            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Available dates: 1 October – 30 November 2026',
-            style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+          Text(
+            isVi
+                ? 'Khoảng thời gian: 1/10 – 30/11/2026'
+                : 'Available dates: 1 October – 30 November 2026',
+            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
           ),
         ],
       ),
@@ -771,23 +830,28 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     List<TrainingSession> sessions,
     List<TrainingSession> unfiltered,
     List<Player> players,
+    bool isVi,
   ) => _surface(
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _tag(
-          DateFormat('EEEE').format(_selectedDate).toUpperCase(),
+          _weekdayName(_selectedDate.weekday, isVi),
           AppTheme.accentCyan,
         ),
         const SizedBox(height: 10),
         Text(
-          DateFormat('d MMMM yyyy').format(_selectedDate),
+          isVi
+              ? '${_selectedDate.day} ${_monthName(_selectedDate.month, true)} ${_selectedDate.year}'
+              : DateFormat('d MMMM yyyy').format(_selectedDate),
           key: const ValueKey('training-selected-date'),
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
-          '${sessions.length} sessions${_type != 'All' || _playerId != null ? ' matching filters' : ' planned'}',
+          isVi
+              ? '${sessions.length} buổi tập ${_type != 'All' || _playerId != null ? 'khớp bộ lọc' : 'theo kế hoạch'}'
+              : '${sessions.length} sessions${_type != 'All' || _playerId != null ? ' matching filters' : ' planned'}',
           style: const TextStyle(color: AppTheme.textSecondary),
         ),
         const SizedBox(height: 18),
@@ -799,30 +863,36 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            unfiltered.isEmpty ? 'Rest & recharge' : 'No matching sessions',
+            unfiltered.isEmpty
+                ? (isVi ? 'Nghỉ ngơi & Hồi phục' : 'Rest & recharge')
+                : (isVi ? 'Không có buổi tập phù hợp' : 'No matching sessions'),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
             unfiltered.isEmpty
-                ? 'No team training is planned for this date. Take time to recover before the next training day.'
-                : 'Try another training type or player to see more sessions.',
+                ? (isVi
+                    ? 'Không có lịch tập nào cho ngày này. Hãy dành thời gian hồi phục thể lực trước buổi tập kế tiếp.'
+                    : 'No team training is planned for this date. Take time to recover before the next training day.')
+                : (isVi
+                    ? 'Hãy thử đổi bộ lọc bài tập hoặc chọn cầu thủ khác để xem thêm buổi tập.'
+                    : 'Try another training type or player to see more sessions.'),
             style: const TextStyle(color: AppTheme.textSecondary, height: 1.5),
           ),
           const SizedBox(height: 16),
           if (unfiltered.isNotEmpty)
             OutlinedButton(
               onPressed: _resetFilters,
-              child: const Text('Clear filters'),
+              child: Text(isVi ? 'Xóa bộ lọc' : 'Clear filters'),
             ),
           if (unfiltered.isEmpty)
             OutlinedButton.icon(
               onPressed: _nextTrainingDay,
               icon: const Icon(Icons.arrow_forward, size: 18),
-              label: const Text('Find a training day'),
+              label: Text(isVi ? 'Tìm ngày có lịch tập' : 'Find a training day'),
             ),
         ] else
-          ...sessions.map((session) => _sessionCard(session, players)),
+          ...sessions.map((session) => _sessionCard(session, players, isVi)),
       ],
     ),
   );
@@ -846,7 +916,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
     setState(() => _selectedDate = next);
   }
 
-  Widget _sessionCard(TrainingSession session, List<Player> players) {
+  Widget _sessionCard(TrainingSession session, List<Player> players, bool isVi) {
     final color = _color(session.type);
     final participants = _participants(session, players);
     final isCompleted = session.status == 'Completed';
@@ -877,9 +947,11 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _tag(session.type, color),
+                    _tag(_typeName(session.type, isVi), color),
                     _tag(
-                      isCompleted ? 'Completed' : 'Planned',
+                      isCompleted
+                          ? (isVi ? 'Đã hoàn thành' : 'Completed')
+                          : (isVi ? 'Đã lên lịch' : 'Planned'),
                       isCompleted ? AppTheme.success : AppTheme.textSecondary,
                     ),
                   ],
@@ -891,14 +963,18 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                   size: 18,
                   color: AppTheme.danger,
                 ),
-                tooltip: 'Delete session',
+                tooltip: isVi ? 'Xóa buổi tập' : 'Delete session',
                 onPressed: () {
                   context.read<AppStateProvider>().deleteTrainingSession(
                     session.id,
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Session removed from the schedule!'),
+                    SnackBar(
+                      content: Text(
+                        isVi
+                            ? 'Đã xóa buổi tập khỏi kế hoạch!'
+                            : 'Session removed from the schedule!',
+                      ),
                     ),
                   );
                 },
@@ -907,7 +983,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            '${session.startTime} – ${session.endTime}  ·  ${_minutes(session.endTime) - _minutes(session.startTime)} min',
+            '${session.startTime} – ${session.endTime}  ·  ${_minutes(session.endTime) - _minutes(session.startTime)} ${isVi ? 'phút' : 'min'}',
             style: TextStyle(
               color: color,
               fontSize: 13,
@@ -924,7 +1000,9 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
           _info(Icons.person_outline, session.coach),
           _info(
             Icons.groups_outlined,
-            '${session.playerIds.isEmpty ? 'Full squad' : 'Selected group'} · ${participants.length} players',
+            isVi
+                ? '${session.playerIds.isEmpty ? 'Toàn đội 1' : 'Nhóm chỉ định'} · ${participants.length} cầu thủ'
+                : '${session.playerIds.isEmpty ? 'Full squad' : 'Selected group'} · ${participants.length} players',
           ),
           const SizedBox(height: 8),
           Text(
@@ -941,9 +1019,11 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
             runSpacing: 8,
             children: [
               OutlinedButton.icon(
-                onPressed: () => _showSession(session, participants),
+                onPressed: () => _showSession(session, participants, isVi),
                 icon: const Icon(Icons.open_in_new, size: 16),
-                label: const Text('View session & players'),
+                label: Text(
+                  isVi ? 'Xem chi tiết & danh sách' : 'View session & players',
+                ),
               ),
               if (!isCompleted)
                 ElevatedButton.icon(
@@ -956,9 +1036,12 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                     ),
                   ),
                   icon: const Icon(Icons.check_circle_outline, size: 16),
-                  label: const Text(
-                    'Complete session',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  label: Text(
+                    isVi ? 'Hoàn thành buổi tập' : 'Complete session',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   onPressed: () async {
                     await context
@@ -966,9 +1049,11 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                         .completeTrainingSession(session.id);
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text(
-                          'Session completed and participant fitness updated!',
+                          isVi
+                              ? 'Đã hoàn thành buổi tập & cập nhật thể lực cầu thủ!'
+                              : 'Session completed and participant fitness updated!',
                         ),
                       ),
                     );
@@ -989,7 +1074,11 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
           )
           .toList();
 
-  void _showSession(TrainingSession session, List<Player> participants) =>
+  void _showSession(
+    TrainingSession session,
+    List<Player> participants,
+    bool isVi,
+  ) =>
       showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
@@ -1001,7 +1090,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _tag(session.type, _color(session.type)),
+                _tag(_typeName(session.type, isVi), _color(session.type)),
                 const SizedBox(height: 16),
                 _info(
                   Icons.calendar_today_outlined,
@@ -1013,7 +1102,9 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                 Text(session.description, style: const TextStyle(height: 1.6)),
                 const Divider(height: 30, color: AppTheme.borderSubtle),
                 Text(
-                  'Participants (${participants.length})',
+                  isVi
+                      ? 'Danh sách tham gia (${participants.length})'
+                      : 'Participants (${participants.length})',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1021,7 +1112,11 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                 ),
                 const SizedBox(height: 8),
                 if (participants.isEmpty)
-                  const Text('No players available for this group.'),
+                  Text(
+                    isVi
+                        ? 'Chưa có cầu thủ nào trong nhóm này.'
+                        : 'No players available for this group.',
+                  ),
                 ...participants.map(
                   (p) => ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -1036,8 +1131,17 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
                         ),
                       ),
                     ),
-                    title: Text(p.name),
-                    subtitle: Text(p.positionName),
+                    title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(p.positionName, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 12, color: AppTheme.textMuted),
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => PlayerDetailScreen(player: p),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -1046,7 +1150,7 @@ class _TrainingScheduleScreenState extends State<TrainingScheduleScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Close'),
+              child: Text(isVi ? 'Đóng' : 'Close'),
             ),
           ],
         ),

@@ -11,6 +11,7 @@ import '../../models/sponsorship.dart';
 import '../../providers/app_state_provider.dart';
 import '../../services/api_service.dart';
 import 'commercial_api_notice.dart';
+import '../../widgets/language_toggle_button.dart';
 
 class SponsorshipManagementScreen extends StatelessWidget {
   const SponsorshipManagementScreen({super.key});
@@ -412,11 +413,17 @@ class SponsorshipManagementScreen extends StatelessWidget {
     final provider = context.watch<AppStateProvider>();
     final sponsorships = provider.sponsorships;
     return Scaffold(
-      appBar: AppBar(title: const Text('Sponsorship management')),
+      appBar: AppBar(
+        title: Text(provider.isVietnamese ? 'Quản lý Nhà tài trợ' : 'Sponsorship Management'),
+        actions: const [
+          LanguageToggleButton(),
+          SizedBox(width: 8),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _editSponsorship(context),
         icon: const Icon(Icons.add),
-        label: const Text('Thêm nhà tài trợ'),
+        label: Text(provider.isVietnamese ? 'Thêm nhà tài trợ' : 'Add Sponsor'),
       ),
       body: Column(
         children: [
