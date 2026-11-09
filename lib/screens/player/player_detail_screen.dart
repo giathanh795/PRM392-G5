@@ -612,8 +612,11 @@ class PlayerDetailScreen extends StatelessWidget {
                             imageUrl: currentPlayer.avatarUrl,
                             radius: 46,
                             initials: currentPlayer.name.isNotEmpty ? currentPlayer.name[0] : '?',
-                            borderColor: AppTheme.accentCyan,
-                            borderWidth: 2,
+                            borderColor: currentPlayer.isInjured
+                                ? AppTheme.danger
+                                : AppTheme.accentCyan,
+                            borderWidth: currentPlayer.isInjured ? 3 : 2,
+                            isInjured: currentPlayer.isInjured,
                           ),
                         ),
                         InkWell(

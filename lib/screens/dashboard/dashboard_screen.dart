@@ -1395,9 +1395,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 color: AppTheme.bgCard,
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: AppTheme.lfcYellow.withValues(
-                                    alpha: 0.4,
-                                  ),
+                                  color: topPlayer.isInjured
+                                      ? AppTheme.danger.withValues(alpha: 0.7)
+                                      : AppTheme.lfcYellow.withValues(
+                                          alpha: 0.4,
+                                        ),
                                 ),
                               ),
                               child: Row(
@@ -1406,8 +1408,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     imageUrl: topPlayer.avatarUrl,
                                     radius: 32,
                                     initials: topPlayer.name[0],
-                                    borderColor: AppTheme.lfcYellow,
+                                    borderColor: topPlayer.isInjured
+                                        ? AppTheme.danger
+                                        : AppTheme.lfcYellow,
                                     borderWidth: 2,
+                                    isInjured: topPlayer.isInjured,
                                   ),
                                   const SizedBox(width: 14),
                                   Expanded(
@@ -1667,6 +1672,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           initials: p.name.isNotEmpty
                                               ? p.name[0]
                                               : null,
+                                          isInjured: p.isInjured,
                                         ),
                                         const SizedBox(height: 8),
                                         Text(

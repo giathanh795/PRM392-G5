@@ -1,44 +1,53 @@
-[
-  {
-    "id": "c1",
-    "name": "Adidas Liverpool 2026/27 New Era Global Launch",
-    "sponsorName": "Adidas",
-    "startDate": "2026-07-01",
-    "endDate": "2026-10-31",
-    "status": "Active",
-    "reach": "28.4M",
-    "engagement": "15.6%",
-    "description": "Celebrating the new Liverpool FC era with Florian Wirtz, Alexander Isak and Bradley Barcola.",
-    "category": "Footwear",
-    "budgetMillions": 1.5,
-    "featuredPlayerNames": ["Florian Wirtz", "Alexander Isak", "Bradley Barcola", "Virgil van Dijk"]
-  },
-  {
-    "id": "c2",
-    "name": "Adidas Predator & F50 Precision Series 2026",
-    "sponsorName": "Adidas",
-    "startDate": "2026-09-01",
-    "endDate": "2026-12-15",
-    "status": "Active",
-    "reach": "16.2M",
-    "engagement": "11.8%",
-    "description": "Showcasing high-precision boots with elite Liverpool forwards & playmakers.",
-    "category": "Footwear",
-    "budgetMillions": 1.5,
-    "featuredPlayerNames": ["Florian Wirtz", "Alexander Isak", "Bradley Barcola"]
-  },
-  {
-    "id": "c3",
-    "name": "AXA x Adidas High-Performance Training Wear 26/27",
-    "sponsorName": "Adidas",
-    "startDate": "2026-08-01",
-    "endDate": "2026-11-30",
-    "status": "Active",
-    "reach": "9.8M",
-    "engagement": "8.9%",
-    "description": "Behind-the-scenes video features on Liverpool player nutrition & high-tech training wear.",
-    "category": "Footwear",
-    "budgetMillions": 1.5,
-    "featuredPlayerNames": ["Alexis Mac Allister", "Dominik Szoboszlai", "Giorgi Mamardashvili"]
-  }
-]
+[ {
+  "id" : "camp_1794218514718894",
+  "name" : "Commercial",
+  "sponsorName" : "Adidias",
+  "startDate" : "2026-11-09",
+  "endDate" : "2026-11-14",
+  "status" : "Active",
+  "reach" : "",
+  "engagement" : "",
+  "description" : "Ok",
+  "category" : "Footwear",
+  "budgetMillions" : 1.5,
+  "featuredPlayerNames" : [ "Joe Gomez", "Conor Bradley", "Kostas Tsimikas", "Florian Wirtz" ]
+}, {
+  "id" : "c1",
+  "name" : "Adidas Liverpool 2026/27 New Era Global Launch",
+  "sponsorName" : "Adidas",
+  "startDate" : "2026-07-01",
+  "endDate" : "2026-10-31",
+  "status" : "Active",
+  "reach" : "28.4M",
+  "engagement" : "15.6%",
+  "description" : "Celebrating the new Liverpool FC era with Florian Wirtz, Alexander Isak and Bradley Barcola.",
+  "category" : "Footwear",
+  "budgetMillions" : 1.5,
+  "featuredPlayerNames" : [ "Florian Wirtz", "Alexander Isak", "Bradley Barcola", "Virgil van Dijk" ]
+}, {
+  "id" : "c2",
+  "name" : "Adidas Predator & F50 Precision Series 2026",
+  "sponsorName" : "Adidas",
+  "startDate" : "2026-09-01",
+  "endDate" : "2026-12-15",
+  "status" : "Active",
+  "reach" : "16.2M",
+  "engagement" : "11.8%",
+  "description" : "Showcasing high-precision boots with elite Liverpool forwards & playmakers.",
+  "category" : "Footwear",
+  "budgetMillions" : 1.5,
+  "featuredPlayerNames" : [ "Florian Wirtz", "Alexander Isak", "Bradley Barcola" ]
+}, {
+  "id" : "c3",
+  "name" : "AXA x Adidas High-Performance Training Wear 26/27",
+  "sponsorName" : "Adidas",
+  "startDate" : "2026-08-01",
+  "endDate" : "2026-11-30",
+  "status" : "Active",
+  "reach" : "9.8M",
+  "engagement" : "8.9%",
+  "description" : "Behind-the-scenes video features on Liverpool player nutrition & high-tech training wear.",
+  "category" : "Footwear",
+  "budgetMillions" : 1.5,
+  "featuredPlayerNames" : [ "Alexis Mac Allister", "Dominik Szoboszlai", "Giorgi Mamardashvili" ]
+} ]

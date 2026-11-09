@@ -80,6 +80,7 @@ class PlayerCardItem extends StatelessWidget {
                       imageUrl: player.avatarUrl,
                       radius: 28,
                       initials: player.name.isNotEmpty ? player.name[0] : null,
+                      isInjured: player.isInjured,
                     ),
                   ),
                   Container(

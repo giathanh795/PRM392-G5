@@ -95,6 +95,7 @@ Future<bool?> showDeletePlayerConfirmationDialog(BuildContext context, Player pl
                     imageUrl: player.avatarUrl,
                     radius: 24,
                     initials: player.name.isNotEmpty ? player.name[0] : '?',
+                    isInjured: player.isInjured,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

@@ -926,6 +926,7 @@ class _DashboardOverviewState extends State<DashboardOverview> {
             imageUrl: player.avatarUrl,
             radius: 20,
             initials: player.name.isEmpty ? '?' : player.name[0],
+            isInjured: player.isInjured,
           ),
           const SizedBox(width: 10),
           Expanded(

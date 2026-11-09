@@ -1,4 +1,19 @@
 [ {
+  "id" : "sponsor_1794217915547090",
+  "name" : "Nike",
+  "logo" : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbqRntiGY0wGmmF51mv1uIo6W508aeXXpcvn2ehP8P30M6CNiQwVLvun9P&s=10",
+  "description" : "Nike",
+  "contractFileName" : "",
+  "contractStorageKey" : null,
+  "value" : 9.0E9,
+  "startDate" : "2026-11-09",
+  "endDate" : "2035-11-09",
+  "status" : "Active",
+  "phone" : "1234567890",
+  "email" : "ok@gmail.com",
+  "contactPerson" : "ok",
+  "removeContract" : false
+}, {
   "id" : "sponsor_1793862390772880",
   "name" : "Nike",
   "logo" : "",

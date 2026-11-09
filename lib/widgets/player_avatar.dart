@@ -11,6 +11,7 @@ class PlayerAvatar extends StatelessWidget {
   final String? initials;
   final Color? borderColor;
   final double borderWidth;
+  final bool isInjured;
 
   const PlayerAvatar({
     super.key,
@@ -19,6 +20,7 @@ class PlayerAvatar extends StatelessWidget {
     this.initials,
     this.borderColor,
     this.borderWidth = 0,
+    this.isInjured = false,
   });
 
   @override
@@ -130,18 +132,62 @@ class PlayerAvatar extends StatelessWidget {
       imageWidget = placeholder;
     }
 
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: borderColor != null
-            ? Border.all(color: borderColor!, width: borderWidth)
-            : null,
-      ),
-      child: ClipOval(
-        child: imageWidget,
-      ),
+    final effectiveBorderColor = isInjured ? AppTheme.danger : borderColor;
+    final effectiveBorderWidth = isInjured
+        ? (borderWidth > 0 ? (borderWidth < 2.5 ? 2.5 : borderWidth) : 2.5)
+        : borderWidth;
+
+    return Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: effectiveBorderColor != null
+                ? Border.all(color: effectiveBorderColor, width: effectiveBorderWidth)
+                : null,
+            boxShadow: isInjured
+                ? [
+                    BoxShadow(
+                      color: AppTheme.danger.withValues(alpha: 0.65),
+                      blurRadius: 9,
+                      spreadRadius: 1.5,
+                    ),
+                  ]
+                : null,
+          ),
+          child: ClipOval(
+            child: imageWidget,
+          ),
+        ),
+        if (isInjured)
+          Positioned(
+            top: -1,
+            right: -1,
+            child: Container(
+              padding: const EdgeInsets.all(2.5),
+              decoration: BoxDecoration(
+                color: AppTheme.danger,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.medical_services,
+                color: Colors.white,
+                size: 9,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

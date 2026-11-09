@@ -91,6 +91,7 @@ class _PlayerComparisonScreenState extends State<PlayerComparisonScreen> {
                       imageUrl: p.avatarUrl,
                       radius: 20,
                       initials: p.name.isNotEmpty ? p.name[0] : '?',
+                      isInjured: p.isInjured,
                     ),
                     title: Text(
                       '#${p.number} ${p.name}',
@@ -233,8 +234,9 @@ class _PlayerComparisonScreenState extends State<PlayerComparisonScreen> {
                   imageUrl: player.avatarUrl,
                   radius: 32,
                   initials: player.name.isNotEmpty ? player.name[0] : '?',
-                  borderColor: color,
-                  borderWidth: 2,
+                  borderColor: player.isInjured ? AppTheme.danger : color,
+                  borderWidth: player.isInjured ? 2.5 : 2,
+                  isInjured: player.isInjured,
                 ),
                 const SizedBox(height: 8),
                 Text(
