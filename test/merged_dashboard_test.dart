@@ -22,6 +22,7 @@ void main() {
           await Future<void>.delayed(const Duration(milliseconds: 1));
         }
       });
+      state.setLanguage('en');
       for (var i = 0; i < state.players.length; i++) {
         state.players[i] = state.players[i].copyWith(avatarUrl: '');
       }

@@ -52,9 +52,55 @@ class _DashboardOverviewState extends State<DashboardOverview> {
     if (selected != null && mounted) setState(() => _date = selected);
   }
 
+  String _posLabel(PlayerPosition pos, bool isVi) {
+    if (!isVi) {
+      return switch (pos) {
+        PlayerPosition.forward => 'Forwards',
+        PlayerPosition.midfielder => 'Midfielders',
+        PlayerPosition.defender => 'Defenders',
+        PlayerPosition.goalkeeper => 'Goalkeepers',
+      };
+    }
+    return switch (pos) {
+      PlayerPosition.forward => 'Tiền đạo',
+      PlayerPosition.midfielder => 'Tiền vệ',
+      PlayerPosition.defender => 'Hậu vệ',
+      PlayerPosition.goalkeeper => 'Thủ môn',
+    };
+  }
+
+  String _posSingleVi(PlayerPosition pos, bool isVi) {
+    if (!isVi) {
+      return switch (pos) {
+        PlayerPosition.forward => 'Forward',
+        PlayerPosition.midfielder => 'Midfielder',
+        PlayerPosition.defender => 'Defender',
+        PlayerPosition.goalkeeper => 'Goalkeeper',
+      };
+    }
+    return switch (pos) {
+      PlayerPosition.forward => 'Tiền đạo',
+      PlayerPosition.midfielder => 'Tiền vệ',
+      PlayerPosition.defender => 'Hậu vệ',
+      PlayerPosition.goalkeeper => 'Thủ môn',
+    };
+  }
+
+  String _sessionTypeLabel(String type, bool isVi) {
+    if (!isVi) return type;
+    return switch (type) {
+      'Gym' => 'Thể lực',
+      'Tactical' => 'Chiến thuật',
+      'Recovery' => 'Hồi phục',
+      'Match Prep' => 'Chuẩn bị trận',
+      _ => type,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
+    final isVi = state.isVietnamese;
     final players = state.players;
     final active = players.where((p) => p.status == 'Active').length;
     final injured = players.where((p) => p.isInjured).length;
@@ -88,7 +134,7 @@ class _DashboardOverviewState extends State<DashboardOverview> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _hero(activeCampaigns),
+              _hero(activeCampaigns, isVi),
               const SizedBox(height: 20),
               Wrap(
                 spacing: 8,
@@ -97,29 +143,31 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                   FilledButton.icon(
                     onPressed: () => _openSquad(),
                     icon: const Icon(Icons.groups_outlined),
-                    label: const Text('Manage squad'),
+                    label: Text(isVi ? 'Quản lý đội hình' : 'Manage squad'),
                   ),
                   OutlinedButton.icon(
                     onPressed: () => widget.onNavigateTab(2),
                     icon: const Icon(Icons.calendar_month_outlined),
-                    label: const Text('Training schedule'),
+                    label: Text(isVi ? 'Lịch trình huấn luyện' : 'Training schedule'),
                   ),
                   OutlinedButton.icon(
                     onPressed: () => widget.onNavigateTab(3),
                     icon: const Icon(Icons.trending_up),
-                    label: const Text('Commercial report'),
+                    label: Text(isVi ? 'Báo cáo thương mại' : 'Commercial report'),
                   ),
                   OutlinedButton.icon(
                     onPressed: widget.onManageData,
                     icon: const Icon(Icons.backup_outlined),
-                    label: const Text('Back up data'),
+                    label: Text(isVi ? 'Sao lưu dữ liệu' : 'Back up data'),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
               _heading(
-                'Club overview',
-                'Based on current squad and training records',
+                isVi ? 'Tổng quan CLB' : 'Club overview',
+                isVi
+                    ? 'Dựa trên dữ liệu đội hình và hồ sơ huấn luyện hiện tại'
+                    : 'Based on current squad and training records',
               ),
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -136,25 +184,29 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                     children: [
                       _metric(
                         width,
-                        'Total players',
+                        isVi ? 'Tổng số cầu thủ' : 'Total players',
                         '${players.length}',
-                        '${players.map((p) => p.nationality).toSet().length} nationalities',
+                        isVi
+                            ? '${players.map((p) => p.nationality).toSet().length} quốc tịch'
+                            : '${players.map((p) => p.nationality).toSet().length} nationalities',
                         Icons.groups,
                         AppTheme.info,
                         () => _openSquad(),
                       ),
                       _metric(
                         width,
-                        'Match ready',
+                        isVi ? 'Sẵn sàng thi đấu' : 'Match ready',
                         '$active / ${players.length}',
-                        '${(readiness * 100).toStringAsFixed(0)}% of squad · $injured injured',
+                        isVi
+                            ? '${(readiness * 100).toStringAsFixed(0)}% đội hình · $injured chấn thương'
+                            : '${(readiness * 100).toStringAsFixed(0)}% of squad · $injured injured',
                         Icons.health_and_safety_outlined,
                         AppTheme.success,
-                        () => _showStatus(players),
+                        () => _showStatus(players, isVi),
                       ),
                       _metric(
                         width,
-                        'Sessions on selected date',
+                        isVi ? 'Buổi tập ngày đã chọn' : 'Sessions on selected date',
                         '${sessions.length}',
                         DateFormat('dd/MM/yyyy').format(_date),
                         Icons.sports_soccer,
@@ -163,11 +215,15 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                       ),
                       _metric(
                         width,
-                        'Squad market value',
+                        isVi ? 'Giá trị chuyển nhượng' : 'Squad market value',
                         _money(state.totalMarketValue),
                         change == null
-                            ? 'No previous valuation available'
-                            : '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}% vs. previous valuation',
+                            ? (isVi
+                                ? 'Chưa có định giá trước'
+                                : 'No previous valuation available')
+                            : (isVi
+                                ? '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}% so với kỳ trước'
+                                : '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}% vs. previous valuation'),
                         Icons.account_balance_wallet_outlined,
                         AppTheme.lfcYellow,
                         () => widget.onNavigateTab(3),
@@ -179,9 +235,12 @@ class _DashboardOverviewState extends State<DashboardOverview> {
               const SizedBox(height: 20),
               _panelGrid([
                 _panel(
-                  'Training schedule',
-                  'Select a date to explore the training plan',
+                  isVi ? 'Lịch trình huấn luyện' : 'Training schedule',
+                  isVi
+                      ? 'Chọn ngày để xem chi tiết giáo án tập luyện'
+                      : 'Select a date to explore the training plan',
                   Icons.event_note,
+                  'Training schedule',
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -197,7 +256,7 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                           ),
                           TextButton(
                             onPressed: () => setState(() => _date = today),
-                            child: const Text('Today'),
+                            child: Text(isVi ? 'Hôm nay' : 'Today'),
                           ),
                           if (state.trainings.isNotEmpty)
                             TextButton(
@@ -212,7 +271,9 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                                   setState(() => _date = dates.first);
                                 }
                               },
-                              child: const Text('First scheduled date'),
+                              child: Text(
+                                isVi ? 'Ngày tập đầu tiên' : 'First scheduled date',
+                              ),
                             ),
                         ],
                       ),
@@ -220,24 +281,35 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                       if (sessions.isEmpty)
                         _empty(
                           Icons.event_available,
-                          'No sessions scheduled for this date.',
-                          'Choose another date or view the first scheduled date.',
+                          isVi
+                              ? 'Không có buổi tập nào trong ngày này.'
+                              : 'No sessions scheduled for this date.',
+                          isVi
+                              ? 'Hãy chọn ngày khác hoặc xem ngày tập đầu tiên.'
+                              : 'Choose another date or view the first scheduled date.',
                         )
                       else
-                        ...sessions.map(_session),
+                        ...sessions.map((s) => _session(s, isVi)),
                       const SizedBox(height: 8),
                       TextButton.icon(
                         onPressed: () => widget.onNavigateTab(2),
                         icon: const Icon(Icons.arrow_forward, size: 18),
-                        label: const Text('Open training calendar'),
+                        label: Text(
+                          isVi
+                              ? 'Mở lịch huấn luyện toàn diện'
+                              : 'Open training calendar',
+                        ),
                       ),
                     ],
                   ),
                 ),
                 _panel(
-                  'Squad availability',
-                  'Player readiness and depth by position',
+                  isVi ? 'Tình trạng sẵn sàng đội hình' : 'Squad availability',
+                  isVi
+                      ? 'Mức độ sẵn sàng và chiều sâu từng vị trí'
+                      : 'Player readiness and depth by position',
                   Icons.monitor_heart_outlined,
+                  'Squad availability',
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -252,10 +324,12 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'of players have Active status',
-                              style: TextStyle(color: AppTheme.textSecondary),
+                              isVi
+                                  ? 'cầu thủ ở trạng thái Sẵn sàng'
+                                  : 'of players have Active status',
+                              style: const TextStyle(color: AppTheme.textSecondary),
                             ),
                           ),
                         ],
@@ -273,9 +347,18 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          _badge('$active ready', AppTheme.success),
-                          _badge('$injured injured', AppTheme.danger),
-                          _badge('$others other status', AppTheme.warning),
+                          _badge(
+                            isVi ? '$active sẵn sàng' : '$active ready',
+                            AppTheme.success,
+                          ),
+                          _badge(
+                            isVi ? '$injured chấn thương' : '$injured injured',
+                            AppTheme.danger,
+                          ),
+                          _badge(
+                            isVi ? '$others trạng thái khác' : '$others other status',
+                            AppTheme.warning,
+                          ),
                         ],
                       ),
                       const Divider(height: 32, color: AppTheme.borderSubtle),
@@ -283,12 +366,6 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                         final count = players
                             .where((p) => p.position == position)
                             .length;
-                        final labels = [
-                          'Forwards',
-                          'Midfielders',
-                          'Defenders',
-                          'Goalkeepers',
-                        ];
                         return InkWell(
                           onTap: () => _openSquad(position),
                           borderRadius: BorderRadius.circular(8),
@@ -299,7 +376,7 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                                 SizedBox(
                                   width: 104,
                                   child: Text(
-                                    labels[position.index],
+                                    _posLabel(position, isVi),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -329,23 +406,34 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                         );
                       }),
                       TextButton(
-                        onPressed: () => _showStatus(players),
-                        child: const Text('View availability details'),
+                        onPressed: () => _showStatus(players, isVi),
+                        child: Text(
+                          isVi
+                              ? 'Xem chi tiết tình trạng cầu thủ'
+                              : 'View availability details',
+                        ),
                       ),
                     ],
                   ),
                 ),
                 _panel(
-                  'Most valuable players',
-                  'Top 5 by current market value · EUR millions',
+                  isVi ? 'Cầu thủ giá trị cao nhất' : 'Most valuable players',
+                  isVi
+                      ? 'Top 5 theo giá trị thị trường · Triệu EUR'
+                      : 'Top 5 by current market value · EUR millions',
                   Icons.workspace_premium_outlined,
+                  'Most valuable players',
                   Column(
                     children: [
                       if (ranked.isEmpty)
                         _empty(
                           Icons.person_search,
-                          'No players available.',
-                          'Add player data to view the rankings.',
+                          isVi
+                              ? 'Chưa có cầu thủ nào.'
+                              : 'No players available.',
+                          isVi
+                              ? 'Thêm dữ liệu cầu thủ để xem xếp hạng.'
+                              : 'Add player data to view the rankings.',
                         ),
                       ...ranked
                           .take(5)
@@ -356,6 +444,7 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                               '${entry.$1 + 1}',
                               _money(entry.$2.currentMarketValue),
                               '${entry.$2.marketValueChangePercent >= 0 ? '+' : ''}${entry.$2.marketValueChangePercent.toStringAsFixed(1)}%',
+                              isVi,
                             ),
                           ),
                       Align(
@@ -363,29 +452,40 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                         child: TextButton.icon(
                           onPressed: () => widget.onNavigateTab(3),
                           icon: const Icon(Icons.arrow_forward, size: 18),
-                          label: const Text('View all valuations'),
+                          label: Text(
+                            isVi ? 'Xem tất cả định giá' : 'View all valuations',
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
                 _panel(
-                  'Contract watch',
-                  'Expired or expiring within the next 12 months',
+                  isVi ? 'Theo dõi thời hạn hợp đồng' : 'Contract watch',
+                  isVi
+                      ? 'Đã hết hạn hoặc hết hạn trong 12 tháng tới'
+                      : 'Expired or expiring within the next 12 months',
                   Icons.description_outlined,
+                  'Contract watch',
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _badge(
-                        '${expiring.length} contracts to review',
+                        isVi
+                            ? '${expiring.length} hợp đồng cần xem xét'
+                            : '${expiring.length} contracts to review',
                         expiring.isEmpty ? AppTheme.success : AppTheme.warning,
                       ),
                       const SizedBox(height: 12),
                       if (expiring.isEmpty)
                         _empty(
                           Icons.verified_outlined,
-                          'No contracts approaching expiry.',
-                          'All dated contracts are outside the review window.',
+                          isVi
+                              ? 'Không có hợp đồng nào sắp hết hạn.'
+                              : 'No contracts approaching expiry.',
+                          isVi
+                              ? 'Tất cả hợp đồng đều còn thời hạn dài.'
+                              : 'All dated contracts are outside the review window.',
                         )
                       else
                         ...expiring.take(3).map((p) {
@@ -394,12 +494,19 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                             p,
                             '#${p.number}',
                             DateFormat('dd/MM/yyyy').format(end),
-                            end.isBefore(today) ? 'Expired' : 'Expiring soon',
+                            end.isBefore(today)
+                                ? (isVi ? 'Đã hết hạn' : 'Expired')
+                                : (isVi ? 'Sắp hết hạn' : 'Expiring soon'),
+                            isVi,
                           );
                         }),
                       TextButton(
-                        onPressed: () => _showContracts(expiring),
-                        child: const Text('View contract list'),
+                        onPressed: () => _showContracts(expiring, isVi),
+                        child: Text(
+                          isVi
+                              ? 'Xem danh sách hợp đồng'
+                              : 'View contract list',
+                        ),
                       ),
                     ],
                   ),
@@ -407,17 +514,24 @@ class _DashboardOverviewState extends State<DashboardOverview> {
               ]),
               const SizedBox(height: 20),
               _panel(
-                'Partners & campaigns',
-                '$activeCampaigns campaigns with Active status',
+                isVi ? 'Đối tác & Chiến dịch' : 'Partners & campaigns',
+                isVi
+                    ? '$activeCampaigns chiến dịch đang hoạt động'
+                    : '$activeCampaigns campaigns with Active status',
                 Icons.handshake_outlined,
+                'Partners & campaigns',
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (state.campaigns.isEmpty)
                       _empty(
                         Icons.campaign_outlined,
-                        'No campaigns available.',
-                        'Campaigns will appear here when data is available.',
+                        isVi
+                            ? 'Chưa có chiến dịch nào.'
+                            : 'No campaigns available.',
+                        isVi
+                            ? 'Chiến dịch sẽ hiển thị tại đây khi có dữ liệu.'
+                            : 'Campaigns will appear here when data is available.',
                       ),
                     ...state.campaigns.map(
                       (campaign) => Container(
@@ -440,7 +554,11 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                                   AppTheme.lfcYellow,
                                 ),
                                 _badge(
-                                  campaign.status,
+                                  isVi
+                                      ? (campaign.status == 'Active'
+                                          ? 'Đang chạy'
+                                          : campaign.status)
+                                      : campaign.status,
                                   campaign.status == 'Active'
                                       ? AppTheme.success
                                       : AppTheme.info,
@@ -469,13 +587,17 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                               runSpacing: 8,
                               children: [
                                 Text(
-                                  'Reach: ${campaign.reach}',
+                                  isVi
+                                      ? 'Tiếp cận: ${campaign.reach}'
+                                      : 'Reach: ${campaign.reach}',
                                   style: const TextStyle(
                                     color: AppTheme.accentCyan,
                                   ),
                                 ),
                                 Text(
-                                  'Engagement: ${campaign.engagement}',
+                                  isVi
+                                      ? 'Tương tác: ${campaign.engagement}'
+                                      : 'Engagement: ${campaign.engagement}',
                                   style: const TextStyle(
                                     color: AppTheme.lfcYellow,
                                   ),
@@ -490,7 +612,9 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Players: ${campaign.featuredPlayerNames.join(', ')}',
+                              isVi
+                                  ? 'Cầu thủ tham gia: ${campaign.featuredPlayerNames.join(', ')}'
+                                  : 'Players: ${campaign.featuredPlayerNames.join(', ')}',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.textSecondary,
@@ -503,15 +627,21 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                     TextButton.icon(
                       onPressed: () => widget.onNavigateTab(3),
                       icon: const Icon(Icons.arrow_forward, size: 18),
-                      label: const Text('Manage commercial & sponsorship'),
+                      label: Text(
+                        isVi
+                            ? 'Quản lý thương mại & tài trợ'
+                            : 'Manage commercial & sponsorship',
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 18),
-              const Text(
-                'Liverpool FC - Player Management System · Overview of current application data',
-                style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+              Text(
+                isVi
+                    ? 'Liverpool FC - Hệ thống Quản lý Cầu thủ · Tổng quan dữ liệu thời gian thực'
+                    : 'Liverpool FC - Player Management System · Overview of current application data',
+                style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
               ),
             ],
           ),
@@ -520,7 +650,7 @@ class _DashboardOverviewState extends State<DashboardOverview> {
     );
   }
 
-  Widget _hero(int campaigns) => Container(
+  Widget _hero(int campaigns, bool isVi) => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
@@ -540,22 +670,27 @@ class _DashboardOverviewState extends State<DashboardOverview> {
           runSpacing: 8,
           children: [
             _badge('LIVERPOOL FC', AppTheme.lfcRed),
-            _badge('OPERATIONS CENTRE', AppTheme.accentCyan),
+            _badge(
+              isVi ? 'TRUNG TÂM ĐIỀU HÀNH' : 'OPERATIONS CENTRE',
+              AppTheme.accentCyan,
+            ),
           ],
         ),
         const SizedBox(height: 18),
-        const Text(
-          'Your club at a glance',
-          style: TextStyle(
+        Text(
+          isVi ? 'Toàn cảnh Câu lạc bộ' : 'Your club at a glance',
+          style: const TextStyle(
             fontSize: 30,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.8,
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Track your squad, training plans and commercial performance in one place.',
-          style: TextStyle(color: AppTheme.textSecondary, height: 1.6),
+        Text(
+          isVi
+              ? 'Theo dõi đội hình, kế hoạch huấn luyện và hiệu suất thương mại tại một nơi tập trung.'
+              : 'Track your squad, training plans and commercial performance in one place.',
+          style: const TextStyle(color: AppTheme.textSecondary, height: 1.6),
         ),
         const SizedBox(height: 20),
         Wrap(
@@ -566,8 +701,16 @@ class _DashboardOverviewState extends State<DashboardOverview> {
               Icons.today_outlined,
               DateFormat('dd/MM/yyyy').format(DateTime.now()),
             ),
-            _heroInfo(Icons.location_on_outlined, 'AXA Training Centre'),
-            _heroInfo(Icons.campaign_outlined, '$campaigns active campaigns'),
+            _heroInfo(
+              Icons.location_on_outlined,
+              isVi ? 'Trung tâm HL AXA' : 'AXA Training Centre',
+            ),
+            _heroInfo(
+              Icons.campaign_outlined,
+              isVi
+                  ? '$campaigns chiến dịch đang chạy'
+                  : '$campaigns active campaigns',
+            ),
           ],
         ),
       ],
@@ -702,31 +845,36 @@ class _DashboardOverviewState extends State<DashboardOverview> {
     },
   );
 
-  Widget _panel(String title, String subtitle, IconData icon, Widget child) =>
-      Container(
-        key: ValueKey('dashboard-panel-$title'),
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceNavy,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppTheme.borderSubtle),
-        ),
-        child: Column(
+  Widget _panel(
+    String title,
+    String subtitle,
+    IconData icon,
+    String panelKey,
+    Widget child,
+  ) => Container(
+    key: ValueKey('dashboard-panel-$panelKey'),
+    width: double.infinity,
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: AppTheme.surfaceNavy,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: AppTheme.borderSubtle),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icon, color: AppTheme.accentCyan, size: 22),
-                const SizedBox(width: 10),
-                Expanded(child: _heading(title, subtitle)),
-              ],
-            ),
-            child,
+            Icon(icon, color: AppTheme.accentCyan, size: 22),
+            const SizedBox(width: 10),
+            Expanded(child: _heading(title, subtitle)),
           ],
         ),
-      );
+        child,
+      ],
+    ),
+  );
 
   Widget _badge(String label, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -761,58 +909,63 @@ class _DashboardOverviewState extends State<DashboardOverview> {
     ),
   );
 
-  Widget _playerRow(Player player, String rank, String value, String detail) =>
-      InkWell(
-        onTap: () => _openPlayer(player),
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Row(
-            children: [
-              PlayerAvatar(
-                imageUrl: player.avatarUrl,
-                radius: 20,
-                initials: player.name.isEmpty ? '?' : player.name[0],
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      player.name,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$rank · ${player.positionName}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$value · $detail',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.lfcYellow,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.chevron_right,
-                size: 18,
-                color: AppTheme.textMuted,
-              ),
-            ],
+  Widget _playerRow(
+    Player player,
+    String rank,
+    String value,
+    String detail,
+    bool isVi,
+  ) => InkWell(
+    onTap: () => _openPlayer(player),
+    borderRadius: BorderRadius.circular(10),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          PlayerAvatar(
+            imageUrl: player.avatarUrl,
+            radius: 20,
+            initials: player.name.isEmpty ? '?' : player.name[0],
           ),
-        ),
-      );
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  player.name,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$rank · ${_posSingleVi(player.position, isVi)}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$value · $detail',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.lfcYellow,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.chevron_right,
+            size: 18,
+            color: AppTheme.textMuted,
+          ),
+        ],
+      ),
+    ),
+  );
 
-  Widget _session(TrainingSession session) => Padding(
+  Widget _session(TrainingSession session, bool isVi) => Padding(
     padding: const EdgeInsets.only(bottom: 14),
     child: InkWell(
       onTap: () => showDialog<void>(
@@ -821,12 +974,14 @@ class _DashboardOverviewState extends State<DashboardOverview> {
           title: Text(session.title),
           scrollable: true,
           content: Text(
-            '${session.date} · ${session.startTime} – ${session.endTime}\n\n${session.location}\nCoach: ${session.coach}\n\n${session.description}\n\nStatus: ${session.status}',
+            isVi
+                ? '${session.date} · ${session.startTime} – ${session.endTime}\n\n${session.location}\nHLV: ${session.coach}\n\n${session.description}\n\nTrạng thái: ${session.status == 'Completed' ? 'Đã hoàn thành' : 'Kế hoạch'}'
+                : '${session.date} · ${session.startTime} – ${session.endTime}\n\n${session.location}\nCoach: ${session.coach}\n\n${session.description}\n\nStatus: ${session.status}',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
+              child: Text(isVi ? 'Đóng' : 'Close'),
             ),
           ],
         ),
@@ -849,7 +1004,10 @@ class _DashboardOverviewState extends State<DashboardOverview> {
                   '${session.startTime} – ${session.endTime}',
                   AppTheme.accentCyan,
                 ),
-                _badge(session.type, AppTheme.warning),
+                _badge(
+                  _sessionTypeLabel(session.type, isVi),
+                  AppTheme.warning,
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -867,16 +1025,18 @@ class _DashboardOverviewState extends State<DashboardOverview> {
             ),
             const SizedBox(height: 5),
             Text(
-              'Coach: ${session.coach} · ${session.status}',
+              isVi
+                  ? 'HLV: ${session.coach} · ${session.status == 'Completed' ? 'Đã hoàn thành' : 'Kế hoạch'}'
+                  : 'Coach: ${session.coach} · ${session.status}',
               style: const TextStyle(
                 fontSize: 12,
                 color: AppTheme.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'View session details →',
-              style: TextStyle(fontSize: 12, color: AppTheme.accentCyan),
+            Text(
+              isVi ? 'Xem chi tiết buổi tập →' : 'View session details →',
+              style: const TextStyle(fontSize: 12, color: AppTheme.accentCyan),
             ),
           ],
         ),
@@ -884,21 +1044,25 @@ class _DashboardOverviewState extends State<DashboardOverview> {
     ),
   );
 
-  void _showStatus(List<Player> players) {
+  void _showStatus(List<Player> players, bool isVi) {
     final unavailable = players.where((p) => p.status != 'Active').toList();
     _showPlayerList(
-      'Unavailable players',
+      isVi ? 'Cầu thủ chưa sẵn sàng' : 'Unavailable players',
       unavailable,
-      (p) => p.status,
-      'All players currently have Active status.',
+      (p) => isVi ? (p.status == 'Injured' ? 'Chấn thương' : p.status) : p.status,
+      isVi
+          ? 'Tất cả cầu thủ hiện đều ở trạng thái Sẵn sàng.'
+          : 'All players currently have Active status.',
     );
   }
 
-  void _showContracts(List<Player> players) => _showPlayerList(
-    'Contracts to review',
+  void _showContracts(List<Player> players, bool isVi) => _showPlayerList(
+    isVi ? 'Hợp đồng cần xem xét' : 'Contracts to review',
     players,
     (p) => p.contractUntil,
-    'No contracts expire within the review window.',
+    isVi
+        ? 'Không có hợp đồng nào hết hạn trong kỳ xem xét.'
+        : 'No contracts expire within the review window.',
   );
 
   void _showPlayerList(

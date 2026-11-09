@@ -943,7 +943,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              'Command centre',
+                              state.isVietnamese
+                                  ? 'Trung tâm chỉ huy'
+                                  : 'Command centre',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -986,7 +988,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              'Club overview',
+                              state.isVietnamese
+                                  ? 'Tổng quan CLB'
+                                  : 'Club overview',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
